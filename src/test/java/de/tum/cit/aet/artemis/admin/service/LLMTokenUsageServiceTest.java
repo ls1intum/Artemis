@@ -59,6 +59,34 @@ class LLMTokenUsageServiceTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = { "empty", "missingInput", "missingOutput" })
+    void individualResponseWithoutCompleteCountersIsSavedAsUnpriced(String kind) {
+        var metadata = ChatResponseMetadata.builder().model("gpt-5-mini");
+        if (!kind.equals("empty")) {
+            Usage usage = mock(Usage.class);
+            when(usage.getPromptTokens()).thenReturn(kind.equals("missingInput") ? null : 10);
+            when(usage.getCompletionTokens()).thenReturn(kind.equals("missingOutput") ? null : 2);
+            metadata.usage(usage);
+        }
+        llmTokenUsageService.trackModelCallTokenUsage(new ChatResponse(List.of(), metadata.build()), LLMServiceType.ATLAS, "PIPE", scope -> scope.withCourse(42L));
+        var trace = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+        verify(llmTokenUsageTraceRepository).save(trace.capture());
+        assertThat(trace.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+            assertThat(request.getTotalCostUsd()).isNull();
+            assertThat(request.getCostSource()).isNull();
+            assertThat(request.getNumInputTokens()).isEqualTo(kind.equals("missingOutput") ? 10 : 0);
+            assertThat(request.getNumOutputTokens()).isEqualTo(kind.equals("missingInput") ? 2 : 0);
+        });
+    }
+
+    @Test
+    void individualResponseAccountingFailureDoesNotRejectResponse() {
+        when(llmTokenUsageTraceRepository.save(any(LLMTokenUsageTrace.class))).thenThrow(new IllegalStateException("storage unavailable"));
+        llmTokenUsageService.trackModelCallTokenUsage(new ChatResponse(List.of()), LLMServiceType.ATLAS, "PIPE", scope -> scope.withCourse(42L));
+        verify(llmTokenUsageTraceRepository).save(any(LLMTokenUsageTrace.class));
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "PROVIDER", "CONFIGURATION" })
     void transportedCostTakesPrecedenceAndKeepsItsSource(String source) {
         var config = createCostConfiguration();
@@ -72,23 +100,6 @@ class LLMTokenUsageServiceTest {
         assertThat(request).isNotNull();
         assertThat(request.totalCostUsd()).isEqualTo(0.0001);
         assertThat(request.costSource()).isEqualTo(source);
-    }
-
-    @Test
-    void incompleteUsageRetainsTokensWithoutReportingACompleteUsdAmount() {
-        var usage = new DefaultUsage(100, 20, 120, Map.of("prompt_tokens", 100, "completion_tokens", 20, "cost", 0.0001, "cost_currency", "USD", "cost_source", "PROVIDER"));
-        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().model("gpt-5-mini").usage(usage).build());
-
-        llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.ATLAS, "PARTIAL", builder -> builder.withCourse(42L), false);
-
-        var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
-        verify(llmTokenUsageTraceRepository).save(saved.capture());
-        assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
-            assertThat(request.getNumInputTokens()).isEqualTo(100);
-            assertThat(request.getNumOutputTokens()).isEqualTo(20);
-            assertThat(request.getTotalCostUsd()).isNull();
-            assertThat(request.getCostSource()).isNull();
-        });
     }
 
     @Test

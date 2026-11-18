@@ -63,9 +63,6 @@ public final class AtlasResponsesChatModel implements ChatModel {
     /** Metadata key containing the original ordered Responses output items. */
     public static final String RESPONSES_OUTPUT_ITEMS_METADATA_KEY = "atlas.responses.output-items";
 
-    /** Metadata indicating whether every provider response in the replayed conversation supplied usage. */
-    public static final String USAGE_COMPLETE_METADATA_KEY = "atlas.responses.usage-complete";
-
     private final OpenAIClient openAIClient;
 
     private final JsonMapper objectMapper;
@@ -126,8 +123,7 @@ public final class AtlasResponsesChatModel implements ChatModel {
             throw new CancellationException("Atlas Responses dispatch interrupted before request");
         }
         Response response = openAIClient.responses().create(request.build());
-        boolean priorUsageComplete = prompt.getInstructions().stream().noneMatch(message -> Boolean.FALSE.equals(message.getMetadata().get(USAGE_COMPLETE_METADATA_KEY)));
-        return toChatResponse(response, priorUsageComplete);
+        return toChatResponse(response);
     }
 
     private OpenAiChatOptions requireOpenAiOptions(@Nullable ChatOptions options) {
@@ -267,18 +263,34 @@ public final class AtlasResponsesChatModel implements ChatModel {
         throw unsupported("Responses output item kind " + outputItem.getClass().getSimpleName());
     }
 
-    private static ChatResponse toChatResponse(Response response, boolean priorUsageComplete) {
-        boolean usageComplete = priorUsageComplete && response.usage().isPresent();
-        ChatResponseMetadata.Builder responseMetadata = ChatResponseMetadata.builder().id(response.id()).model(responseModelName(response)).keyValue(USAGE_COMPLETE_METADATA_KEY,
-                usageComplete);
-        response.usage().ifPresent(usage -> responseMetadata.usage(toUsage(usage)));
+    private static ChatResponse toChatResponse(Response response) {
+        ChatResponseMetadata.Builder responseMetadata = ChatResponseMetadata.builder().id(response.id()).model(responseModelName(response));
+        try {
+            response.usage().ifPresent(usage -> responseMetadata.usage(toUsage(usage)));
+        }
+        catch (ArithmeticException ex) {
+            return terminalResponse("invalid_usage", responseMetadata);
+        }
         ResponseStatus status = response.status().orElse(null);
         if (response.error().isPresent() || !ResponseStatus.COMPLETED.equals(status)) {
             // Return a terminal, tool-free response so the native advisor retains earlier rounds' usage.
             // The orchestration layer rejects this finish reason after accounting; incomplete tools never run.
             String finish = response.error().isPresent() ? "failed" : status == null ? "missing_status" : status.asString();
-            return new ChatResponse(List.of(new Generation(new AssistantMessage(""), ChatGenerationMetadata.builder().finishReason(finish).build())), responseMetadata.build());
+            return terminalResponse(finish, responseMetadata);
         }
+        try {
+            return completedResponse(response, responseMetadata);
+        }
+        catch (IllegalArgumentException ex) {
+            return terminalResponse("unsupported_output", responseMetadata);
+        }
+    }
+
+    private static ChatResponse terminalResponse(String reason, ChatResponseMetadata.Builder metadata) {
+        return new ChatResponse(List.of(new Generation(new AssistantMessage(""), ChatGenerationMetadata.builder().finishReason(reason).build())), metadata.build());
+    }
+
+    private static ChatResponse completedResponse(Response response, ChatResponseMetadata.Builder responseMetadata) {
         List<ResponseOutputItem> outputItems = List.copyOf(response.output());
         StringBuilder text = new StringBuilder();
         List<AssistantMessage.ToolCall> toolCalls = new ArrayList<>();
@@ -298,7 +310,7 @@ public final class AtlasResponsesChatModel implements ChatModel {
             throw unsupported("Responses output item kind " + outputItem.getClass().getSimpleName());
         }
 
-        Map<String, Object> assistantMetadata = Map.of(RESPONSES_OUTPUT_ITEMS_METADATA_KEY, outputItems, USAGE_COMPLETE_METADATA_KEY, usageComplete);
+        Map<String, Object> assistantMetadata = Map.of(RESPONSES_OUTPUT_ITEMS_METADATA_KEY, outputItems);
         AssistantMessage assistant = AssistantMessage.builder().content(text.toString()).toolCalls(toolCalls).properties(assistantMetadata).build();
 
         return new ChatResponse(List.of(new Generation(assistant)), responseMetadata.build());

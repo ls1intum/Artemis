@@ -166,6 +166,32 @@ public class LLMTokenUsageService {
     }
 
     /**
+     * Records one received provider response, retaining an unpriced row when that call omitted usage.
+     * Call this before a tool loop accumulates usage, so its native provider amount remains available.
+     *
+     * @param response        individual model response, never accumulated usage
+     * @param serviceType     service that made the call
+     * @param pipelineId      pipeline identifier
+     * @param builderFunction configures the trace scope
+     */
+    public void trackModelCallTokenUsage(ChatResponse response, LLMServiceType serviceType, String pipelineId,
+            Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
+        try {
+            LLMRequest request = buildLLMRequest(response, pipelineId);
+            if (request == null) {
+                Usage usage = response.getMetadata().getUsage();
+                int input = usage.getPromptTokens() == null ? 0 : Math.max(0, usage.getPromptTokens());
+                int output = usage.getCompletionTokens() == null ? 0 : Math.max(0, usage.getCompletionTokens());
+                request = new LLMRequest(Objects.requireNonNullElse(response.getMetadata().getModel(), ""), input, 0f, output, 0f, pipelineId);
+            }
+            saveLLMTokenUsage(List.of(request), serviceType, builderFunction);
+        }
+        catch (Exception ex) {
+            log.warn("Failed to store model-call usage for pipeline [{}]", pipelineId, ex);
+        }
+    }
+
+    /**
      * Saves the token usage to the database.
      * This method records the usage of tokens by various LLM services in the system.
      *
@@ -252,20 +278,6 @@ public class LLMTokenUsageService {
      */
     public void trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
             Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
-        trackChatResponseTokenUsage(chatResponse, serviceType, pipelineId, builderFunction, true);
-    }
-
-    /**
-     * Tracks known token counts while leaving USD pricing unknown when some calls have no usage.
-     *
-     * @param chatResponse    response containing the available token counts
-     * @param serviceType     the service that made the call
-     * @param pipelineId      the pipeline identifier
-     * @param builderFunction configures the trace
-     * @param usageComplete   whether the token counts cover every model call
-     */
-    public void trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
-            Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction, boolean usageComplete) {
         try {
             if (chatResponse == null) {
                 log.warn("Failed to store token usage for pipeline [{}]: chat response is missing.", pipelineId);
@@ -287,11 +299,6 @@ public class LLMTokenUsageService {
             }
             LLMRequest llmRequest = buildLLMRequest(chatResponse, pipelineId);
             if (llmRequest != null) {
-                if (!usageComplete) {
-                    llmRequest = new LLMRequest(llmRequest.model(), llmRequest.numInputTokens(), llmRequest.costPerMillionInputToken(), llmRequest.numOutputTokens(),
-                            llmRequest.costPerMillionOutputToken(), llmRequest.pipelineId(), llmRequest.numCachedInputTokens(), llmRequest.costPerMillionCachedInputToken(),
-                            llmRequest.numCacheWriteInputTokens(), llmRequest.costPerMillionCacheWriteInputToken());
-                }
                 saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
             }
         }
