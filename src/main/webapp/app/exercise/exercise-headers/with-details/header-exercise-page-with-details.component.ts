@@ -84,7 +84,20 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
         title: 'artemisApp.courseOverview.exerciseDetails.bonus',
         content: { type: 'string', value: this.exercise().bonusPoints ?? 0 },
     }));
-    readonly dueDateInformation = computed(() => getSubmissionDueDateInformation(this.dueDate()));
+    readonly dueDateInformation = computed<InformationBox | undefined>(() => {
+        const exam = this.exam();
+        if (exam) {
+            if (this.isTestRun() || !exam.endDate) {
+                return undefined;
+            }
+            return {
+                title: 'artemisApp.exam.endDate',
+                content: { type: 'dateTime', value: exam.endDate },
+                isContentComponent: true,
+            };
+        }
+        return getSubmissionDueDateInformation(this.dueDate());
+    });
     public readonly canComplainLaterOn = signal<boolean>(undefined!);
 
     readonly numberOfSubmissions = computed<number | undefined>(() => {

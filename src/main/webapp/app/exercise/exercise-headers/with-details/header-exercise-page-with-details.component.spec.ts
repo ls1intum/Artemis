@@ -177,6 +177,32 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.nextRelevantDateStatusBadge()).toBe('bg-state-success');
     });
 
+    it.each([-1, 1])('shows the exam end date when it is %s days from now', (days) => {
+        exam.endDate = dayjs().add(days, 'day');
+        exercise.dueDate = dayjs().add(3, 'days');
+        fixture.componentRef.setInput('exam', exam);
+        fixture.detectChanges();
+
+        expect(component.dueDateInformation()).toEqual({
+            title: 'artemisApp.exam.endDate',
+            content: { type: 'dateTime', value: exam.endDate },
+            isContentComponent: true,
+        });
+    });
+
+    it('omits the exam deadline for test runs and exams without an end date', () => {
+        fixture.componentRef.setInput('exam', exam);
+        fixture.detectChanges();
+        expect(component.dueDateInformation()).toBeUndefined();
+
+        const scheduledExam = new Exam();
+        scheduledExam.endDate = dayjs().add(1, 'day');
+        fixture.componentRef.setInput('exam', scheduledExam);
+        fixture.componentRef.setInput('isTestRun', true);
+        fixture.detectChanges();
+        expect(component.dueDateInformation()).toBeUndefined();
+    });
+
     it('should not set a due date in exam mode as no individual due dates exist', () => {
         exercise.dueDate = dayjs();
         exam.endDate = dayjs().add(1, 'day');
