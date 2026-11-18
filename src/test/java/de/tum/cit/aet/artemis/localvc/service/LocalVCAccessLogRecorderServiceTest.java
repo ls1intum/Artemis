@@ -501,8 +501,12 @@ class LocalVCAccessLogRecorderServiceTest {
         var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
         var stored = new AtomicInteger();
         var timeOfRetry = new AtomicReference<ZonedDateTime>();
+        var timeInsideTheFirstAttempt = new AtomicReference<ZonedDateTime>();
         // the first attempt is interrupted while it waits for a connection
         doAnswer(invocation -> {
+            timeInsideTheFirstAttempt.set(ZonedDateTime.now());
+            // a retry that took a new time would fall after this wait, also on a clock with a coarse resolution
+            Thread.sleep(10);
             Thread.currentThread().interrupt();
             throw new IllegalStateException("no connection was acquired", new InterruptedException());
         }).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
@@ -521,7 +525,7 @@ class LocalVCAccessLogRecorderServiceTest {
             accessLogRecorder.recordFetch(subject, auditOfAClone());
 
             assertThat(stored).hasValue(1);
-            assertThat(timeOfRetry.get()).isBetween(before, ZonedDateTime.now());
+            assertThat(timeOfRetry.get()).as("the time of the first attempt, taken before it started").isBetween(before, timeInsideTheFirstAttempt.get());
             verify(vcsAccessLogService, times(1)).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
             assertThat(Thread.currentThread().isInterrupted()).as("the interrupt is not lost").isTrue();
         }
@@ -538,6 +542,8 @@ class LocalVCAccessLogRecorderServiceTest {
         accessLogRecorder.recordFetch(subject, auditOfAClone());
 
         verify(vcsAccessLogService, times(1)).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+        // no other attempt either, for example one with a time
+        verifyNoMoreInteractions(vcsAccessLogService);
         assertThat(Thread.currentThread().isInterrupted()).isFalse();
     }
 
