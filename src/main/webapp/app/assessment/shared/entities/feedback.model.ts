@@ -76,6 +76,8 @@ export class Feedback implements BaseEntity {
     public text?: string;
     public detailText?: string;
     public hasLongFeedbackText?: boolean;
+    /** Whether Artemis filled in {@link text} as the points-based default title, which then follows the points, rather than the assessor typing it. */
+    public titleGenerated?: boolean;
     public reference?: string;
     public credits?: number;
     public type?: FeedbackType;

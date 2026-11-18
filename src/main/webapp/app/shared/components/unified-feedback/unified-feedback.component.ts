@@ -129,16 +129,7 @@ export class UnifiedFeedbackComponent {
         // consumers read the title right away when the points change is emitted.
         effect(() => {
             this.feedbackCredits();
-            const feedback = this.feedback();
-            untracked(() => {
-                // Another feedback brings its own title and points together, which is no points change of the previous title.
-                if (feedback !== this.lastFeedback) {
-                    this.lastFeedback = feedback;
-                    this.lastDefaultTitle = undefined;
-                    this.titleTypedByAssessor = false;
-                }
-                this.refreshDefaultTitle();
-            });
+            untracked(() => this.refreshDefaultTitle());
         });
     }
 
@@ -420,11 +411,8 @@ export class UnifiedFeedbackComponent {
 
     readonly detailLength = computed(() => (this.feedbackDetail() ?? '').length);
 
-    /** Whether the assessor typed the current title, which then never follows the points, even when it reads like a default. */
-    private titleTypedByAssessor = false;
-    /** The default title for the points the title was last checked against, see {@link refreshDefaultTitle}. */
-    private lastDefaultTitle?: string;
-    private lastFeedback?: Feedback;
+    /** Whether the title was generated, for a consumer that passes no {@link feedback}, which otherwise records it (see {@link Feedback.titleGenerated}). */
+    private titleGeneratedWithoutFeedback = false;
 
     private currentTitlePrefix(): string {
         const raw = this.feedbackTitle() ?? '';
@@ -473,7 +461,7 @@ export class UnifiedFeedbackComponent {
 
     onTitleInput(value: string): void {
         const title = Feedback.withinLength(value, this.displayTitle(), this.TITLE_MAX_LENGTH);
-        this.titleTypedByAssessor = !!title.trim();
+        this.setTitleGenerated(false);
         this.feedbackTitle.set(`${this.nextTitlePrefix()}${title}`);
     }
 
@@ -490,26 +478,38 @@ export class UnifiedFeedbackComponent {
         if (!this.isTitleEditable() || this.displayTitle().trim() || isTyping) {
             return;
         }
+        this.setTitleGenerated(true);
         this.feedbackTitle.set(`${this.nextTitlePrefix()}${this.defaultTitlePlaceholder()}`);
     }
 
     /**
-     * Keeps a default title in line with the points, which choose it. A title counts as default when it is the default
-     * for the points it was last checked against, so this also holds once a new inline feedback is re-rendered after its
-     * first commit, or when an assessment is reopened, while a title such as "Feedback" on a positive feedback is the
-     * assessor's own and stays. A title the assessor typed here always stays, even one that reads like the default. An
-     * untouched (accepted) suggestion is never rewritten, so opening one whose own title matches a default does not mark it adapted.
+     * Keeps a generated title in line with the points, which choose it. Whether the title was generated is stored with the
+     * feedback, so this also holds once a new inline feedback is re-rendered after its first commit, or when an assessment
+     * is reopened, while a title the assessor typed always stays, even one that reads like a default. An untouched
+     * (accepted) suggestion is never rewritten, so opening one does not mark it adapted.
      */
     private refreshDefaultTitle(): void {
-        const defaultTitle = this.defaultTitlePlaceholder();
-        const previousDefaultTitle = this.lastDefaultTitle ?? defaultTitle;
-        this.lastDefaultTitle = defaultTitle;
-        if (!this.isTitleEditable() || this.titleTypedByAssessor || (this.feedbackTitle() ?? '').startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+        if (!this.isTitleEditable() || !this.isTitleGenerated() || (this.feedbackTitle() ?? '').startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
             return;
         }
-        const currentTitle = this.displayTitle().trim();
-        if (currentTitle !== defaultTitle && currentTitle === previousDefaultTitle) {
+        const defaultTitle = this.defaultTitlePlaceholder();
+        if (this.displayTitle().trim() !== defaultTitle) {
             this.feedbackTitle.set(`${this.nextTitlePrefix()}${defaultTitle}`);
+        }
+    }
+
+    private isTitleGenerated(): boolean {
+        const feedback = this.feedback();
+        return feedback ? !!feedback.titleGenerated : this.titleGeneratedWithoutFeedback;
+    }
+
+    /** Recorded on the feedback itself, like an unlinked grading instruction, so it is saved and survives a re-render. */
+    private setTitleGenerated(generated: boolean): void {
+        const feedback = this.feedback();
+        if (feedback) {
+            feedback.titleGenerated = generated;
+        } else {
+            this.titleGeneratedWithoutFeedback = generated;
         }
     }
 

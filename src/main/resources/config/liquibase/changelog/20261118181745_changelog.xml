@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261118181745-01-feedback-title-generated" author="musaberkay">
+        <comment>Remember whether Artemis filled in a feedback's title as the points-based default, which follows the points, or the assessor typed it.
+            Existing feedback counts as typed, so its title is never replaced. The default keeps the previous version's inserts valid after a rollback.</comment>
+        <addColumn tableName="feedback">
+            <column name="title_generated" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

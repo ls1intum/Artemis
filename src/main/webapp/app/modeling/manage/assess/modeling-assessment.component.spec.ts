@@ -380,8 +380,15 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.text).toBe('Missing abstraction');
     });
 
-    it('should leave a saved default title to Apollon as its placeholder, and let it follow the points', () => {
-        const saved: Feedback = { text: 'artemisApp.feedback.type.positive', detailText: 'Looks right', referenceId: RELATIONSHIP_ID, reference: 'reference', credits: 1 };
+    it('should leave a saved generated title to Apollon as its placeholder, and let it follow the points', () => {
+        const saved: Feedback = {
+            text: 'artemisApp.feedback.type.positive',
+            titleGenerated: true,
+            detailText: 'Looks right',
+            referenceId: RELATIONSHIP_ID,
+            reference: 'reference',
+            credits: 1,
+        };
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.detectChanges();
         fixture.componentRef.setInput('resultFeedbacks', [saved]);
@@ -395,18 +402,26 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.text).toBe('artemisApp.feedback.type.needsRevision');
     });
 
-    it('should show a saved title that is the default for other points, e.g. "Feedback" on a positive feedback, as the title', () => {
-        const saved: Feedback = { text: 'artemisApp.feedback.type.feedback', detailText: 'Looks right', referenceId: RELATIONSHIP_ID, reference: 'reference', credits: 1 };
+    it('should show a saved typed title that reads like the default as the title, and keep it when the score changes', () => {
+        const saved: Feedback = {
+            text: 'artemisApp.feedback.type.positive',
+            titleGenerated: false,
+            detailText: 'Looks right',
+            referenceId: RELATIONSHIP_ID,
+            reference: 'reference',
+            credits: 1,
+        };
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.detectChanges();
         fixture.componentRef.setInput('resultFeedbacks', [saved]);
         fixture.detectChanges();
 
         const assessment = comp.apollonEditor!.model.assessments[RELATIONSHIP_ID];
-        expect(assessment.title).toBe('artemisApp.feedback.type.feedback');
+        expect(assessment.title).toBe('artemisApp.feedback.type.positive');
 
         comp.generateFeedbackFromAssessment([{ ...assessment, score: -1 }]);
-        expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.text).toBe('artemisApp.feedback.type.feedback');
+        expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.text).toBe('artemisApp.feedback.type.positive');
+        expect(comp.elementFeedback.get(RELATIONSHIP_ID)?.titleGenerated).toBe(false);
     });
 
     it('should show the comment of feedback saved before Apollon had a title as its description', () => {
@@ -483,6 +498,7 @@ describe('ModelingAssessmentComponent', () => {
             expect(created.credits).toBe(1);
             // Without a title the heading is the points-based default; the comment stays the description
             expect(created.text).toBe('artemisApp.feedback.type.positive');
+            expect(created.titleGenerated).toBe(true);
             expect(created.detailText).toBe('Looks right');
         });
 
@@ -492,6 +508,7 @@ describe('ModelingAssessmentComponent', () => {
 
             comp.generateFeedbackFromAssessment([assessmentFor({ title: 'artemisApp.feedback.type.feedback', score: -1 })]);
             expect(created.text).toBe('artemisApp.feedback.type.feedback');
+            expect(created.titleGenerated).toBe(false);
 
             comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, score: -1 })]);
             expect(created.text).toBe('artemisApp.feedback.type.needsRevision');
@@ -589,6 +606,7 @@ describe('ModelingAssessmentComponent', () => {
             // Apollon emits a cleared title as undefined
             comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: 'Original detail', score: 1 })]);
             expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.positive');
+            expect(suggestion.titleGenerated).toBe(true);
 
             comp.generateFeedbackFromAssessment([assessmentFor({ title: undefined, feedback: 'Original detail', score: -1 })]);
             expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'artemisApp.feedback.type.needsRevision');

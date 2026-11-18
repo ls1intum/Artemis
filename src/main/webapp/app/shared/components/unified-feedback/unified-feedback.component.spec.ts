@@ -952,49 +952,49 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.positive');
     });
 
-    it('should keep a stored default title following the points, e.g. once a new inline feedback is re-rendered', () => {
+    /** Binds a feedback as a reopened assessment does: its stored title, points and whether the title was generated. */
+    const openSaved = (title: string, credits: number, titleGenerated: boolean): Feedback => {
+        const saved = { text: title, credits, titleGenerated } as Feedback;
         fixture.componentRef.setInput('editable', true);
-        component.feedbackTitle.set('artemisApp.feedback.type.feedback');
-        component.feedbackCredits.set(0);
+        fixture.componentRef.setInput('feedback', saved);
+        component.feedbackTitle.set(title);
+        component.feedbackCredits.set(credits);
         fixture.detectChanges();
+        return saved;
+    };
+
+    it('should keep a saved generated title following the points, e.g. once an assessment is reopened', () => {
+        openSaved('artemisApp.feedback.type.feedback', 0, true);
 
         component.onCreditsChange(-0.5);
         expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
     });
 
-    it.each(['artemisApp.feedback.type.feedback', 'artemisApp.feedback.type.positive'])('should keep the typed title %s when only the points change', (typedTitle) => {
-        fixture.componentRef.setInput('editable', true);
-        component.feedbackTitle.set('artemisApp.feedback.type.positive');
-        component.feedbackCredits.set(2);
+    it('should keep a saved typed title that reads like the default when the points change after reopening', () => {
+        openSaved('artemisApp.feedback.type.positive', 2, false);
+
+        component.onCreditsChange(-1);
         fixture.detectChanges();
+        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.positive');
+    });
+
+    it.each(['artemisApp.feedback.type.feedback', 'artemisApp.feedback.type.positive'])('should keep the typed title %s when only the points change', (typedTitle) => {
+        const saved = openSaved('artemisApp.feedback.type.positive', 2, true);
 
         component.onTitleInput(typedTitle);
         component.onCreditsChange(-1);
         fixture.detectChanges();
         expect(component.feedbackTitle()).toBe(typedTitle);
+        // saved with the feedback, so the title also stays after reopening
+        expect(saved.titleGenerated).toBe(false);
     });
 
-    it('should keep a stored title that is the default for other points, e.g. "Feedback" on a positive feedback', () => {
-        fixture.componentRef.setInput('editable', true);
-        // e.g. a reopened assessment binds the saved feedback, which brings its title and points together
-        fixture.componentRef.setInput('feedback', { text: 'artemisApp.feedback.type.feedback', credits: 2 } as Feedback);
-        component.feedbackTitle.set('artemisApp.feedback.type.feedback');
-        component.feedbackCredits.set(2);
-        fixture.detectChanges();
+    it('should mark a filled-in default title as generated on the feedback, and let it follow the points again once the assessor cleared it', () => {
+        const saved = openSaved('Good interface', 2, false);
 
-        component.onCreditsChange(-1);
-        fixture.detectChanges();
-        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.feedback');
-    });
-
-    it('should let a title follow the points again once the assessor cleared it', () => {
-        fixture.componentRef.setInput('editable', true);
-        component.feedbackCredits.set(2);
-        fixture.detectChanges();
-
-        component.onTitleInput('Good interface');
         component.onTitleInput('');
         component.applyDefaultTitleIfEmpty();
+        expect(saved.titleGenerated).toBe(true);
         component.onCreditsChange(-1);
         expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
     });

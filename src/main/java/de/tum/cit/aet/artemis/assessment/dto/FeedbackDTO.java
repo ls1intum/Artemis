@@ -18,10 +18,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType
  * DTO containing {@link Feedback} information.
  * This does not include large reference attributes (e.g. long feedback text) in order to send minimal data to the client.
  * An empty detail text is kept: the client reads it as a title in {@code text} without a description, unlike legacy feedback without one.
+ * {@code titleGenerated} tells whether Artemis filled in {@code text} as the points-based default title (see {@link Feedback#isTitleGenerated()}).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record FeedbackDTO(Long id, String text, @JsonSerialize(using = KeepEmptyStringSerializer.class) String detailText, boolean hasLongFeedbackText, String reference,
-        Double credits, Boolean positive, FeedbackType type, Visibility visibility, GradingInstructionDTO gradingInstruction, TestCaseDTO testCase) implements Serializable {
+        Double credits, Boolean positive, FeedbackType type, Visibility visibility, GradingInstructionDTO gradingInstruction, TestCaseDTO testCase, boolean titleGenerated)
+        implements Serializable {
 
     /**
      * The test case an automatic programming feedback belongs to. The components are every scalar property
@@ -70,6 +72,7 @@ public record FeedbackDTO(Long id, String text, @JsonSerialize(using = KeepEmpty
         feedback.setCredits(credits);
         feedback.setDetailText(resolvedDetailText);
         feedback.setText(text);
+        feedback.setTitleGenerated(titleGenerated);
         feedback.setReference(reference);
         feedback.setType(type);
         feedback.setPositive(positive);
@@ -95,6 +98,6 @@ public record FeedbackDTO(Long id, String text, @JsonSerialize(using = KeepEmpty
         GradingInstructionDTO gradingInstruction = feedback.getGradingInstruction() != null ? GradingInstructionDTO.of(feedback.getGradingInstruction()) : null;
         // the test case is a transient field set on synthesized automatic feedback views, never a lazy association
         return new FeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(), feedback.getCredits(),
-                feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstruction, TestCaseDTO.of(feedback.getTestCase()));
+                feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstruction, TestCaseDTO.of(feedback.getTestCase()), feedback.isTitleGenerated());
     }
 }
