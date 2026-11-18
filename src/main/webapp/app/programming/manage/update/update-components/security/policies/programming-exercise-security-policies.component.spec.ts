@@ -227,6 +227,34 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.editor()?.baseCommitHash).toBe('b'.repeat(40));
     });
 
+    it('blocks the outdated policies until the pushed ones are read when their read fails after an unprocessed commit', () => {
+        create(configured(), false);
+        const policy = comp.policies()[0];
+        const granted = withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+        comp['onPolicyChange']({ ...policy, working: granted });
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } })));
+        service.getPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        comp['commit']('Grant commons');
+
+        expect(comp.loadFailed()).toBe(true);
+        expect(comp.editingDisabled()).toBe(true);
+        expect(comp.banner()?.kind).toBe('processingFailed');
+
+        service.getPolicies.mockReturnValueOnce(of(editor('b'.repeat(40), granted)));
+        comp['retryLoad']();
+
+        expect(comp.loadFailed()).toBe(false);
+        expect(comp.editor()?.baseCommitHash).toBe('b'.repeat(40));
+        comp['discard']();
+        expect(comp.policies()[0].working?.packages).toEqual([{ packageName: 'org.apache.commons' }]);
+
+        // The banner's Retry still sends the original request, whose processing the server resumes.
+        service.commitPolicies.mockReturnValueOnce(of({ editor: editor('b'.repeat(40), granted), config: configured() }));
+        comp['retryCommit']();
+        expect(service.commitPolicies.mock.calls[1][1]).toEqual(service.commitPolicies.mock.calls[0][1]);
+    });
+
     it('removes the file of a deleted committed policy with the commit', () => {
         create(configured(), false);
         comp['askDeletePolicy'](comp.policies()[0]);

@@ -221,6 +221,8 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private newPolicyCounter = 0;
     /** The last commit request that failed, for Retry. */
     private failedRequest: CommitRequest | undefined;
+    /** Set while the policies of a pushed but unprocessed commit are not read yet, so loading them again reads them, see loadPushed. */
+    private pendingRecovery: { keepUnsaved: boolean } | undefined;
     /** The number of the latest YAML import started for each policy, from {@link importSequence}. */
     private readonly importGenerations = new Map<string, number>();
     /** The number of YAML imports started. */
@@ -271,7 +273,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     readonly isConfigured = computed(() => this.status() === SecurityActivationStatus.CONFIGURED);
     readonly toggleOn = computed(() => this.pendingToggle() ?? (this.isConfigured() || this.status() === SecurityActivationStatus.GENERATING));
     /** Editing is paused while a commit is processed or the exercise is saved, and for users who may not commit. */
-    readonly editingDisabled = computed(() => this.isCommitting() || this.locked() || !this.canCommit() || !this.isConfigured());
+    readonly editingDisabled = computed(() => this.isCommitting() || this.locked() || !this.canCommit() || !this.isConfigured() || this.loadFailed());
 
     readonly presets = computed(() => this.editor()?.presets ?? []);
     readonly pinnedVersion = computed(() => this.editor()?.frameworkVersion ?? this.config().frameworkVersion);
@@ -515,6 +517,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     /** Loads the policies and replaces every unsaved change. */
     private load(exerciseId: number): void {
         const request = ++this.loadRequests;
+        this.pendingRecovery = undefined;
         this.loading.set(true);
         this.loadFailed.set(false);
         this.securityService.getPolicies(exerciseId).subscribe({
@@ -534,7 +537,12 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     protected retryLoad(): void {
-        this.load(this.exerciseId());
+        const recovery = this.pendingRecovery;
+        if (recovery) {
+            this.loadPushed(recovery.keepUnsaved);
+        } else {
+            this.load(this.exerciseId());
+        }
     }
 
     /**
@@ -544,6 +552,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
      */
     private loadPushed(keepUnsaved: boolean): void {
         const request = ++this.loadRequests;
+        this.pendingRecovery = { keepUnsaved };
         this.loading.set(true);
         forkJoin({
             editor: this.securityService.getPolicies(this.exerciseId()).pipe(catchError(() => of(undefined))),
@@ -558,8 +567,13 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 this.configChange.emit(config);
             }
             if (!editor) {
+                // The shown policies are older than the pushed ones, so Discard and Commit must not act on them: the editor shows the load error instead,
+                // whose Retry reads the pushed policies, while the banner's Retry still resumes the builds.
+                this.loadFailed.set(true);
                 return;
             }
+            this.pendingRecovery = undefined;
+            this.loadFailed.set(false);
             if (keepUnsaved) {
                 this.rebaseOnto(editor, false);
             } else {
@@ -994,6 +1008,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 // A load that is still pending started before this commit, so its answer is older than the editor of the commit.
                 this.loadRequests++;
                 this.loading.set(false);
+                // The editor of the commit is current, also after the pushed policies of an unprocessed commit could not be read.
+                this.pendingRecovery = undefined;
+                this.loadFailed.set(false);
                 this.reviewOpen.set(false);
                 const hash = (result.editor.lastCommit?.hash ?? result.editor.baseCommitHash ?? '').substring(0, 7);
                 this.configChange.emit(result.config);
