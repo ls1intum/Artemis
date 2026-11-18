@@ -421,8 +421,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         if (outcome === 'failure') {
             const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
-            refresh.error(new HttpErrorResponse({ status: 500, error: { detail: 'Queue refresh failed' } }));
-            expect(alertSpy).toHaveBeenCalled();
+            refresh.error(new HttpErrorResponse({ status: 400, error: { detail: 'Queue refresh failed' } }));
+            expect(alertSpy).toHaveBeenCalledWith('error.http.400');
             expect(comp.assessmentQueueTeams()).toBe(knownTeams);
             expect(comp.assessedSubmissionsByRound()).toBe(assessed);
             expect(comp.teamUnassessedSubmissionsByRound()).toBe(unassessed);
