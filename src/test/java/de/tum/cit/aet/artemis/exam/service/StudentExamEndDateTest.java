@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 
 class StudentExamEndDateTest {
@@ -16,27 +17,40 @@ class StudentExamEndDateTest {
 
     @Test
     void testExamUsesStartedDateWithGracePeriod() {
-        var end = StudentExam.individualEndDateWithGracePeriod(true, EXAM_START, 30, STARTED, 3600);
+        var end = StudentExam.individualEndDateWithGracePeriod(ExamMode.TEST, null, EXAM_START, 30, STARTED, 3600);
 
         assertThat(end.toInstant()).isEqualTo(STARTED.plusSeconds(3630).toInstant());
     }
 
     @Test
     void testExamWithoutStartedDateHasNoEnd() {
-        assertThat(StudentExam.individualEndDateWithGracePeriod(true, EXAM_START, 30, null, 3600)).isNull();
+        assertThat(StudentExam.individualEndDateWithGracePeriod(ExamMode.TEST, null, EXAM_START, 30, null, 3600)).isNull();
     }
 
     @Test
     void realExamUsesExamStartDateAndTreatsMissingGracePeriodAsZero() {
-        var end = StudentExam.individualEndDateWithGracePeriod(false, EXAM_START, null, null, 7200);
+        var end = StudentExam.individualEndDateWithGracePeriod(ExamMode.REAL, null, EXAM_START, null, null, 7200);
 
         assertThat(end.toInstant()).isEqualTo(EXAM_START.plusSeconds(7200).toInstant());
     }
 
     @Test
     void workingTimeAndGracePeriodAreAddedWithoutIntOverflow() {
-        var end = StudentExam.individualEndDateWithGracePeriod(false, EXAM_START, Integer.MAX_VALUE, null, Integer.MAX_VALUE);
+        var end = StudentExam.individualEndDateWithGracePeriod(ExamMode.REAL, null, EXAM_START, Integer.MAX_VALUE, null, Integer.MAX_VALUE);
 
         assertThat(end.toInstant()).isEqualTo(EXAM_START.plusSeconds(2L * Integer.MAX_VALUE).toInstant());
+    }
+
+    @Test
+    void supervisedSessionUsesExamStartDateAndPracticeAttemptsUseStartedDate() {
+        var supervisedSessionEnd = EXAM_START.plusSeconds(3600);
+
+        var supervised = StudentExam.individualEndDateWithGracePeriod(ExamMode.TEST_WITH_SUPERVISED_SESSION, supervisedSessionEnd, EXAM_START, 30, EXAM_START.plusSeconds(60),
+                3600);
+        var practice = StudentExam.individualEndDateWithGracePeriod(ExamMode.TEST_WITH_SUPERVISED_SESSION, supervisedSessionEnd, EXAM_START, 30,
+                supervisedSessionEnd.plusSeconds(60), 3600);
+
+        assertThat(supervised.toInstant()).isEqualTo(EXAM_START.plusSeconds(3630).toInstant());
+        assertThat(practice.toInstant()).isEqualTo(supervisedSessionEnd.plusSeconds(60 + 3630).toInstant());
     }
 }
