@@ -2,7 +2,7 @@ import { usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generat
 import { Component, DestroyRef, Injector, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { CompetencyExerciseLink, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
@@ -14,7 +14,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -32,7 +31,7 @@ import { MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH } from 'app/foundatio
 import { Observable } from 'rxjs';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
-import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
+import { DiffReviewBannerComponent } from 'app/programming/shared/diff-review-banner/diff-review-banner.component';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -40,7 +39,6 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
     styleUrls: ['../../../../shared/programming-exercise-form.scss', './programming-exercise-problem.component.scss'],
     imports: [
         TranslateDirective,
-        TooltipModule,
         TextareaModule,
         ProgrammingExerciseInstructionComponent,
         ProgrammingExerciseEditableInstructionComponent,
@@ -51,7 +49,7 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
         FaIconComponent,
         HelpIconComponent,
         ChecklistPanelComponent,
-        GitDiffLineStatComponent,
+        DiffReviewBannerComponent,
         MessageModule,
     ],
 })
@@ -108,8 +106,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     facArtemisIntelligence = facArtemisIntelligence;
     faSpinner = faSpinner;
     faBan = faBan;
-    faSave = faSave;
-    faTableColumns = faTableColumns;
 
     constructor() {
         this.aiOps.setChangeHandler({
