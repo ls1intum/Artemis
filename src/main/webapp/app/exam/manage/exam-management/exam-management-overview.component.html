@@ -56,7 +56,7 @@
                                     {{ exam.title }}
                                 </span>
                             }
-                            <jhi-exam-mode-badge [testExam]="exam.testExam!" />
+                            <jhi-exam-mode-badge [examMode]="exam.examMode ?? ExamMode.REAL" />
                         </td>
                         <td>
                             <jhi-exam-status [exam]="exam" [course]="course()" class="flex justify-center" />

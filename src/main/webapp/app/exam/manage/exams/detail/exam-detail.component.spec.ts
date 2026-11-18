@@ -49,6 +49,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
 import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 @Component({
     template: '',
@@ -138,7 +139,7 @@ describe('ExamDetailComponent', () => {
         exam.numberOfExamUsers = 3;
         exam.examMaxPoints = 100;
         exam.exerciseGroups = [];
-        exam.testExam = false;
+        exam.examMode = ExamMode.REAL;
         exam.examiner = undefined;
         exam.gracePeriod = undefined;
         component.exam.set(exam);

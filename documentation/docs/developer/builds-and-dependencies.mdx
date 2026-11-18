@@ -84,6 +84,9 @@ There are currently docker containers for:
 - [Python](https://github.com/ls1intum/artemis-python-docker)
 - [C](https://github.com/ls1intum/artemis-c-docker)
 - [Swift](https://github.com/ls1intum/artemis-swift-swiftlint-docker)
+- [Ruby](https://github.com/ls1intum/artemis-ruby-docker)
+- [Dart](https://github.com/ls1intum/artemis-dart-docker)
+- [C#](https://github.com/ls1intum/artemis-csharp-docker)
 - [Haskell](https://github.com/uni-passau-artemis/artemis-haskell) (external)
 - [Assembler](https://hub.docker.com/r/tizianleonhardt/era-artemis-assembler) (external)
 - [VHDL](https://hub.docker.com/r/tizianleonhardt/era-artemis-vhdl) (external)
@@ -120,7 +123,7 @@ in [Keeping the images in sync](#keeping-the-images-in-sync-with-the-templates) 
 
 ## Keeping the images in sync with the templates
 
-The images of Java, Kotlin, Rust, JavaScript, TypeScript and Swift hold the dependencies of a copy of the test template in their repository.
+The images of Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart and C# hold the dependencies of a copy of the test template in their repository.
 It has to pin the same versions as the test templates in `src/main/resources/templates`:
 
 | Language | Cached project in the image repository | What has to match the templates |
@@ -130,8 +133,11 @@ It has to pin the same versions as the test templates in `src/main/resources/tem
 | Rust | `test` | the crates in `Cargo.lock` of the test project and of the assignment |
 | JavaScript, TypeScript | `vitest/javascript`, `vitest/typescript` (each with `staticCodeAnalysis`) | the packages in `package-lock.json`, including the ones of the assignment, which the test project builds as an npm workspace |
 | Swift | `test` | the packages and version requirements in `Package.swift` |
+| Ruby | repository root (`Gemfile`, `Gemfile.lock`) | the gems in every `Gemfile.lock` of the templates (regular and static code analysis, test, exercise and solution), which the lock file of the image has to contain |
+| Dart | repository root (`pubspec.yaml`, `pubspec.lock`) | the packages in `pubspec.lock` of the test project and of the assignment |
+| C# | repository root (`test.csproj`) | the NuGet packages and the target framework in `test.csproj` and in the project files of the assignment |
 
-A version that the image does not hold is downloaded by every build of every exercise (from Maven Central, crates.io, the npm registry or GitHub),
+A version that the image does not hold is downloaded by every build of every exercise (from Maven Central, crates.io, the npm registry, RubyGems, pub.dev, NuGet or GitHub),
 which costs build time and runs into rate limits.
 
 Two checks keep both sides together without downloading any dependency in the pull request pipeline:
@@ -145,7 +151,7 @@ Two checks keep both sides together without downloading any dependency in the pu
   `src/main/resources/templates/phases` in a container without network access. A dependency that the image does not hold turns into a failed
   build and a tracking issue. This catches what a version comparison cannot, for example a transitive dependency or a changed build phase.
   You can run it locally for one language, e.g. `--language kotlin`. Add `--platform linux/amd64` for an image that is not published for your CPU
-  (the Kotlin and Rust images are only published for amd64, and the npm packages of the JavaScript and TypeScript image depend on the CPU).
+  (the Kotlin, Rust, Ruby, Dart and C# images are only published for amd64, and the npm packages of the JavaScript and TypeScript image depend on the CPU).
 
 To change a version that is part of an image:
 
@@ -153,7 +159,7 @@ To change a version that is part of an image:
    `--image <language>=<local image>` (for example `--image rust=my-image:test`) before you release.
 2. Release the image with a new tag:
    - **Java:** follow the Docker Hub procedure above, using the same Git tag and Docker image tag.
-   - **Kotlin, Rust, JavaScript and TypeScript:** push a new `vX.Y.Z` Git tag to the repository of the image ([artemis-kotlin-docker](https://github.com/ls1intum/artemis-kotlin-docker), [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker), [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker); TypeScript uses the JavaScript image) and publish a GitHub release for that tag. The tag-push workflow publishes `ghcr.io/ls1intum/<repository>:vX.Y.Z`; wait for it to finish. No Docker Hub build rule is needed.
+   - **Kotlin, Rust, JavaScript, TypeScript, Ruby, Dart and C#:** push a new `vX.Y.Z` Git tag to the repository of the image ([artemis-kotlin-docker](https://github.com/ls1intum/artemis-kotlin-docker), [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker), [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker); TypeScript uses the JavaScript image; [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker), [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker), [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)) and publish a GitHub release for that tag. The tag-push workflow publishes `ghcr.io/ls1intum/<repository>:vX.Y.Z`; wait for it to finish. No Docker Hub build rule is needed.
    - **Swift:** push a new `vX.Y.Z` Git tag to [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) and publish a GitHub release for that tag. The workflow publishes the tag to `ghcr.io/ls1intum/artemis-swift-swiftlint-docker` and to Docker Hub.
 
    In every case, keep the image tag identical to the Git tag: the version check reads the image's template files at that Git tag.
@@ -163,5 +169,6 @@ To change a version that is part of an image:
 The other languages are not checked yet or do not need it. The table in [Choose a Programming Language](/instructor/exercises/programming-exercise#supported-programming-languages) shows the status of every language. In short:
 
 - **Not needed**: the template pins nothing that its image has to cache. Python, C, C++, VHDL, assembler, OCaml, R, Bash and MATLAB use the standard library or tools the image installs. Go is the same: the test template imports only the standard library and the student module through a local `replace`, so `go test` fetches no module, which a one-off offline build confirmed (compile, tests and `golangci-lint` ran in the Go image without network access; the nightly workflow does not cover Go). Two things couple the Go template to its image without downloading a dependency: the `go` directive of `go.mod` must not be newer than the Go version of the image (otherwise Go downloads a toolchain), and `.golangci.yml` must match the major version of `golangci-lint` in the image.
-- **Not checked yet**: Ruby, Dart and C# cache a copy of the lock file of the template in the image (`bundler install`, `dart pub get`, `dotnet restore`). The same two checks apply to them: compare the lock files of the template with the copy in the image repository at the image tag, and build the template in the image without network access. A first comparison found differing lock files for Ruby. Haskell uses an external image that has not been assessed.
+- **Not checked yet**: Haskell uses an external image that has not been assessed.
+- **Ruby, Dart and C#** check out the test repository into `tests` next to the `assignment` directory, so the offline build does the same. The image of each caches the lock file of one project (`bundler install`, `dart pub get`, `dotnet restore`) and the tools the phases call (`junitreport` and `analyze_sarif` in the Dart image, the analyzers of the .NET SDK for C#). Those tools are not pinned in the templates, so only the offline build notices a change there. The Ruby image has a single `Gemfile.lock`, which has to be a superset of the lock files of all templates; the static code analysis test project is that superset.
 - **Swift** pins no `Package.resolved`, so its check compares the declared packages and version requirements. The image resolves them once, and SwiftPM finds any version a requirement allows in the cached clones. The Xcode project type has no build phases for the build agents (`templates/phases/swift` only covers the plain project type), so there is nothing to check for it.
