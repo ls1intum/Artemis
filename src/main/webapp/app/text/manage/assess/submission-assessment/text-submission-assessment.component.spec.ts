@@ -41,13 +41,12 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -72,7 +71,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
     let textAssessmentService: TextAssessmentService;
     let submissionService: SubmissionService;
-    let exampleSubmissionService: ExampleSubmissionService;
+    let exampleSubmissionService: ExampleSubmissionApi;
     let athenaService: AthenaService;
     let router: Router;
 
@@ -202,7 +201,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture = TestBed.createComponent(TextSubmissionAssessmentComponent);
         component = fixture.componentInstance;
         submissionService = TestBed.inject(SubmissionService);
-        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionApi);
         textAssessmentService = TestBed.inject(TextAssessmentService);
         athenaService = TestBed.inject(AthenaService);
         router = TestBed.inject(Router);
@@ -558,13 +557,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.submission = submission;
         component.exercise = exercise;
 
-        const importStub = vi.spyOn(exampleSubmissionService, 'import');
-        importStub.mockReturnValue(of(new HttpResponse({ body: new ExampleSubmission() })));
+        const importStub = vi.spyOn(exampleSubmissionService, 'importExampleSubmission');
+        importStub.mockReturnValue(of({}));
 
         component.useStudentSubmissionAsExampleSubmission();
 
         expect(importStub).toHaveBeenCalledOnce();
-        expect(importStub).toHaveBeenCalledWith(submission.id, exercise.id);
+        expect(importStub).toHaveBeenCalledWith(exercise.id, submission.id);
     });
 
     it('should cancel assessment', async () => {

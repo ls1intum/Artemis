@@ -54,20 +54,20 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
             overflow: hidden;
         }
 
-        .card-text {
+        .feature-text {
             display: flex;
             flex-direction: column;
             gap: 4px;
         }
 
-        .card-category {
+        .feature-category {
             font-size: 14px;
             color: var(--text-body-secondary);
             line-height: 1.6;
             margin: 0;
         }
 
-        .card-description {
+        .feature-description {
             font-size: 18px;
             font-weight: 500;
             color: var(--body-color);
@@ -75,7 +75,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
             margin: 0;
         }
 
-        .card-assets {
+        .feature-assets {
             flex: 1;
             max-height: 540px;
             overflow: hidden;
@@ -85,21 +85,21 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
             position: relative;
         }
 
-        .card-image {
+        .feature-image {
             border-radius: 8px;
             object-fit: contain;
             width: 100%;
             flex: 1;
         }
 
-        .card-downloads {
+        .feature-downloads {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
             justify-content: flex-end;
         }
 
-        .card-download {
+        .feature-download {
             display: inline-flex;
             line-height: 0;
             transition:
@@ -107,17 +107,17 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
                 opacity 150ms ease;
         }
 
-        .card-download:hover {
+        .feature-download:hover {
             transform: translateY(-1px);
         }
 
-        .card-download-badge {
+        .feature-download-badge {
             height: 44px;
             width: auto;
             display: block;
         }
 
-        .card-download.is-disabled {
+        .feature-download.is-disabled {
             opacity: 0.5;
             pointer-events: none;
             cursor: not-allowed;
@@ -157,13 +157,13 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
             <div class="features-grid">
                 @for (card of cards; track card.categoryKey) {
                     <div class="feature-card">
-                        <div class="card-text">
-                            <p class="card-category">{{ card.categoryKey | artemisTranslate }}</p>
-                            <p class="card-description">{{ card.descriptionKey | artemisTranslate }}</p>
+                        <div class="feature-text">
+                            <p class="feature-category">{{ card.categoryKey | artemisTranslate }}</p>
+                            <p class="feature-description">{{ card.descriptionKey | artemisTranslate }}</p>
                         </div>
-                        <div class="card-assets">
+                        <div class="feature-assets">
                             <img
-                                class="card-image"
+                                class="feature-image"
                                 [src]="cardImageSrc(card)"
                                 [alt]="card.imageAltKey | artemisTranslate"
                                 loading="lazy"
@@ -172,10 +172,10 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
                                 height="284"
                             />
                             @if (card.downloadLinks?.length) {
-                                <div class="card-downloads">
+                                <div class="feature-downloads">
                                     @for (link of card.downloadLinks; track link.href) {
                                         <a
-                                            class="card-download"
+                                            class="feature-download"
                                             [class.is-disabled]="link.disabled"
                                             [href]="link.href"
                                             [attr.aria-disabled]="link.disabled ? 'true' : null"
@@ -184,7 +184,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
                                             rel="noopener noreferrer"
                                         >
                                             <img
-                                                class="card-download-badge"
+                                                class="feature-download-badge"
                                                 [src]="downloadBadgeSrc(link)"
                                                 [alt]="link.altKey | artemisTranslate"
                                                 loading="lazy"
