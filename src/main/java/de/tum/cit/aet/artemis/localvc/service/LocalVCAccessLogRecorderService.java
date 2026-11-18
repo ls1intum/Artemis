@@ -253,10 +253,12 @@ public class LocalVCAccessLogRecorderService {
         // An interrupted thread cannot wait for a database connection, so the entry is written as if there was no interrupt, and the interrupt is passed on afterwards. If it
         // arrives while the entry is written, the entry is written once more.
         boolean interrupted = Thread.interrupted();
+        // The time of the access stays the same if the entry is written once more, as the entries of an operation are joined by their times
+        ZonedDateTime firstAttemptAt = ZonedDateTime.now();
         try {
             for (int attempt = 1; attempt <= 2; attempt++) {
                 try {
-                    store(subject, action, commitHash, accessedAt);
+                    store(subject, action, commitHash, attempt == 1 ? accessedAt : Objects.requireNonNullElse(accessedAt, firstAttemptAt));
                     return;
                 }
                 catch (RuntimeException e) {

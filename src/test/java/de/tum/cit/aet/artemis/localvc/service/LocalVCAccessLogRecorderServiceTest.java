@@ -23,6 +23,7 @@ import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -485,6 +486,9 @@ class LocalVCAccessLogRecorderServiceTest {
             accessLogRecorder.recordFetch(subject, auditOfAClone());
 
             assertThat(stored).hasValue(1);
+            // the entry was written at the first attempt: clearing the interrupt is what made it possible, not the second attempt
+            verify(vcsAccessLogService, times(1)).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.CLONE, AuthenticationMechanism.SSH, "head", "10.0.0.2");
+            verify(vcsAccessLogService, never()).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString(), any());
             assertThat(Thread.currentThread().isInterrupted()).as("the interrupt is not lost").isTrue();
         }
         finally {
@@ -495,25 +499,30 @@ class LocalVCAccessLogRecorderServiceTest {
     @Test
     void anEntryIsWrittenOnceMoreWhenTheInterruptArrivesWhileItIsWritten() {
         var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
-        var calls = new AtomicInteger();
         var stored = new AtomicInteger();
+        var timeOfRetry = new AtomicReference<ZonedDateTime>();
+        // the first attempt is interrupted while it waits for a connection
         doAnswer(invocation -> {
-            if (calls.incrementAndGet() == 1) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException("no connection was acquired", new InterruptedException());
-            }
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("no connection was acquired", new InterruptedException());
+        }).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+        // the second one carries the time that was taken before the first attempt
+        doAnswer(invocation -> {
             if (Thread.currentThread().isInterrupted()) {
                 throw new IllegalStateException("no connection was acquired", new InterruptedException());
             }
+            timeOfRetry.set(invocation.getArgument(6));
             stored.incrementAndGet();
             return null;
-        }).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+        }).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString(), any());
 
+        var before = ZonedDateTime.now();
         try {
             accessLogRecorder.recordFetch(subject, auditOfAClone());
 
-            assertThat(calls).hasValue(2);
             assertThat(stored).hasValue(1);
+            assertThat(timeOfRetry.get()).isBetween(before, ZonedDateTime.now());
+            verify(vcsAccessLogService, times(1)).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
             assertThat(Thread.currentThread().isInterrupted()).as("the interrupt is not lost").isTrue();
         }
         finally {
