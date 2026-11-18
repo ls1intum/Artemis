@@ -1437,6 +1437,18 @@ public class CourseUtilService {
     }
 
     /**
+     * Switches the presentation assessments of a course on or off, as the course settings do.
+     *
+     * @param course  the course whose setting changes
+     * @param enabled whether instructors and tutors can manage presentations in the course
+     */
+    public void setPresentationAssessmentsEnabled(Course course, boolean enabled) {
+        CourseConfiguration courseConfiguration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        courseConfiguration.setPresentationAssessmentsEnabled(enabled);
+        course.setCourseConfiguration(courseConfigurationRepository.save(courseConfiguration));
+    }
+
+    /**
      * Creates and saves a course with text exercise and a tutor, enrolling users by login prefix.
      *
      * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").

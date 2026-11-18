@@ -2,10 +2,8 @@ import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { of } from 'rxjs';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { StarRatingChangeEvent, StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
-import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -13,7 +11,8 @@ import { MockDirective } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { MockRatingService } from 'test/helpers/mocks/service/mock-rating.service';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 
 @Component({
@@ -33,13 +32,16 @@ class StarRatingComponentStub {
 describe('RatingComponent', () => {
     let ratingComponent: RatingComponent;
     let ratingComponentFixture: ComponentFixture<RatingComponent>;
-    let ratingService: RatingService;
+    let http: HttpTestingController;
+
+    const ratingUrl = (resultId: number) => `/api/assessment/results/${resultId}/rating`;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [RatingComponent],
             providers: [
-                { provide: RatingService, useClass: MockRatingService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -52,117 +54,107 @@ describe('RatingComponent', () => {
 
         ratingComponentFixture = TestBed.createComponent(RatingComponent);
         ratingComponent = ratingComponentFixture.componentInstance;
-        ratingService = TestBed.inject(RatingService);
+        http = TestBed.inject(HttpTestingController);
 
         ratingComponentFixture.componentRef.setInput('result', { id: 89 } as Result);
         ratingComponentFixture.componentRef.setInput('participation', { id: 1 } as Participation);
     });
 
     afterEach(() => {
+        http.verify();
         vi.restoreAllMocks();
     });
 
     it('should get rating', () => {
-        const getRatingSpy = vi.spyOn(ratingService, 'getRating');
-
         // The constructor effect loads the rating on the initial binding (replaces the former ngOnInit).
         ratingComponentFixture.detectChanges();
 
-        expect(getRatingSpy).toHaveBeenCalledTimes(1);
-        expect(ratingComponent.result()?.id).toBe(89);
+        const request = http.expectOne(ratingUrl(89));
+        expect(request.request.method).toBe('GET');
+        request.flush(3);
+        expect(ratingComponent.rating()).toBe(3);
     });
 
     it('should return due to missing result', () => {
-        const getRatingSpy = vi.spyOn(ratingService, 'getRating');
         ratingComponentFixture.componentRef.setInput('result', undefined);
 
         ratingComponentFixture.detectChanges();
 
-        expect(getRatingSpy).not.toHaveBeenCalled();
+        http.expectNone(() => true);
     });
 
     it('should return due to missing participation', () => {
-        const getRatingSpy = vi.spyOn(ratingService, 'getRating');
         ratingComponentFixture.componentRef.setInput('participation', undefined);
 
         ratingComponentFixture.detectChanges();
 
-        expect(getRatingSpy).not.toHaveBeenCalled();
+        http.expectNone(() => true);
     });
 
     it('should create new local rating', () => {
         ratingComponentFixture.detectChanges();
+        http.expectOne(ratingUrl(89)).flush(null);
 
         expect(ratingComponent.rating()).toBe(0);
     });
 
     it('should set rating received from server', () => {
-        vi.spyOn(ratingService, 'getRating').mockReturnValue(of(1));
-
         ratingComponentFixture.detectChanges();
+        http.expectOne(ratingUrl(89)).flush(1);
 
         expect(ratingComponent.rating()).toBe(1);
     });
 
-    it('should load the rating on init', () => {
-        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
-
-        ratingComponentFixture.detectChanges();
-
-        expect(loadRatingSpy).toHaveBeenCalledTimes(1);
-    });
-
     it('should not set rating if result participation is not defined', () => {
         ratingComponentFixture.componentRef.setInput('participation', undefined);
-        vi.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
-        // First CD runs ngOnInit + the constructor effect once for the beforeEach result (id 89).
         ratingComponentFixture.detectChanges();
-        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
 
         // Effect reacts to the result id change (replaces the former ngOnChanges); loadRating returns early (no participation).
         ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
         ratingComponentFixture.detectChanges();
 
-        expect(loadRatingSpy).toHaveBeenCalledTimes(1);
+        http.expectNone(() => true);
         expect(ratingComponent.rating()).toBeUndefined();
     });
 
     it('should call loadRating when result changes', () => {
-        vi.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
-        // First CD runs ngOnInit + the constructor effect once for the beforeEach result (id 89).
         ratingComponentFixture.detectChanges();
-        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
+        http.expectOne(ratingUrl(89)).flush(1);
 
         // Effect reloads when the result id changes (replaces the former ngOnChanges).
         ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
         ratingComponentFixture.detectChanges();
+        http.expectOne(ratingUrl(90)).flush(2);
 
-        expect(loadRatingSpy).toHaveBeenCalledTimes(1);
         expect(ratingComponent.rating()).toBe(2);
     });
 
     it('should not call loadRating if result ID remains the same', () => {
-        vi.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
         ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
-        // First CD runs ngOnInit + the effect once for result id 90 (previousResultId becomes 90).
         ratingComponentFixture.detectChanges();
-        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
+        http.expectOne(ratingUrl(90)).flush(2);
 
         // A new result reference with the same id must NOT trigger a reload.
         ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
         ratingComponentFixture.detectChanges();
 
-        expect(loadRatingSpy).not.toHaveBeenCalled();
+        http.expectNone(() => true);
         expect(ratingComponent.rating()).toBe(2);
     });
 
     describe('appearance', () => {
+        function renderWithStoredRating(storedRating: number | null = null) {
+            ratingComponentFixture.detectChanges();
+            http.expectOne(ratingUrl(89)).flush(storedRating);
+            ratingComponentFixture.detectChanges();
+        }
+
         function stars(): StarRatingComponentStub {
             return ratingComponentFixture.debugElement.query(By.directive(StarRatingComponentStub)).componentInstance;
         }
 
         it('should be a quiet block without a tinted box or border of its own', () => {
-            ratingComponentFixture.detectChanges();
+            renderWithStoredRating();
 
             const root = ratingComponentFixture.nativeElement.querySelector('.rating') as HTMLElement;
             expect(root).toBeTruthy();
@@ -174,7 +166,7 @@ describe('RatingComponent', () => {
         });
 
         it('should show the prompt as a small muted label instead of bold text', () => {
-            ratingComponentFixture.detectChanges();
+            renderWithStoredRating();
 
             const label = ratingComponentFixture.nativeElement.querySelector('.rating__label') as HTMLElement;
             expect(label).toBeTruthy();
@@ -184,7 +176,7 @@ describe('RatingComponent', () => {
         });
 
         it('should draw small stars in semantic colours that take colour only when chosen', () => {
-            ratingComponentFixture.detectChanges();
+            renderWithStoredRating();
 
             expect(stars().size()).toBe('18');
             // Unchosen stars are muted. The chosen colour is also what a hovered star shows.
@@ -195,29 +187,26 @@ describe('RatingComponent', () => {
 
         it('should keep the size that a page asks for', () => {
             ratingComponentFixture.componentRef.setInput('starSize', '24');
-            ratingComponentFixture.detectChanges();
+            renderWithStoredRating();
 
             expect(stars().size()).toBe('24');
         });
 
         it('should stay interactive, so that every star can be chosen', () => {
-            ratingComponentFixture.detectChanges();
+            renderWithStoredRating();
 
             expect(stars().readOnly()).toBe(false);
             expect(stars().totalStars()).toBe(5);
         });
 
         it('should show the stored rating in the stars', () => {
-            vi.spyOn(ratingService, 'getRating').mockReturnValue(of(4));
-
-            ratingComponentFixture.detectChanges();
-            ratingComponentFixture.detectChanges();
+            renderWithStoredRating(4);
 
             expect(stars().value()).toBe(4);
         });
 
         it('should only change the cursor while a rating is being saved, so the layout does not jump', () => {
-            ratingComponentFixture.detectChanges();
+            renderWithStoredRating();
             const root = ratingComponentFixture.nativeElement.querySelector('.rating') as HTMLElement;
             const classesBefore = Array.from(root.classList);
 
@@ -230,14 +219,14 @@ describe('RatingComponent', () => {
 
         it('should put the prompt and the stars on one row with the inline layout', () => {
             ratingComponentFixture.componentRef.setInput('layout', 'inline');
-            ratingComponentFixture.detectChanges();
+            renderWithStoredRating();
 
             const root = ratingComponentFixture.nativeElement.querySelector('.rating') as HTMLElement;
             expect(root.classList.contains('rating--inline')).toBe(true);
         });
 
         it('should stack the prompt above the stars by default', () => {
-            ratingComponentFixture.detectChanges();
+            renderWithStoredRating();
 
             const root = ratingComponentFixture.nativeElement.querySelector('.rating') as HTMLElement;
             expect(root.classList.contains('rating--inline')).toBe(false);
@@ -248,8 +237,6 @@ describe('RatingComponent', () => {
         beforeEach(() => {
             ratingComponent.rating.set(0);
             ratingComponentFixture.componentRef.setInput('result', { id: 89 } as Result);
-            vi.spyOn(ratingService, 'createRating');
-            vi.spyOn(ratingService, 'updateRating');
         });
 
         it('should return', () => {
@@ -260,8 +247,7 @@ describe('RatingComponent', () => {
                 newValue: 2,
             });
 
-            expect(ratingService.createRating).not.toHaveBeenCalled();
-            expect(ratingService.updateRating).not.toHaveBeenCalled();
+            http.expectNone(() => true);
         });
 
         it('should create new rating', () => {
@@ -270,9 +256,11 @@ describe('RatingComponent', () => {
                 newValue: 2,
             });
 
-            expect(ratingService.createRating).toHaveBeenCalledTimes(1);
-            expect(ratingService.updateRating).not.toHaveBeenCalled();
+            const request = http.expectOne(`${ratingUrl(89)}/2`);
+            expect(request.request.method).toBe('POST');
+            request.flush(2);
             expect(ratingComponent.rating()).toBe(2);
+            expect(ratingComponent.disableRating()).toBe(false);
         });
 
         it('should update rating', () => {
@@ -283,8 +271,9 @@ describe('RatingComponent', () => {
                 newValue: 2,
             });
 
-            expect(ratingService.updateRating).toHaveBeenCalledTimes(1);
-            expect(ratingService.createRating).not.toHaveBeenCalled();
+            const request = http.expectOne(`${ratingUrl(89)}/2`);
+            expect(request.request.method).toBe('PUT');
+            request.flush(2);
             expect(ratingComponent.rating()).toBe(2);
         });
     });

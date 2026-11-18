@@ -495,7 +495,7 @@ ui bootstrap tweaks
     color: inherit;
 }
 
-.card-resizable {
+.resizable-dragging {
     user-select: none;
 }
 
@@ -768,8 +768,9 @@ code.password:hover {
 // Kit overlays (dialogs, calendars, select panels, tooltips) open in this one container, so they all share one layer.
 // Stacking order of the layers an Artemis page can show, lowest first:
 //   1000       Bootstrap dropdowns, PrimeNG overlays and menus
+//   1049-1053  Iris onboarding tour: click guard 1049, tour root and spotlight 1050, card 1051, coach mark 1052, highlighted target 1053
 //   1050/1055  Bootstrap modal backdrop / NgbModal
-//   1060-1090  Iris onboarding overlay, Bootstrap popover, tooltip and toast
+//   1060-1090  Bootstrap popover, tooltip and toast; also the context picker's PrimeNG panel while tour step 1 is active (1060)
 //   1102+      PrimeNG dialogs (PrimeNG modal base 1100, +2 per stacked layer)
 //   1200       this container: kit dialogs and everything the kit opens above them
 //   1402+      PrimeNG confirmation dialogs (DeleteDialogService, baseZIndex CONFIRMATION_DIALOG_BASE_Z_INDEX 300 on top of 1100)
@@ -802,6 +803,23 @@ Course Info Bar
     flex-direction: column;
     justify-content: center;
     border-radius: 0.25rem 0.25rem 0 0;
+}
+
+/* ==========================================================================
+    Problem statement differences (html-diff-ts output), e.g. after an update during an exam
+========================================================================== */
+ins.diffins,
+ins.diffmod {
+    text-decoration: none;
+    background-color: var(--artemis-alert-success-background);
+    color: var(--artemis-alert-success-color);
+    border-radius: 0.2em;
+    padding: 0 0.15em;
+}
+
+del.diffdel,
+del.diffmod {
+    color: var(--artemis-alert-danger-color);
 }
 
 /* ==========================================================================
@@ -891,108 +909,21 @@ Course Info Bar
     }
 }
 
-.git-info {
-    --bs-tooltip-max-width: 500px;
-
-    .tooltip-inner {
-        text-align: left;
-    }
-}
-
-// The diff comparison renders in a PrimeNG dialog (.p-dialog), to which the `diff-view-modal` styleClass is
-// applied; the width itself is set via the dialog config. Cap it so it never exceeds the viewport.
-.diff-view-modal {
-    max-width: 95vw;
-}
-
 .warning-modal-window .modal-dialog {
     width: 50%;
 }
 
-.iris-onboarding-dialog {
-    // Allow clicks to pass through the PrimeNG dialog wrapper to the page beneath.
-    // The onboarding component manages its own pointer-events on backdrops, tooltips, and modals.
-    // !important is required because PrimeNG applies pointer-events: auto as an inline style
-    // on the .p-dialog root element (see inlineStyles.root in primeng-dialog.mjs).
-    pointer-events: none !important;
-
-    // Cover the full screen
-    max-width: 100% !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    max-height: 100vh !important;
-    margin: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-
-    // Neutralize the PrimeNG .p-dialog inner wrapper so it doesn't act as an opaque frame.
-    // Without this, the dialog background (white/surface) covers the page beneath the overlay,
-    // making the "transparent hole" in the spotlight reveal the dialog background instead of the page.
-    &.p-dialog,
-    .p-dialog {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        max-width: 100% !important;
-        max-height: 100% !important;
-        overflow: visible !important;
-    }
-
-    .p-dialog-header {
-        display: none !important;
-    }
-
-    .p-dialog-content {
-        background: transparent;
-        border: none;
-        box-shadow: none;
-        width: 100%;
-        height: 100%;
-        padding: 0;
-        pointer-events: none;
-        overflow: visible;
-    }
-}
-
-.iris-onboarding-mask {
-    background: transparent !important;
-    pointer-events: none !important;
-    align-items: flex-start !important;
-    justify-content: flex-start !important;
-}
-
-// Cross-component button styling for onboarding modal (replaces ::ng-deep)
-.iris-onboarding-dialog .actions jhi-button button {
-    border-radius: 0.5rem;
-    padding: 0.5rem 1rem;
-}
-
-.iris-onboarding-dialog .tooltip-footer jhi-button button {
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    padding: 0.3rem 0.75rem;
-}
-
 // Onboarding stacking context. The click-guard sits at 1049 and the spotlight blocker at 1050
 // (defined in iris-onboarding-modal.component.scss). The active target must rise above both so
-// the user's clicks reach the real UI element; PrimeNG overlays opened from that target must
-// rise above the active target so their dropdowns aren't clipped by the spotlight.
+// the user's clicks reach the real UI element. Overlays opened from that target, such as the
+// context picker, render in the CDK overlay container, which already stacks above the tour.
 $iris-onboarding-active-target-z-index: 1053;
-$iris-onboarding-overlay-z-index: 1060;
 
 body[data-onboarding-active-step='1'] [data-onboarding-target='context-selector'],
 body[data-onboarding-active-step='2'] [data-onboarding-target='suggestion-chips'],
 body[data-onboarding-active-step='3'] [data-onboarding-target='info-icon'] {
     position: relative;
     z-index: $iris-onboarding-active-target-z-index;
-}
-
-// PrimeNG p-select overlay (appended to body) during the context selector step.
-body[data-onboarding-active-step='1'] > .p-select-overlay {
-    z-index: $iris-onboarding-overlay-z-index !important;
 }
 
 .connection-status {
@@ -1222,37 +1153,6 @@ body[data-onboarding-active-step='1'] > .p-select-overlay {
     --mdc-outlined-text-field-container-shape: 4px;
 }
 
-/* Connection Warning Tooltip */
-.connection-warning-popover {
-    pointer-events: none;
-    flex-wrap: nowrap;
-    background-color: transparent;
-
-    .popover-arrow::after {
-        border-bottom-color: $artemis-alert-danger-background;
-    }
-
-    .popover-body {
-        border: none;
-        max-width: 70vw;
-        width: 400px;
-        background-color: $artemis-alert-danger-background;
-        color: $artemis-alert-danger-color;
-        font-size: 14px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding-left: 20px;
-        box-shadow: rgba(0, 0, 0, 0.55) 0 5px 15px;
-    }
-}
-
-@media only screen and (max-width: 400px) {
-    .connection-warning-popover .popover-body .ng-fa-icon {
-        display: none;
-    }
-}
-
 body.transparent-background {
     background: transparent;
 }
@@ -1331,8 +1231,8 @@ body.transparent-background {
  * While a drag is in progress the pointer is captured by the panel and may no longer be over the divider. The divider is
  * a child of the panel it resizes, or its next sibling when the panel is a column beside it (the lecture video players).
  */
-.card-resizable > .panel-divider-x::after,
-.card-resizable + .panel-divider-x::after {
+.resizable-dragging > .panel-divider-x::after,
+.resizable-dragging + .panel-divider-x::after {
     border-color: var(--primary);
 }
 
@@ -1618,66 +1518,9 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 }
 
-// Iris session switcher menu (PrimeNG p-menu rendered outside component scope)
-.session-switcher-menu {
-    width: 300px;
-    border-radius: 0.5rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    background-color: var(--iris-secondary-background) !important;
-    font-size: 14px;
-    font-weight: 400;
-
-    .p-menu-list {
-        padding: 8px;
-        gap: 0;
-        max-height: 220px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--bs-border-color) transparent;
-
-        &::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background-color: var(--bs-border-color);
-            border-radius: 0.375rem;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: transparent;
-        }
-    }
-
-    a.p-menu-item-link {
-        color: var(--bs-body-color);
-        text-decoration: none !important;
-
-        &:hover {
-            background-color: var(--iris-accent-background);
-            border-radius: 0.5rem;
-            color: inherit;
-            text-decoration: none !important;
-        }
-    }
-
-    .p-menu-item-label {
-        line-height: 1.5;
-    }
-
-    .session-menu-item-active {
-        background-color: var(--iris-tertiary-background);
-        border-radius: 0.5rem;
-        color: var(--bs-body-color);
-    }
-
-    .session-menu-group-label {
-        .p-menu-item-label {
-            color: var(--iris-label-color);
-            font-size: 12px;
-            font-weight: 500;
-        }
-    }
+// Interim messages end flush with their bubble; the paragraph is rendered markdown outside component scope.
+jhi-iris-base-chatbot .interim-message .bubble-left p:last-child {
+    margin-bottom: 0;
 }
 
 // Iris chat bubble markdown content (rendered via innerHTML, outside component scope)
@@ -1755,175 +1598,6 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 }
 
-// Iris send button inner styling (jhi-button rendered outside component scope)
-#irisSendButton button {
-    border-radius: 0.5rem;
-    padding: 6px 8px;
-    background-color: var(--primary);
-    border-color: var(--primary);
-    color: var(--white);
-    transition:
-        background-color 0.3s ease,
-        border-color 0.3s ease;
-
-    &:hover .svg-inline--fa {
-        transform: rotate(45deg);
-    }
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-}
-
-#irisSendButton .svg-inline--fa {
-    transition: transform 0.3s ease;
-}
-
-// Compact tooltip used by Iris context selection (add button and chip label)
-.p-tooltip.iris-context-tooltip .p-tooltip-text {
-    font-size: 0.75rem;
-    padding: 0.3rem 0.55rem;
-    line-height: 1.2;
-}
-
-// Reduced gap between tooltip and trigger (used by the plus add button)
-.p-tooltip.iris-context-tooltip-tight {
-    &.p-tooltip-bottom {
-        margin-top: -0.35rem;
-    }
-
-    &.p-tooltip-top {
-        margin-bottom: -0.35rem;
-    }
-}
-
-// Increased gap between tooltip and trigger (used by the context chip label)
-.p-tooltip.iris-context-tooltip-spaced {
-    &.p-tooltip-bottom {
-        margin-top: 0.1rem;
-    }
-
-    &.p-tooltip-top {
-        margin-bottom: 0.4rem;
-    }
-}
-
-// About Iris modal — PrimeNG DynamicDialog (used by every Iris host)
-.p-dialog-mask.about-iris-dialog {
-    background-color: rgba(0, 0, 0, 0.3);
-}
-
-.about-iris-dialog {
-    .p-dialog-content {
-        border-radius: 1rem;
-        overflow: hidden;
-        background-color: var(--iris-secondary-background);
-        position: relative;
-        padding: 0;
-    }
-}
-
-// Floating Iris chat widget — PrimeNG DynamicDialog (exercise/lecture chat button).
-// The widget is a non-modal, no-backdrop, bottom-right floating panel. The embedded
-// `.chat-widget` is `position: fixed` and manages its own placement, drag and resize, so the
-// PrimeNG dialog shell must be a transparent, full-viewport, pointer-events-passthrough container
-// that does not impose its own chrome or positioning (mirrors the `.iris-onboarding-dialog` pattern).
-// !important is required because PrimeNG applies inline styles on the `.p-dialog` root.
-.iris-chat-widget-dialog {
-    pointer-events: none !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    margin: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-
-    // Neutralize any PrimeNG enter/leave transform on the dialog root: a transformed ancestor would
-    // make the embedded `position: fixed` `.chat-widget` resolve against the dialog instead of the
-    // viewport, breaking its bottom-right placement and drag/resize math.
-    transform: none !important;
-    animation: none !important;
-
-    .p-dialog-content {
-        background: transparent;
-        border: none;
-        box-shadow: none;
-        width: 100%;
-        height: 100%;
-        padding: 0;
-        overflow: visible;
-    }
-
-    // Re-enable interaction on the actual widget; the shell above stays click-through.
-    .chat-widget {
-        pointer-events: auto;
-    }
-}
-
-// Communication dialogs (PrimeNG DynamicDialog styling)
-// Uses var(--p-surface-0) for white in light mode, var(--p-surface-900) for dark mode
-// (Artemis body-bg is grey, but dialogs should have a white/dark surface)
-.p-dialog.communication-dialog,
-.p-dialog.second-layer-modal-bg {
-    background: var(--p-surface-0) !important;
-    color: var(--bs-body-color) !important;
-    border-radius: var(--bs-border-radius-lg);
-    overflow: hidden;
-
-    .p-dialog-content {
-        background: var(--p-surface-0) !important;
-        color: var(--bs-body-color) !important;
-        padding: 0;
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid var(--bs-border-color);
-    }
-
-    .modal-body {
-        padding: 1rem 1.5rem;
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.5rem;
-        border-top: 1px solid var(--bs-border-color);
-    }
-}
-
-:root[prime-ng-use-dark-theme='true'] {
-    .p-dialog.communication-dialog,
-    .p-dialog.second-layer-modal-bg {
-        background: var(--p-surface-900) !important;
-        color: var(--bs-body-color) !important;
-
-        .p-dialog-content {
-            background: var(--p-surface-900) !important;
-            color: var(--bs-body-color) !important;
-        }
-    }
-}
-
-// Tooltip for chat-history related-entity icons (portaled to <body>).
-.chat-history-entity-tooltip .p-tooltip-text {
-    font-size: 12px;
-    min-width: 200px;
-    white-space: pre-line;
-}
-
 // Tooltip for the generative AI disclaimer icon in the feedback suggestions banner.
 .feedback-suggestions-ai-tooltip,
 .feedback-suggestions-ai-tooltip .p-tooltip-text {
@@ -1943,17 +1617,6 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     > span:not([class]) {
         display: none;
     }
-}
-
-// Global search modal sizing
-.global-search-dialog {
-    width: 100%;
-    max-width: 800px;
-    height: 75vh;
-    max-height: 750px;
-    overflow: hidden;
-    background: var(--module-bg);
-    transition: max-width 250ms ease-out;
 }
 
 // Global search result description: reset styles for markdown rendered via innerHTML (outside component scope)
@@ -1981,7 +1644,7 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     code {
         font-size: 0.85em;
         padding: 0.1em 0.3em;
-        background-color: var(--bs-tertiary-bg);
+        background-color: color-mix(in srgb, var(--body-color) 3%, transparent);
         border-radius: 0.2em;
     }
 
@@ -2012,14 +1675,6 @@ ngb-typeahead-window.dropdown-menu.show {
     a.iris-chip:hover,
     a.iris-chip:focus-visible {
         text-decoration: none !important;
-    }
-
-    /* Strip the default dashed bubble styling when shown inside the card */
-    .thinking-bubble {
-        background: transparent !important;
-        box-shadow: none !important;
-        border: none !important;
-        padding: 0 !important;
     }
 }
 

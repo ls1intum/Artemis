@@ -3,7 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { filter, take } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faExclamationTriangle, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faExclamationTriangle, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortService } from 'app/foundation/service/sort.service';
 import { LtiApi } from 'app/openapi/api/lti-api';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,9 +13,16 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+} from '@tumaet/ui-angular';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
@@ -26,8 +34,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './lti13-deep-linking.component.html',
     imports: [
         TranslateDirective,
-        FormsModule,
+        FaIconComponent,
         HelpIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
         TumAetUiTableDirective,
         TumAetUiTableSortableColumnComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
@@ -49,6 +61,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faWrench = faWrench;
+    protected readonly faChevronDown = faChevronDown;
 
     courseId!: number; // set in ngOnInit() from route params
     readonly exercises = signal<Exercise[]>([]);
@@ -282,17 +295,24 @@ export class Lti13DeepLinkingComponent implements OnInit {
         this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
     }
 
-    /** Restricts the server's deep-link response to the local content-selection route. */
+    /**
+     * Restricts the server's deep-link response to the local content-selection route.
+     * <p>
+     * The server appends {@code /lti/select-content} to {@code server.url}, which can carry a path prefix such as {@code /artemis}. The
+     * client is served under the same prefix, so the expected path is the route resolved against the document's base URL. The router
+     * takes routes relative to that base, so the prefix is not part of the returned target.
+     */
     private localDeepLinkTarget(target: string | undefined): string | undefined {
         if (!target) {
             return undefined;
         }
         try {
             const url = new URL(target, window.location.origin);
-            if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password || url.pathname !== '/lti/select-content') {
+            const expectedPathname = new URL('lti/select-content', document.baseURI).pathname;
+            if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password || url.pathname !== expectedPathname) {
                 return undefined;
             }
-            return url.pathname + url.search + url.hash;
+            return '/lti/select-content' + url.search + url.hash;
         } catch {
             return undefined;
         }

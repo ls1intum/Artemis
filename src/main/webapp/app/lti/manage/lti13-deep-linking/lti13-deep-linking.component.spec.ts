@@ -189,17 +189,37 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/lti/select-content?jwt=token&id=course', { replaceUrl: true });
     });
 
-    it.each(['javascript:alert(1)', 'https://example.com/other', 'https://user:pass@example.com/lti/select-content'])('rejects an unsafe deep-link target: %s', (targetLinkUri) => {
-        component.selectExercise(exercise1.id);
-        component.courseId = 123;
-        ltiApiMock.lti13DeepLinking.mockReturnValue(of({ targetLinkUri }));
+    it('accepts the content selection under the path prefix the client is served from', () => {
+        const base = document.createElement('base');
+        base.href = '/artemis/';
+        document.head.appendChild(base);
+        try {
+            component.selectExercise(exercise1.id);
+            component.courseId = 123;
+            ltiApiMock.lti13DeepLinking.mockReturnValue(of({ targetLinkUri: 'https://example.org/artemis/lti/select-content?jwt=token&id=course' }));
 
-        component.sendDeepLinkRequest();
+            component.sendDeepLinkRequest();
 
-        expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
-        expect(component.isLinking()).toBe(false);
-        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.lti13.deepLinking.unknownError');
+            expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/lti/select-content?jwt=token&id=course', { replaceUrl: true });
+        } finally {
+            base.remove();
+        }
     });
+
+    it.each(['javascript:alert(1)', 'https://example.com/other', 'https://user:pass@example.com/lti/select-content', 'https://example.com/other/lti/select-content'])(
+        'rejects an unsafe deep-link target: %s',
+        (targetLinkUri) => {
+            component.selectExercise(exercise1.id);
+            component.courseId = 123;
+            ltiApiMock.lti13DeepLinking.mockReturnValue(of({ targetLinkUri }));
+
+            component.sendDeepLinkRequest();
+
+            expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
+            expect(component.isLinking()).toBe(false);
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.lti13.deepLinking.unknownError');
+        },
+    );
 
     it.each([
         ['is cancelled', () => Promise.resolve(false)],

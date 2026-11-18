@@ -255,7 +255,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
             // the placeholder names the caller asks to replace
             "de.tum.cit.aet.artemis.core.util.FileUtil.replacePlaceholderSections(java.nio.file.Path, java.util.Map)",
             // the branch expression configured on the exercise
-            "de.tum.cit.aet.artemis.localvc.service.LocalVCServletService.isBranchNameAllowedForRepository(org.eclipse.jgit.lib.Repository, java.lang.String)",
+            "de.tum.cit.aet.artemis.localvc.service.LocalVCServletService.compileBranchRegex(java.lang.String)",
+            // the branch expression of an exercise, checked when it is saved
+            "de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService.validateBranchRegex(java.lang.String, boolean)",
             // the exceptions to filter, which the caller passes in
             "de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.prepareJVMResultMessageMatcher(java.util.List)",
             // Hyperion probes build expressions from the generated names and contracts of each exercise.
@@ -971,7 +973,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExerciseBuildConfigResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest",
                 "ProgrammingExerciseTestCaseResourceTest", "ProgrammingExerciseUpdateResourceTest", "RepositoryResourceMutationGuardTest",
                 "StaticCodeAnalysisResourceMutationGuardTest", "SubmissionPolicyResourceMutationGuardTest", "AdminHyperionLiveSaveRecoveryTest",
-                "ProgrammingGradingLiveSaveCoordinationTest" };
+                "ProgrammingGradingLiveSaveCoordinationTest", "StudentExamConductionResourceTest" };
         final var classes = classesAndNestedExcept(classesExcept(allClasses, exceptions), resourceBehaviourTests);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }

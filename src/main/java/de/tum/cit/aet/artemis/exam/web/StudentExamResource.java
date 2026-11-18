@@ -312,6 +312,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
         checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        checkCourseMembershipForStudentAttemptElseThrow(studentExam, currentUser);
         studentExamAthenaFeedbackService.requestAthenaFeedback(studentExam, currentUser);
         return ResponseEntity.ok().build();
     }
@@ -338,13 +339,14 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
         checkCourseAccessForTestRunElseThrow(studentExam, examId, courseId, currentUser);
+        checkCourseMembershipForStudentAttemptElseThrow(studentExam, currentUser);
         return ResponseEntity.ok(studentExamAthenaFeedbackService.getAthenaFeedbackUsage(currentUser.getId(), examId, studentExam.isTestRun()));
     }
 
     /**
      * Ensures that the owner of a test run still has instructor access to the course. Test run ownership survives a
      * role revocation, so ownership alone must not keep an endpoint open for a former instructor. Non test run student
-     * exams are unaffected: their parameters were already validated by the caller and the check is an extra query.
+     * exams are covered by the course membership check of the student attempt.
      *
      * @param studentExam the student exam the request targets
      * @param examId      the exam id from the path
@@ -354,6 +356,18 @@ public class StudentExamResource {
     private void checkCourseAccessForTestRunElseThrow(StudentExam studentExam, Long examId, Long courseId, User currentUser) {
         if (studentExam.isTestRun()) {
             studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
+        }
+    }
+
+    /**
+     * Ensures that the owner of a student attempt (a real exam or a test exam, not a test run) is still a student of the course.
+     *
+     * @param studentExam the student exam the request targets
+     * @param currentUser the current user
+     */
+    private void checkCourseMembershipForStudentAttemptElseThrow(StudentExam studentExam, User currentUser) {
+        if (!studentExam.isTestRun()) {
+            studentExamAccessService.checkCourseAccessForStudentElseThrow(studentExam.getExam().getCourse(), currentUser);
         }
     }
 
@@ -428,8 +442,8 @@ public class StudentExamResource {
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         // Only a test exam or test run summary offers the AI feedback request - the client hides the button for anything else and
         // StudentExamAthenaFeedbackService rejects it - so a real exam attempt does not read the (lazy) Athena configuration.
-        // A test run is an attempt on a real exam, so it has to be named here separately rather than covered by isTestExam().
-        if (studentExam.getExam().isTestExam() || studentExam.isTestRun()) {
+        // A test run is an attempt on a real exam, so it has to be named here separately rather than covered by the exam mode.
+        if (!studentExam.getExam().getExamMode().isReal() || studentExam.isTestRun()) {
             courseAthenaConfigRepository.attachTo(studentExam.getExam().getCourse());
         }
         return ResponseEntity.ok(StudentExamForSummaryDTO.of(studentExam));
@@ -619,7 +633,7 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
         }
 

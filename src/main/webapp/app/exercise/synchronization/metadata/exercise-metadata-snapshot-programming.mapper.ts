@@ -2,6 +2,9 @@ import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { BuildConfigAdvancedSettings } from 'app/programming/shared/entities/programming-exercise-build-advanced-settings';
+import { BuildConfigAdvancedSettingsDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
+import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
 import {
     AuxiliaryRepositorySnapshotDTO,
@@ -24,6 +27,12 @@ export const toAuxiliaryRepositories = (repositories?: AuxiliaryRepositorySnapsh
     });
 };
 
+const toAdvancedSettings = (snapshot?: BuildConfigAdvancedSettingsDTO): BuildConfigAdvancedSettings | undefined => {
+    const start = convertDateStringFromServer(snapshot?.buildTimeWindow?.start);
+    const end = convertDateStringFromServer(snapshot?.buildTimeWindow?.end);
+    return start || end ? { buildTimeWindow: { start, end } } : undefined;
+};
+
 // Note: `branch` is intentionally not mapped — it is not an editable field on the
 // exercise edit page and has no corresponding property on ProgrammingExerciseBuildConfig.
 export const toBuildConfig = (snapshot?: ProgrammingExerciseBuildConfigSnapshotDTO): ProgrammingExerciseBuildConfig | undefined => {
@@ -44,6 +53,7 @@ export const toBuildConfig = (snapshot?: ProgrammingExerciseBuildConfigSnapshotD
     buildConfig.onlineIdeExperienceLevel = snapshot.onlineIdeExperienceLevel;
     buildConfig.allowBranching = snapshot.allowBranching ?? false;
     buildConfig.branchRegex = snapshot.branchRegex ?? buildConfig.branchRegex;
+    buildConfig.advancedSettings = toAdvancedSettings(snapshot.advancedSettings);
     return buildConfig;
 };
 

@@ -13,11 +13,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -29,15 +34,21 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
+@Isolated("Changes Logback loggers to verify token redaction without concurrent Spring logging reconfiguration")
 class JWTFilterTest {
 
     private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 60000; // 60 seconds
@@ -395,5 +406,130 @@ class JWTFilterTest {
         jwtFilter.doFilter(request, response, filterChain);
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void anInvalidTokenIsLoggedWithoutTheHeadersOfTheRequest() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(JWTFilter.class);
+        Logger tokenLogger = (Logger) LoggerFactory.getLogger(TokenProvider.class);
+        Level previousLevel = logger.getLevel();
+        Level previousTokenLevel = tokenLogger.getLevel();
+        ListAppender<ILoggingEvent> logAppender = new ListAppender<>();
+        logAppender.start();
+        logger.setLevel(Level.DEBUG);
+        tokenLogger.setLevel(Level.DEBUG);
+        logger.addAppender(logAppender);
+        tokenLogger.addAppender(logAppender);
+        try {
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/core/test");
+            request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + "not-a-valid-token-value");
+            request.addHeader(HttpHeaders.COOKIE, "other=cookie-value-1234");
+            request.addHeader("X-Custom-Header", "custom-header-value-5678");
+            request.addHeader(HttpHeaders.HOST, "artemis.example.org");
+            request.addHeader(HttpHeaders.USER_AGENT, "test-agent/1.0");
+
+            jwtFilter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+            assertThat(logAppender.list).anySatisfy(event -> assertThat(event.getLoggerName()).isEqualTo(TokenProvider.class.getName()));
+            String logged = logAppender.list.stream().map(ILoggingEvent::getFormattedMessage).reduce("", String::concat);
+            assertThat(logged).contains("GET", "/api/core/test", "artemis.example.org", "test-agent/1.0");
+            assertThat(logged).doesNotContain("not-a-valid-token-value", "cookie-value-1234", "custom-header-value-5678");
+        }
+        finally {
+            logger.detachAppender(logAppender);
+            tokenLogger.detachAppender(logAppender);
+            logAppender.stop();
+            logger.setLevel(previousLevel);
+            tokenLogger.setLevel(previousTokenLevel);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "/artemis", "/api/context" })
+    void aToolTokenAuthenticatesTheNativeWebsocketEndpoint(String contextPath) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", contextPath + "/websocket/websocket");
+        request.setContextPath(contextPath);
+        request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+
+        jwtFilter.doFilter(request, response, filterChain);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(filterChain.getRequest()).isNotNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "/artemis", "/api/context" })
+    void aToolTokenDoesNotAuthenticateOtherPathsButTheRequestContinues(String contextPath) throws Exception {
+        for (String path : List.of("/management/info", "/management/health", "/other", "/websocket/info", "/websocket/123/abc/websocket")) {
+            SecurityContextHolder.getContext().setAuthentication(null);
+            MockHttpServletRequest request = new MockHttpServletRequest("GET", contextPath + path);
+            request.setContextPath(contextPath);
+            request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            MockFilterChain filterChain = new MockFilterChain();
+
+            jwtFilter.doFilter(request, response, filterChain);
+
+            assertThat(response.getStatus()).as(path).isEqualTo(HttpStatus.OK.value());
+            assertThat(filterChain.getRequest()).as(path).isNotNull();
+            assertThat(SecurityContextHolder.getContext().getAuthentication()).as(path).isNull();
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "/artemis", "/api/context" })
+    void aToolTokenKeepsAuthenticatingTheErrorDispatchOfARejectedRequest(String contextPath) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", contextPath + "/error");
+        request.setDispatcherType(DispatcherType.ERROR);
+        request.setContextPath(contextPath);
+        request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+
+        jwtFilter.doFilter(request, response, filterChain);
+
+        assertThat(filterChain.getRequest()).isNotNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "/artemis", "/api/context" })
+    void aToolTokenIsAuthenticatedOnTheRestEndpoints(String contextPath) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", contextPath + "/api/core/test");
+        request.setContextPath(contextPath);
+        request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + createToolToken());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+
+        jwtFilter.doFilter(request, response, filterChain);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(filterChain.getRequest()).isNotNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "/artemis", "/api/context" })
+    void aTokenWithoutToolIsStillAuthenticatedOnTheWebsocketHandshake(String contextPath) throws Exception {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", contextPath + "/websocket/websocket");
+        request.setContextPath(contextPath);
+        request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + tokenProvider.createToken(authentication, false));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        jwtFilter.doFilter(request, response, new MockFilterChain());
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
+    }
+
+    private String createToolToken() {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
+                List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        return tokenProvider.createToken(authentication, TOKEN_VALIDITY_IN_MILLISECONDS, ToolTokenType.SCORPIO);
     }
 }

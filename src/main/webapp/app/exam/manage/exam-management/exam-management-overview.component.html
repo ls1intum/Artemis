@@ -56,7 +56,7 @@
                                     {{ exam.title }}
                                 </span>
                             }
-                            <jhi-exam-mode-badge [testExam]="exam.testExam!" />
+                            <jhi-exam-mode-badge [examMode]="exam.examMode ?? ExamMode.REAL" />
                         </td>
                         <td>
                             <jhi-exam-status [exam]="exam" [course]="course()" class="flex justify-center" />
@@ -68,7 +68,7 @@
     </tumaet-ui-table-layout>
 } @else if (exams()) {
     <tumaet-ui-empty-state
-        class="mt-5"
+        class="mt-12!"
         [icon]="faFileAlt"
         [title]="'artemisApp.examManagement.empty.title' | artemisTranslate"
         [description]="'artemisApp.examManagement.empty.description' | artemisTranslate"

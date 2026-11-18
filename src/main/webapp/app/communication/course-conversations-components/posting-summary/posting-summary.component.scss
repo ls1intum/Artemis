@@ -1,7 +1,3 @@
-@import '../../../../../../../node_modules/bootstrap/scss/functions';
-@import '../../../../../../../node_modules/bootstrap/scss/variables';
-@import '../../../../../../../node_modules/bootstrap/scss/mixins';
-
 .posting-summary {
     background-color: transparent;
     cursor: pointer;
@@ -11,7 +7,7 @@
 
 .posting-summary:hover,
 .posting-summary:focus-within {
-    background-color: rgba($primary, 0.1);
+    background-color: color-mix(in srgb, var(--primary) 10%, transparent);
 
     & .posting-summary-saved-post-options {
         opacity: 1;
@@ -33,10 +29,11 @@
 .posting-summary-content.is-answer-post {
     padding-left: 0.7rem;
     margin-left: 0.35rem;
-    border-left: 1px solid $secondary;
+    border-left: 1px solid var(--tumaet-ui-muted-color);
 }
 
-@include media-breakpoint-down(sm) {
+// Phones: below the 576px breakpoint the JS mobile checks use as well.
+@media (max-width: 575.98px) {
     .posting-summary-saved-post-options {
         opacity: 1;
     }

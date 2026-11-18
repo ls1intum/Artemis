@@ -10,6 +10,8 @@
 @source not './src/**/*.stories.ts';
 
 :where(
+    tumaet-ui-accordion,
+    tumaet-ui-accordion-panel,
     tumaet-ui-autocomplete,
     tumaet-ui-bar-chart,
     tumaet-ui-button,
@@ -35,6 +37,8 @@
     tumaet-ui-line-chart,
     tumaet-ui-list,
     tumaet-ui-menu,
+    tumaet-ui-menu-group,
+    tumaet-ui-menu-separator,
     tumaet-ui-message,
     tumaet-ui-multi-select,
     tumaet-ui-paginator,
@@ -46,6 +50,7 @@
     tumaet-ui-search-field,
     tumaet-ui-select,
     tumaet-ui-select-button,
+    tumaet-ui-skeleton,
     tumaet-ui-splitter,
     tumaet-ui-tab,
     tumaet-ui-tab-list,
@@ -70,6 +75,7 @@
 }
 
 :where(
+        tumaet-ui-accordion-panel,
         tumaet-ui-autocomplete,
         tumaet-ui-button,
         tumaet-ui-calendar,
@@ -122,6 +128,11 @@
 
 .tumaet-ui-btn:disabled {
     cursor: default;
+}
+
+/* Shared with the component's scoped rule so native `[tumAetUiButton]` hosts can be rounded too. */
+.tumaet-ui-btn.tumaet-ui-btn-rounded {
+    border-radius: 9999px;
 }
 
 .tumaet-ui-button-group {
@@ -237,5 +248,30 @@
 @media (prefers-reduced-motion: reduce) {
     .tumaet-ui-empty-state-documentation a {
         transition: none;
+    }
+}
+
+.tumaet-ui-select-panel,
+.tumaet-ui-multi-select-panel {
+    animation: tumaet-panel-enter var(--tumaet-ui-panel-enter-duration) ease-out;
+    transform-origin: top center;
+}
+
+@keyframes tumaet-panel-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tumaet-ui-select-panel,
+    .tumaet-ui-multi-select-panel {
+        animation: none;
     }
 }

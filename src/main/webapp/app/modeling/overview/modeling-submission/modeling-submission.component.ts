@@ -403,7 +403,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         this.submission.set(modelingSubmission);
         this.participation.set(modelingSubmission.participation as StudentParticipation);
-        this.isOwnerOfParticipation.set(this.accountService.isOwnerOfParticipation(this.participation()));
+        // A participation without owner information, as shown to staff in a preview, does not belong to the current user
+        const hasOwnerInformation = !!this.participation().student || !!this.participation().team?.students;
+        this.isOwnerOfParticipation.set(hasOwnerInformation && this.accountService.isOwnerOfParticipation(this.participation()));
 
         this.participation().submissions = [omit(modelingSubmission, 'participation')];
 

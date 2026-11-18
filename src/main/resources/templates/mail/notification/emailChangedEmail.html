@@ -24,8 +24,8 @@
     </p>
 
     <p>
-        <span th:if="${!emailRemoved}" th:text="#{email.notification.emailChanged.actionRequired}">If you did not make this change, someone else may have access to your account. Password reset messages now go to the new address, so please contact support immediately</span>
-        <span th:if="${emailRemoved}" th:text="#{email.notification.emailRemoved.actionRequired}">If you did not make this change, someone else may have access to your account. Contact your Artemis administrator immediately</span>:
+        <!-- No whitespace between the two spans and the colon: the span that is not rendered would otherwise leave a gap in front of the colon -->
+        <span th:if="${!emailRemoved}" th:text="#{email.notification.emailChanged.actionRequired}">If you did not make this change, someone else may have access to your account. Password reset messages now go to the new address, so please contact support immediately</span><span th:if="${emailRemoved}" th:text="#{email.notification.emailRemoved.actionRequired}">If you did not make this change, someone else may have access to your account. Contact your Artemis administrator immediately</span>:
 
         <a th:with="url=(@{|${baseUrl}/|})" th:href="${url}" th:text="${url}">Artemis</a>
     </p>

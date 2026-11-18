@@ -1,6 +1,6 @@
 <form name="editForm" role="form" novalidate>
     <h5 *adminTitleBarTitle id="lti-configuration-heading" class="mb-0" jhiTranslate="artemisApp.lti.version13Configuration"></h5>
-    <tumaet-ui-message severity="info" class="mt-3 w-full" data-testid="lti-documentation-message">
+    <tumaet-ui-message severity="info" class="mt-4! w-full" data-testid="lti-documentation-message">
         <span jhiTranslate="artemisApp.lti.edit.documentationLink"></span>
         <a
             href="https://docs.artemis.tum.de/instructor/integrations/lti-configuration"
@@ -10,7 +10,7 @@
         ></a
         >.
     </tumaet-ui-message>
-    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)" class="mt-4">
+    <tumaet-ui-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)" class="mt-6!">
         <tumaet-ui-tab-list>
             <tumaet-ui-tab [value]="1"><span jhiTranslate="artemisApp.lti.platformRegistration"></span></tumaet-ui-tab>
             <tumaet-ui-tab [value]="2"><span jhiTranslate="artemisApp.lti.serviceUrls"></span></tumaet-ui-tab>
@@ -25,7 +25,7 @@
                     <span>{{ getDynamicRegistrationUrl() }}</span>
                     <jhi-copy-to-clipboard-button [copyText]="getDynamicRegistrationUrl()" />
                 </dd>
-                <tumaet-ui-table-layout class="mt-3" [empty]="platforms().length === 0">
+                <tumaet-ui-table-layout class="mt-4!" [empty]="platforms().length === 0">
                     <a tumAetUiTableEmptyActions tumAetUiButton size="small" [routerLink]="['/admin', 'lti-configuration', 'new']" data-testid="add-platform-empty-button">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lti13.addNewPlatform"></span>
