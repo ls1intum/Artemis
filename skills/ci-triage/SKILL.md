@@ -137,9 +137,11 @@ The existing Sonar job requires zero newly duplicated lines in PRs and reports a
 counts in its summary. A displayed 0.0% can still contain duplicate lines. Inspect the exact-head
 PR analysis and its duplication blocks; share the repeated behavior without changing scan scope
 or detection thresholds. The guard verifies the current open PR head/target and analysis identity
-before and after reading metrics. An empty response requires a complete GitHub file list with
-every changed path outside Sonar's source roots. Partial metrics, API failures, and replaced
-analyses fail verification.
+before and after reading metrics. A valid Sonar response for the PR with `component.measures: []`
+can pass when the PR changes fewer than 3,000 files and GitHub returns the complete file list
+with every path outside Sonar's source roots. The GitHub comparison must still match after the
+final Sonar request. A missing body or invalid response fails before GitHub lists the files.
+Partial metrics, API failures, and replaced analyses also fail verification.
 If the analysis was replaced, verify the current head and rerun verification once; no new build or
 scan is needed when a passing exact-head analysis already exists. See the
 [Sonar workflow policy](../../.github/workflows/README.md#the-code-quality-analyses).

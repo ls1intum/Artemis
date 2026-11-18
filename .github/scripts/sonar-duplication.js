@@ -61,12 +61,14 @@ async function checkPullRequestDuplication({ github, context, sha, pullRequest, 
               duplicatedBlocks: count(measures, 'new_duplicated_blocks'),
               newLines: count(measures, 'new_lines'),
           };
-    const latestPull = await currentPull();
-    if (emptyOutsideSource && (latestPull.base.sha !== pull.base.sha || latestPull.changed_files !== pull.changed_files)) {
-        throw new Error('GitHub PR comparison changed while verifying empty Sonar metrics');
-    }
-    const after = await verifyFork({ pull: latestPull, fetchImpl });
+    const after = await verifyFork({ pull: await currentPull(), fetchImpl });
     if (before.analysisDate !== after.analysisDate) throw new Error('Sonar analysis changed while reading duplication metrics; rerun verification');
+    if (emptyOutsideSource) {
+        const latestPull = await currentPull();
+        if (latestPull.base.sha !== pull.base.sha || latestPull.changed_files !== pull.changed_files) {
+            throw new Error('GitHub PR comparison changed while verifying empty Sonar metrics');
+        }
+    }
     if (summary) {
         await summary
             .addHeading('PR duplication')

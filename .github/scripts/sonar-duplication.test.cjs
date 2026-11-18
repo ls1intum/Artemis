@@ -41,7 +41,10 @@ function fixture() {
         assert.equal(options.cache, 'no-store');
         state.calls.push(parsed);
         if (state.httpError) return { ok: false, status: 503 };
-        if (parsed.pathname === '/api/project_pull_requests/list') return { ok: true, json: async () => ({ pullRequests: structuredClone(state.analyses) }) };
+        if (parsed.pathname === '/api/project_pull_requests/list') {
+            state.onAnalysisRead?.();
+            return { ok: true, json: async () => ({ pullRequests: structuredClone(state.analyses) }) };
+        }
         assert.equal(parsed.pathname, '/api/measures/component');
         assert.equal(parsed.searchParams.get('component'), 'ls1intum_Artemis');
         assert.equal(parsed.searchParams.get('pullRequest'), '123');
@@ -100,6 +103,16 @@ test('rejects empty Sonar measures when the PR base advances during verification
     f.state.measures = [];
     f.state.afterMetrics = () => {
         f.state.pull.base.sha = 'c'.repeat(40);
+    };
+    await assert.rejects(f.run(), /PR comparison changed/);
+});
+
+test('rejects empty Sonar measures when the PR base advances during the final Sonar read', async () => {
+    const f = fixture();
+    f.state.measures = [];
+    let analysisReads = 0;
+    f.state.onAnalysisRead = () => {
+        if (++analysisReads === 2) f.state.pull.base.sha = 'c'.repeat(40);
     };
     await assert.rejects(f.run(), /PR comparison changed/);
 });
