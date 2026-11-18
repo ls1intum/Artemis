@@ -17,6 +17,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -67,7 +68,7 @@ describe('CodeEditorStudentIntegration', () => {
     let containerFixture: ComponentFixture<CodeEditorStudentContainerComponent>;
     let containerDebugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
-    let resultService: ResultService;
+    let resultApi: ResultApi;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let route: ActivatedRoute;
 
@@ -142,7 +143,7 @@ describe('CodeEditorStudentIntegration', () => {
         containerDebugElement = containerFixture.debugElement;
 
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-        resultService = TestBed.inject(ResultService);
+        resultApi = TestBed.inject(ResultApi);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         route = TestBed.inject(ActivatedRoute);
 
@@ -155,7 +156,7 @@ describe('CodeEditorStudentIntegration', () => {
         subscribeForLatestResultOfParticipationStub = vi
             .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
             .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
-        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getFeedbackDetailsForResultStub = vi.spyOn(resultApi, 'getResultDetails');
         getStudentParticipationWithLatestResultStub = vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
     });
 

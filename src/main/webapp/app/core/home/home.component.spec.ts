@@ -4,6 +4,7 @@ import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { HomeComponent } from './home.component';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -26,6 +27,7 @@ import { RouterLink } from '@angular/router';
 import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 describe('HomeComponent', () => {
+    const originalPublicKeyCredential = Object.getOwnPropertyDescriptor(window, 'PublicKeyCredential');
     let component: HomeComponent;
     let fixture: ComponentFixture<HomeComponent>;
     let loginService: LoginService;
@@ -93,10 +95,38 @@ describe('HomeComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        // Several specs replace the global; an assignment is not undone by restoring the mocks.
+        if (originalPublicKeyCredential) {
+            Object.defineProperty(window, 'PublicKeyCredential', originalPublicKeyCredential);
+        } else {
+            delete (window as any).PublicKeyCredential;
+        }
     });
 
     it('should create the component', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should show the form again when the session ends after the page was created while signed in', async () => {
+        const accountService = TestBed.inject(AccountService);
+        const wrapper = (fixture.nativeElement as HTMLElement).firstElementChild as HTMLElement;
+        const prefillSpy = vi.spyOn(component as any, 'prefillPasskeysIfPossible').mockResolvedValue(undefined);
+        accountService.userIdentity.set({ id: 99, login: 'admin' } as User);
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(component.account()).toBeDefined();
+        expect(component.loading()).toBe(true);
+        expect(wrapper.hidden).toBe(true);
+        expect(prefillSpy).not.toHaveBeenCalled();
+
+        accountService.userIdentity.set(undefined);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.account()).toBeUndefined();
+        expect(component.loading()).toBe(false);
+        expect(wrapper.hidden).toBe(false);
+        expect(prefillSpy).toHaveBeenCalledOnce();
     });
 
     it('should initialize with profile info and prefilled username', () => {
@@ -486,6 +516,38 @@ describe('HomeComponent', () => {
             expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
             expect(startSpy).toHaveBeenCalledOnce();
             expect(startSpy).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
+        });
+
+        it('should not start conditional mediation when the user signed in during the capability check', async () => {
+            component.isPasskeyEnabled.set(true);
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+            let resolveAvailability!: (available: boolean) => void;
+            const isConditionalMediationAvailable = vi.fn().mockReturnValue(new Promise<boolean>((resolve) => (resolveAvailability = resolve)));
+            (window as any).PublicKeyCredential = { isConditionalMediationAvailable };
+
+            const pending = component.prefillPasskeysIfPossible();
+            expect(isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            TestBed.inject(AccountService).userIdentity.set({ id: 99, login: 'admin' } as User);
+            resolveAvailability(true);
+            await pending;
+
+            expect(startSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not start conditional mediation when the page was destroyed during the capability check', async () => {
+            component.isPasskeyEnabled.set(true);
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+            let resolveAvailability!: (available: boolean) => void;
+            const isConditionalMediationAvailable = vi.fn().mockReturnValue(new Promise<boolean>((resolve) => (resolveAvailability = resolve)));
+            (window as any).PublicKeyCredential = { isConditionalMediationAvailable };
+
+            const pending = component.prefillPasskeysIfPossible();
+            expect(isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            fixture.destroy();
+            resolveAvailability(true);
+            await pending;
+
+            expect(startSpy).not.toHaveBeenCalled();
         });
 
         it('should not call startConditionalMediation if passkey is disabled', async () => {

@@ -67,7 +67,7 @@ Artemis ships a template for each supported language, so a new exercise starts f
 | 1   | Java                 | ✅        | ✅       | Gradle, Maven, DejaGnu | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     | ✅                 |
 | 2   | Python               | ✅        | ✅       | pip                    | [artemis-python-docker](https://github.com/ls1intum/artemis-python-docker)                   | ✅ †               |
 | 3   | C                    | ✅        | ✅       | Makefile, FACT, GCC    | [artemis-c-docker](https://github.com/ls1intum/artemis-c-docker)                             | ✅ †               |
-| 4   | Haskell              | ✅        | ✅       | Stack                  | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell)                     | ❌ ‡               |
+| 4   | Haskell              | ✅        | ✅       | Stack                  | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell)                     | ✅                 |
 | 5   | Kotlin               | ✅        | ✅       | Maven                  | [artemis-kotlin-docker](https://github.com/ls1intum/artemis-kotlin-docker)                   | ✅                 |
 | 6   | VHDL                 | ✅        | ❌       | Makefile               | [artemis-vhdl-docker](https://github.com/ls1intum/artemis-vhdl-docker)                       | ✅ †               |
 | 7   | Assembler            | ✅        | ❌       | Makefile               | [artemis-assembler-docker](https://github.com/ls1intum/artemis-assembler-docker)             | ✅ †               |
@@ -79,7 +79,7 @@ Artemis ships a template for each supported language, so a new exercise starts f
 | 13  | C++                  | ✅        | ✅       | CMake                  | [artemis-cpp-docker](https://github.com/ls1intum/artemis-cpp-docker)                         | ✅ †               |
 | 14  | TypeScript           | ✅        | ✅       | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           | ✅                 |
 | 15  | C#                   | ✅        | ✅       | dotnet                 | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)                   | ✅                 |
-| 16  | Go                   | ✅        | ✅       | built-in               | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker)                           | ✅ †               |
+| 16  | Go                   | ✅        | ✅       | built-in               | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker)                           | ✅                 |
 | 17  | Bash                 | ✅        | ✅       | built-in               | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker)                       | ✅ †               |
 | 18  | MATLAB               | ✅ \*     | ❌       | built-in               | [matlab](https://hub.docker.com/r/mathworks/matlab)                                          | ✅ †               |
 | 19  | Ruby                 | ✅        | ✅       | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       | ✅                 |
@@ -90,8 +90,7 @@ Artemis ships a template for each supported language, so a new exercise starts f
 **Image Drift Check**: the Docker image of a language caches the dependencies of the template, so that builds do not download them again. When the template and the image pin different versions, every build downloads the difference. The column shows whether Artemis checks this automatically, see [Keeping the images in sync with the templates](/developer/builds-and-dependencies#keeping-the-images-in-sync-with-the-templates).
 
 - ✅ Checked automatically on every pull request that changes the template, and nightly by building the template in the image without network access.
-- ✅ † Not needed: the template pins no dependency that the image has to cache. It uses the standard library or tools the image installs, so there is nothing that can drift.
-- ❌ ‡ Not checked yet: Haskell uses an external image that has not been assessed.
+- ✅ † No version to compare: the template pins no dependency that the image has to cache. It uses the standard library or tools the image installs. These templates are still built nightly in the image without network access (except MATLAB, which needs a license server).
 
 ### Using a Language Without a Template
 
