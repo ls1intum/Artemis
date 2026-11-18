@@ -97,6 +97,36 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         expect(component.confirmingReset()).toBe(false);
     });
 
+    /** The content of the popover is only in the document while it is open. */
+    const openPopover = () => {
+        const origin = document.createElement('button');
+        document.body.appendChild(origin);
+        component.open({ currentTarget: origin } as unknown as Event);
+        fixture.detectChanges();
+        return origin;
+    };
+    const shown = (testId: string) => document.querySelector(`[data-testid="${testId}"]`);
+
+    it('keeps the buttons of the confirmation in the content that scrolls', () => {
+        const origin = openPopover();
+        component.confirmingReset.set(true);
+        fixture.detectChanges();
+        const content = shown('subscription-popover-content') as HTMLElement;
+
+        expect(content.contains(shown('subscription-link-reset-confirm'))).toBe(true);
+        expect(content.contains(shown('subscription-link-reset-cancel'))).toBe(true);
+        origin.remove();
+    });
+
+    it('lets the content scroll when it is taller than the screen', () => {
+        const origin = openPopover();
+        const content = shown('subscription-popover-content') as HTMLElement;
+
+        expect(content.classList.contains('overflow-y-auto')).toBe(true);
+        expect(content.classList.contains('max-h-[75dvh]')).toBe(true);
+        origin.remove();
+    });
+
     it('starts without a pending confirmation each time it is opened', () => {
         component.confirmingReset.set(true);
         const button = document.createElement('button');

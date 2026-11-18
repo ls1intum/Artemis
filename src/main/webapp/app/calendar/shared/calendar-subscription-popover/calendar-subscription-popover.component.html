@@ -1,5 +1,5 @@
 <tumaet-ui-popover #calendarSubscriptionPopover [ariaLabel]="'artemisApp.calendar.subscriptionPopover.title' | artemisTranslate" placement="bottom">
-    <div class="flex flex-col gap-2" [class]="isMobile() ? 'w-60' : 'w-156'">
+    <div class="flex max-h-[75dvh] flex-col gap-2 overflow-y-auto" data-testid="subscription-popover-content" [class]="isMobile() ? 'w-60' : 'w-156'">
         <h5 class="m-0!" jhiTranslate="artemisApp.calendar.subscriptionPopover.title"></h5>
         <span jhiTranslate="artemisApp.calendar.subscriptionPopover.configurationExplanation"></span>
         @if (isMobile()) {
