@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
  * Pushes to a student repository outside the optional build time window of the exercise are kept, but neither create a submission nor queue a build.
@@ -179,8 +180,9 @@ class LocalVCBuildTimeWindowIntegrationTest extends AbstractProgrammingIntegrati
         PushOutcome outcome = commitAndPushAs(student1Login);
 
         assertThat(outcome.pushResult().getMessages()).contains("not built or graded");
-        // the entry is finished after the hook answered, so wait for it
-        await().untilAsserted(() -> assertThat(vcsAccessLogRepository.findNewestUserEntryByParticipationId(outcome.participationId())).isPresent().get()
+        // the push is part of the repository although no build follows, so its entry carries the commit
+        await().untilAsserted(() -> assertThat(vcsAccessLogRepository.findAllByParticipationId(outcome.participationId()))
+                .filteredOn(accessLog -> accessLog.getRepositoryActionType() == RepositoryActionType.PUSH).singleElement()
                 .satisfies(accessLog -> assertThat(accessLog.getCommitHash()).isEqualTo(outcome.commit())));
     }
 

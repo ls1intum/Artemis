@@ -17,7 +17,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { LockRepositoryPolicy, SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -27,6 +26,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseHeadersInformationComponent', () => {

@@ -9,7 +9,7 @@ import { ChannelIconComponent } from 'app/communication/course-conversations-com
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
@@ -59,7 +59,7 @@ examples.forEach((activeConversation) => {
                         { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
-                    MockProvider(DialogService),
+                    MockProvider(TumAetUiDialogService),
                     MockProvider(ConversationService),
                     { provide: CommunicationService, useClass: MockCommunicationService },
                     { provide: TranslateService, useClass: MockTranslateService },
@@ -111,12 +111,15 @@ examples.forEach((activeConversation) => {
             const addUsersButton = fixture.debugElement.nativeElement.querySelector('.addUsers');
             expect(addUsersButton).toBeTruthy();
 
-            const dialogService = TestBed.inject(DialogService);
-            const mockDialogRef = { onClose: new Subject(), close: vi.fn() } as unknown as DynamicDialogRef;
+            const dialogService = TestBed.inject(TumAetUiDialogService);
+            const mockDialogRef = { onClose: new Subject(), close: vi.fn() } as unknown as TumAetUiDialogRef;
             const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             addUsersButton.click();
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, expect.anything());
+            expect(openDialogSpy).toHaveBeenCalledWith(
+                ConversationAddUsersDialogComponent,
+                expect.objectContaining({ autoFocus: 'first-tabbable', ariaLabel: expect.any(String), data: { course, activeConversation } }),
+            );
         });
 
         it('should open dialog details dialog with members tab', () => {
@@ -214,9 +217,9 @@ examples.forEach((activeConversation) => {
         }
 
         it('should open conversation detail dialog', () => {
-            const dialogService = TestBed.inject(DialogService);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
             const mockOnClose = new Subject<any>();
-            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef;
+            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as TumAetUiDialogRef;
             const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
             const event = new MouseEvent('click');
@@ -224,13 +227,39 @@ examples.forEach((activeConversation) => {
             vi.advanceTimersByTime(0);
 
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, expect.anything());
+            expect(openDialogSpy).toHaveBeenCalledWith(
+                ConversationDetailDialogComponent,
+                expect.objectContaining({
+                    showHeader: false,
+                    ariaLabel: expect.any(String),
+                    data: expect.objectContaining({
+                        course,
+                        activeConversation,
+                        selectedTab: ConversationDetailTabs.INFO,
+                        onUserNameClicked: expect.any(Function),
+                    }),
+                }),
+            );
+        });
+
+        it('should close the conversation detail dialog and start a chat when a user name is clicked', () => {
+            const dialogService = TestBed.inject(TumAetUiDialogService);
+            const mockDialogRef = { onClose: new Subject<any>().asObservable(), close: vi.fn() } as unknown as TumAetUiDialogRef;
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+            const createChatSpy = vi.spyOn(courseConversationsService, 'createOneToOneChatWithId').mockReturnValue(EMPTY);
+
+            component.openConversationDetailDialog(new MouseEvent('click'), ConversationDetailTabs.MEMBERS);
+            const options = openDialogSpy.mock.calls[0][1] as { data: { onUserNameClicked: (userId: number) => void } };
+            options.data.onUserNameClicked(7);
+
+            expect(mockDialogRef.close).toHaveBeenCalledOnce();
+            expect(createChatSpy).toHaveBeenCalledWith(7);
         });
 
         it('should emit onUpdateSidebar when conversation detail dialog is closed', () => {
-            const dialogService = TestBed.inject(DialogService);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
             const mockOnClose = new Subject<any>();
-            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef;
+            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as TumAetUiDialogRef;
             vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
             const onUpdateSidebarSpy = vi.spyOn(component.onUpdateSidebar, 'emit');
@@ -255,9 +284,9 @@ examples.forEach((activeConversation) => {
             const detailButton = fixture.debugElement.nativeElement.querySelector('.' + className);
             expect(detailButton).toBeTruthy();
 
-            const dialogService = TestBed.inject(DialogService);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
             const mockOnClose = new Subject<any>();
-            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef;
+            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as TumAetUiDialogRef;
             const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             fixture.changeDetectorRef.detectChanges();
             detailButton.click();
