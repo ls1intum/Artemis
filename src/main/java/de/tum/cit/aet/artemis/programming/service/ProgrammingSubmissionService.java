@@ -537,7 +537,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             if (!Boolean.TRUE.equals(submission.isSubmitted())) {
                 throw new AccessForbiddenException("The team's submission has not been submitted.");
             }
-            checkIfExerciseDueDateIsReached(participation.getExercise());
+            var buildAndTestDate = ((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate();
+            if (buildAndTestDate != null && buildAndTestDate.isAfter(ZonedDateTime.now())) {
+                throw new AccessForbiddenException("The build and test date has not passed yet.");
+            }
             if (ExerciseDateService.getDueDate(participation).isPresent() && exerciseDateService.isBeforeDueDate(participation)) {
                 throw new AccessForbiddenException("The team's submission deadline has not passed yet.");
             }

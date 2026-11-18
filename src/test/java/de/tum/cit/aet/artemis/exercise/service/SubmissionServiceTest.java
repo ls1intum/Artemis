@@ -443,6 +443,10 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
         assertThat(request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams", HttpStatus.OK, AssessmentQueueTeamDTO.class))
                 .extracting(entry -> entry.submission().id()).containsExactly(regular.getId());
+        request.get(assessmentStartUrl(type, regular.getId()), HttpStatus.OK, String.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(regular.getId()).getManualResults()).hasSize(1);
+        request.get(assessmentStartUrl(type, extended.getId()), HttpStatus.FORBIDDEN, String.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(extended.getId()).getManualResults()).isEmpty();
     }
 
     @Test
@@ -454,6 +458,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         exerciseRepository.save(exercise);
         assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).isEmpty();
+        request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId()), HttpStatus.FORBIDDEN, String.class);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).isEmpty();
 
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         exerciseRepository.save(exercise);

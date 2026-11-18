@@ -800,7 +800,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return the latest visible result id, or empty if none is visible
      */
     @Query("""
-            SELECT r.id FROM Result r WHERE r.id =
+            SELECT r.id FROM Result r WHERE r.id = (
                 SELECT MAX(r2.id) FROM Result r2
                     JOIN r2.submission s2 JOIN s2.participation p2 LEFT JOIN p2.exercise e2
                 WHERE p2.id = :participationId AND (
