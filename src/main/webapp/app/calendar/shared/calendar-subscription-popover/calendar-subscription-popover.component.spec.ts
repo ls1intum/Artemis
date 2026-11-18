@@ -94,6 +94,47 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         vi.unstubAllGlobals();
     });
 
+    it('shows the check mark for the full time after the last copy, not only for what is left of the first one', () => {
+        vi.useFakeTimers();
+        try {
+            vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+            component.copySubscriptionUrlToClipboard();
+            fixture.detectChanges();
+
+            // another link is copied shortly before the confirmation of the first one ends
+            vi.advanceTimersByTime(1400);
+            component.selectedLanguage.set('GERMAN');
+            fixture.detectChanges();
+            component.copySubscriptionUrlToClipboard();
+            fixture.detectChanges();
+
+            vi.advanceTimersByTime(200);
+            expect(component.copyConfirmed()).toBe(true);
+
+            vi.advanceTimersByTime(1300);
+            expect(component.copyConfirmed()).toBe(false);
+        } finally {
+            vi.useRealTimers();
+            vi.unstubAllGlobals();
+        }
+    });
+
+    it('does not change anything after the component was destroyed while the confirmation was shown', () => {
+        vi.useFakeTimers();
+        try {
+            vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+            component.copySubscriptionUrlToClipboard();
+            fixture.detectChanges();
+
+            fixture.destroy();
+
+            expect(vi.getTimerCount()).toBe(0);
+        } finally {
+            vi.useRealTimers();
+            vi.unstubAllGlobals();
+        }
+    });
+
     it('marks the last remaining checkbox as disabled', () => {
         component.includeLectureEvents.set(false);
         component.includeTutorialEvents.set(false);

@@ -58,11 +58,12 @@ export class CalendarSubscriptionPopoverComponent {
     copyConfirmed = computed(() => this.copiedUrl() !== undefined && this.copiedUrl() === this.subscriptionUrl());
 
     constructor() {
-        effect(() => {
+        // The callback of an effect registers a cleanup only through onCleanup, not by returning a function: it cancels the timer of an earlier copy when another link is copied,
+        // and when the component is destroyed
+        effect((onCleanup) => {
             if (this.copiedUrl() !== undefined) {
-                return this.setTimerToToggleBackCopiedUrl();
+                onCleanup(this.setTimerToToggleBackCopiedUrl());
             }
-            return undefined;
         });
     }
 
