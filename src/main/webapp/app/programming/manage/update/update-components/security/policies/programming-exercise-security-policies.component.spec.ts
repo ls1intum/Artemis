@@ -193,6 +193,40 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.banner()).toEqual(expect.objectContaining({ kind: 'committed', hash: 'bbbbbbb' }));
     });
 
+    it('keeps editing and switching the sandbox paused until the policies and the config of a pushed but unprocessed commit are read', () => {
+        create(configured(), false);
+        const pending: boolean[] = [];
+        comp.committingChange.subscribe((committing) => pending.push(committing));
+        const configs: SecurityFrameworkConfig[] = [];
+        comp.configChange.subscribe((config) => configs.push(config));
+        const policy = comp.policies()[0];
+        const granted = withRows(policy.working!, 'packages', [{ packageName: 'org.apache.commons' }]);
+        comp['onPolicyChange']({ ...policy, working: granted });
+        const policies = new Subject<SecurityPolicyEditor>();
+        const config = new Subject<SecurityFrameworkConfig>();
+        service.getPolicies.mockReturnValue(policies);
+        service.getConfig.mockReturnValue(config);
+        service.commitPolicies.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500, error: { message: 'error.securityFrameworkProcessingFailed' } })));
+
+        comp['commit']('Grant commons');
+
+        expect(comp.isCommitting()).toBe(true);
+        expect(comp.editingDisabled()).toBe(true);
+        comp['onToggleRequested'](false);
+        expect(comp.dialogOpen()).toBe(false);
+
+        policies.next(editor('b'.repeat(40), granted));
+        policies.complete();
+        expect(comp.isCommitting()).toBe(true);
+        config.next(configured());
+        config.complete();
+
+        expect(comp.isCommitting()).toBe(false);
+        expect(pending).toEqual([true, false]);
+        expect(configs).toEqual([configured()]);
+        expect(comp.editor()?.baseCommitHash).toBe('b'.repeat(40));
+    });
+
     it('removes the file of a deleted committed policy with the commit', () => {
         create(configured(), false);
         comp['askDeletePolicy'](comp.policies()[0]);

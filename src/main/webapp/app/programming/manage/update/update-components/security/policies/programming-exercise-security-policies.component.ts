@@ -24,7 +24,7 @@ import {
     TumAetUiProgressSpinnerComponent,
     TumAetUiTagComponent,
 } from '@tumaet/ui-angular';
-import { Subscription } from 'rxjs';
+import { Subscription, catchError, forkJoin, of } from 'rxjs';
 
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -538,34 +538,37 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     }
 
     /**
-     * Loads the policies of a change that was pushed although its processing failed. A commit of the unsaved changes made exactly them, since editing is
-     * paused while it runs, so they are replaced; a commit of dependency scanning kept them, so they are rebased.
+     * Loads the policies and the config of a change that was pushed although its processing failed. A commit of the unsaved changes made exactly them, since
+     * editing is paused while it runs, so they are replaced; a commit of dependency scanning kept them, so they are rebased. The reads still belong to the
+     * commit: until both answer, editing and switching the sandbox stay paused, so their answers overwrite neither an edit nor a later operation.
      */
     private loadPushed(keepUnsaved: boolean): void {
         const request = ++this.loadRequests;
         this.loading.set(true);
-        this.securityService.getPolicies(this.exerciseId()).subscribe({
-            next: (editor) => {
-                if (request !== this.loadRequests) {
-                    return;
-                }
-                this.loading.set(false);
-                if (keepUnsaved) {
-                    this.rebaseOnto(editor, false);
-                } else {
-                    this.applyEditor(editor);
-                }
-                if (this.banner()?.kind === 'processingFailed') {
-                    this.banner.set({ kind: 'processingFailed', hash: editor.lastCommit?.hash.substring(0, 7) });
-                }
-            },
-            error: () => {
-                if (request === this.loadRequests) {
-                    this.loading.set(false);
-                }
-            },
+        forkJoin({
+            editor: this.securityService.getPolicies(this.exerciseId()).pipe(catchError(() => of(undefined))),
+            config: this.securityService.getConfig(this.exerciseId()).pipe(catchError(() => of(undefined))),
+        }).subscribe(({ editor, config }) => {
+            this.setCommitPending(false);
+            if (request !== this.loadRequests) {
+                return;
+            }
+            this.loading.set(false);
+            if (config) {
+                this.configChange.emit(config);
+            }
+            if (!editor) {
+                return;
+            }
+            if (keepUnsaved) {
+                this.rebaseOnto(editor, false);
+            } else {
+                this.applyEditor(editor);
+            }
+            if (this.banner()?.kind === 'processingFailed') {
+                this.banner.set({ kind: 'processingFailed', hash: editor.lastCommit?.hash.substring(0, 7) });
+            }
         });
-        this.securityService.getConfig(this.exerciseId()).subscribe({ next: (config) => this.configChange.emit(config), error: () => undefined });
     }
 
     private applyEditor(editor: SecurityPolicyEditor): void {
@@ -1010,7 +1013,11 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 });
             },
             error: (error: HttpErrorResponse) => {
-                this.setCommitPending(false);
+                // A pushed change whose processing failed stays pending until its policies and config are read again, see loadPushed.
+                const processingFailed = isProcessingFailure(error);
+                if (!processingFailed) {
+                    this.setCommitPending(false);
+                }
                 this.reviewOpen.set(false);
                 this.pendingScan.set(undefined);
                 if (error.status === 409) {
@@ -1025,7 +1032,7 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                         },
                         error: () => undefined,
                     });
-                } else if (isProcessingFailure(error)) {
+                } else if (processingFailed) {
                     // The push succeeded, so the committed policies are the pushed ones, and Discard must return to them. Retry sends the same request again,
                     // whose processing the server resumes instead of applying the change twice; it keeps what was edited meanwhile.
                     this.failedRequest = { change, keepUnsaved: true, scan };
