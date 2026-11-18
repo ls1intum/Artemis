@@ -114,8 +114,8 @@ describe('ExamExerciseHeaderComponent', () => {
         fixture.detectChanges();
 
         const actions: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-exercise-header-actions"]');
-        // 4px padding, a 20px line and the 1px border on both sides are 30px. The important spelling beats the padding of the kit and of the Bootstrap button.
-        for (const button of ['.btn', '.tumaet-ui-btn']) {
+        // 4px padding, a 20px line and the 1px border on both sides are 30px. The important spelling beats the padding of every button flavour.
+        for (const button of ['button', '.tumaet-ui-btn']) {
             expect([...actions.classList], button).toEqual(expect.arrayContaining([`[&_${button}]:py-1!`, `[&_${button}]:leading-5!`]));
         }
         // 12px between the rule and the content

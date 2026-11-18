@@ -3,9 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import {
@@ -27,7 +26,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 import { Component as NgComponent, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 
@@ -69,11 +67,10 @@ describe('CompetencyManagementTableComponent', () => {
             imports: [WrappedComponent],
             providers: [
                 MockProvider(AlertService),
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -117,8 +114,8 @@ describe('CompetencyManagementTableComponent', () => {
         expect(component.allCompetencies).toHaveLength(2);
     });
 
-    it('should open the import-all dialog with a responsive width that never exceeds the viewport', () => {
-        const dialogService = TestBed.inject(DialogService);
+    it('should open the import-all dialog sized by the kit with the translated title', () => {
+        const dialogService = TestBed.inject(TumAetUiDialogService);
         const openSpy = vi.spyOn(dialogService, 'open');
 
         competencyManagementTableComponent.openImportAllModal();
@@ -126,7 +123,9 @@ describe('CompetencyManagementTableComponent', () => {
         expect(openSpy).toHaveBeenCalledWith(
             ImportAllCompetenciesComponent,
             expect.objectContaining({
-                style: { width: '90vw', maxWidth: '60rem', height: '85vh' },
+                header: 'artemisApp.competency.importAll.title',
+                size: 'large',
+                data: { disabledIds: [1] },
             }),
         );
     });
@@ -135,7 +134,7 @@ describe('CompetencyManagementTableComponent', () => {
         const dialogResult = { courseForImportDTO: { id: 7, title: 'Other course' }, importRelations: true };
 
         function openWithResult(response: CompetencyWithTailRelationDTO[]) {
-            vi.spyOn(TestBed.inject(DialogService), 'open').mockReturnValue({ onClose: of(dialogResult) } as any);
+            vi.spyOn(TestBed.inject(TumAetUiDialogService), 'open').mockReturnValue({ onClose: of(dialogResult) } as any);
             const importAllSpy = vi.spyOn(competencyService, 'importAll').mockReturnValue(of(new HttpResponse({ body: response })));
             competencyManagementTableComponent.service = competencyService;
             competencyManagementTableComponent.openImportAllModal();

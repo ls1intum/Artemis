@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -133,6 +134,12 @@ class KubernetesBuildJobFactoryTest {
                 .hasMessageContaining("memory swap");
         assertThatThrownBy(() -> factory.createJob(buildJob(new DockerRunConfig(List.of("MISSING_VALUE"), null, 0, 0, 0)), "job", "agent")).isInstanceOf(LocalCIException.class)
                 .hasMessageContaining("KEY=value");
+    }
+
+    @Test
+    void aNamedNetworkRefusalUsesTheNonAgentFailureCategory() {
+        assertThatThrownBy(() -> factory.createJob(buildJob(new DockerRunConfig(List.of(), "named-network", 0, 0, 0)), "job", "agent"))
+                .isInstanceOf(ContainerNetworkNotAllowedException.class).hasMessageContaining("Named Docker networks");
     }
 
     @Test

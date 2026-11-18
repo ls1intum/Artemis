@@ -1,19 +1,22 @@
 <div>
     @if (formattedConsistency().length > 0) {
-        <div class="alert alert-warning alert-dismissible text-start fade show mt-4" role="alert">
-            <button type="button" class="btn-close" (click)="dismissConsistencyCheck()" aria-label="Close"></button>
-            <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.title"></h4>
-            <h5 jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.inconsistencies"></h5>
-            <ul>
-                @for (element of formattedConsistency(); track element.suggestion) {
-                    <li>
-                        <p>{{ element.suggestion }}</p>
-                        <p>{{ element.inconsistentFaq }}</p>
-                    </li>
-                }
-            </ul>
-            <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.improvement"></h4>
-            <div [innerHtml]="this.improvement()"></div>
-        </div>
+        <tumaet-ui-message class="text-start" severity="warn" dismissible (dismissed)="dismissConsistencyCheck()">
+            <div class="flex flex-col gap-2 py-1">
+                <h4 class="m-0" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.title">Consistency Check Result</h4>
+                <h5 class="m-0" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.inconsistencies">
+                    Please review the FAQ for inconsistencies and adjust it accordingly to ensure clarity and coherence.
+                </h5>
+                <ul class="m-0 ps-4!">
+                    @for (element of formattedConsistency(); track element.suggestion) {
+                        <li>
+                            <p>{{ element.suggestion }}</p>
+                            <p>{{ element.inconsistentFaq }}</p>
+                        </li>
+                    }
+                </ul>
+                <h4 class="m-0" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.improvement">Suggestion for improvement</h4>
+                <div [innerHtml]="this.improvement()"></div>
+            </div>
+        </tumaet-ui-message>
     }
 </div>

@@ -51,6 +51,35 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetCourseSettings_belowInstructorSeesReducedConfiguration() throws Exception {
+        enableIrisFor(course1);
+        var current = irisSettingsService.getSettingsForCourse(course1);
+        var update = IrisCourseSettings.of(current.enabled(), "Custom instructions for this course", current.variant(), current.supportLevel(), current.rateLimit(),
+                current.proactiveStruggleEnabled());
+        request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+        String url = "/api/iris/courses/" + course1.getId() + "/iris-settings";
+
+        var instructorResponse = request.get(url, HttpStatus.OK, IrisCourseSettingsWithRateLimitDTO.class);
+        assertThat(instructorResponse.settings().customInstructions()).isEqualTo("Custom instructions for this course");
+        assertThat(instructorResponse.effectiveRateLimit()).isNotNull();
+        assertThat(instructorResponse.applicationRateLimitDefaults()).isNotNull();
+
+        for (String login : new String[] { TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", TEST_PREFIX + "editor1" }) {
+            userUtilService.changeUser(login);
+            var response = request.get(url, HttpStatus.OK, IrisCourseSettingsWithRateLimitDTO.class);
+            assertThat(response.courseId()).isEqualTo(course1.getId());
+            assertThat(response.settings().enabled()).isTrue();
+            assertThat(response.settings().customInstructions()).isNull();
+            assertThat(response.settings().rateLimit()).isNull();
+            assertThat(response.settings().variant()).isNotNull();
+            assertThat(response.settings().proactiveStruggleEnabled()).isEqualTo(instructorResponse.settings().proactiveStruggleEnabled());
+            assertThat(response.effectiveRateLimit()).isNotNull();
+            assertThat(response.applicationRateLimitDefaults()).isNotNull();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetCourseSettings_asInstructor() throws Exception {
         enableIrisFor(course1);
 

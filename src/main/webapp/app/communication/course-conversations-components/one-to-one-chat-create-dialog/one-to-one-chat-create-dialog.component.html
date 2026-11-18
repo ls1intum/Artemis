@@ -1,20 +1,28 @@
 @if (isInitialized) {
-    <div ngbAutofocus>
-        <div class="modal-header">
-            <h4 class="modal-title">
-                <span jhiTranslate="artemisApp.dialogs.createOneToOneChat.title"></span>
-            </h4>
-            <button type="button" class="btn-close dismiss" (click)="clear()"></button>
+    <div class="flex flex-col gap-4!">
+        <div class="flex items-start justify-between gap-2 pt-4!">
+            <h4 class="m-0 text-xl! font-medium!" jhiTranslate="artemisApp.dialogs.createOneToOneChat.title">Start a direct conversation with another user</h4>
+            <button
+                type="button"
+                tumAetUiButton
+                severity="secondary"
+                variant="text"
+                rounded
+                class="size-8 shrink-0 p-0"
+                data-testid="dialog-close-button"
+                [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                (click)="clear()"
+            >
+                <fa-icon [icon]="faXmark" />
+            </button>
         </div>
-        <div class="modal-body">
-            <jhi-course-users-selector
-                [ngModel]="selectedUsers()"
-                (ngModelChange)="onSelectedUsersChange($event)"
-                [multiSelect]="false"
-                [showUserList]="false"
-                [courseId]="course()!.id!"
-                [label]="'artemisApp.dialogs.createOneToOneChat.userSelectorLabel' | artemisTranslate"
-            />
-        </div>
+        <jhi-course-users-selector
+            [ngModel]="selectedUsers()"
+            (ngModelChange)="onSelectedUsersChange($event)"
+            [multiSelect]="false"
+            [showUserList]="false"
+            [courseId]="course()!.id!"
+            [label]="'artemisApp.dialogs.createOneToOneChat.userSelectorLabel' | artemisTranslate"
+        />
     </div>
 }

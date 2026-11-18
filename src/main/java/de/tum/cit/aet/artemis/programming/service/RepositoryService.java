@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCReceivePackLimits;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.VcsAccessLogService;
+import de.tum.cit.aet.artemis.localvc.service.WorkingCopyCommit;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -945,8 +946,7 @@ public class RepositoryService {
      * @throws GitAPIException if the staging/committing process fails.
      */
     public String commitChanges(Repository repository, User user) throws GitAPIException {
-        gitService.stageAllChanges(repository);
-        return gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
+        return WorkingCopyCommit.commitChanges(gitService, bareGitRepositoryService, repository, "Changes by Online Editor", user);
     }
 
     /**

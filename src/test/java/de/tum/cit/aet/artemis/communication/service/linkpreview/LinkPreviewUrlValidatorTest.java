@@ -30,9 +30,19 @@ class LinkPreviewUrlValidatorTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = { "https://example.com", "http://example.com", "https://example.com:443/page", "http://example.com:80/page", "https://example.com:80",
+            "http://example.com:443" })
+    void acceptsTheDefaultAndTheOrdinaryWebPorts(String url) throws Exception {
+        var validator = new LinkPreviewUrlValidator(host -> new InetAddress[] { InetAddress.getByName("93.184.216.34") });
+
+        assertThat(validator.validateAndResolve(URI.create(url)).uri()).isEqualTo(URI.create(url));
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "https://localhost", "http://127.0.0.1", "http://[::1]", "ftp://example.com", "javascript:void(0)", "https://user@example.com",
-            "https://example.superlongtldover20chars", "https://example.com:99999", "example.com", "https://localhost.",
-            "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example.com", "https://example..com", "https://example.c0m" })
+            "https://example.superlongtldover20chars", "https://example.com:99999", "https://example.com:8080", "http://example.com:22", "https://example.com:0",
+            "http://example.com:8443", "example.com", "https://localhost.", "https://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example.com",
+            "https://example..com", "https://example.c0m" })
     void rejectsInvalidUrls(String url) {
         var validator = new LinkPreviewUrlValidator(host -> new InetAddress[] { InetAddress.getByName("93.184.216.34") });
 

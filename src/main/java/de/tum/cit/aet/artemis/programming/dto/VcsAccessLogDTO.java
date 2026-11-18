@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 
 /**
@@ -18,10 +19,12 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
  * @param authenticationMechanism The method the user used for authenticating to the repository.
  * @param commitHash              The latest commit hash at the access event.
  * @param timestamp               The date and time when the access event occurred.
+ * @param buildAgent              Whether a build agent made the access, for example to clone the repository for a build job, rather than a person. These entries are the bulk of
+ *                                    the log on a busy repository and of little interest when looking for who accessed it, so clients can hide them.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record VcsAccessLogDTO(Long id, Long userId, String name, String email, String repositoryActionType, String authenticationMechanism, String commitHash,
-        ZonedDateTime timestamp) {
+        ZonedDateTime timestamp, boolean buildAgent) {
 
     /**
      * Converts an access log entry into its DTO.
@@ -34,6 +37,18 @@ public record VcsAccessLogDTO(Long id, Long userId, String name, String email, S
         // agent and job are recorded in the name instead.
         Long userId = vcsAccessLog.getUser() != null ? vcsAccessLog.getUser().getId() : null;
         return new VcsAccessLogDTO(vcsAccessLog.getId(), userId, vcsAccessLog.getName(), vcsAccessLog.getEmail(), vcsAccessLog.getRepositoryActionType().name(),
-                vcsAccessLog.getAuthenticationMechanism().name(), vcsAccessLog.getCommitHash(), vcsAccessLog.getTimestamp());
+                vcsAccessLog.getAuthenticationMechanism().name(), vcsAccessLog.getCommitHash(), vcsAccessLog.getTimestamp(), isBuildAgentAccess(vcsAccessLog));
+    }
+
+    /**
+     * A build agent has no user, like a person whose account was deleted afterwards, so the user alone does not tell them apart. The token of a build job is only ever used by a
+     * build agent, and the entry of an agent that connected by SSH carries the name the agent was given.
+     */
+    private static boolean isBuildAgentAccess(VcsAccessLog vcsAccessLog) {
+        if (vcsAccessLog.getUser() != null) {
+            return false;
+        }
+        return vcsAccessLog.getAuthenticationMechanism() == AuthenticationMechanism.BUILD_JOB_TOKEN
+                || (vcsAccessLog.getName() != null && vcsAccessLog.getName().startsWith(VcsAccessLog.BUILD_AGENT_ACCESSOR_PREFIX));
     }
 }
