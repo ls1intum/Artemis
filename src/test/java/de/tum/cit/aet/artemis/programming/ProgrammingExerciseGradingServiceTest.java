@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
@@ -27,10 +29,12 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -71,6 +75,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     private ProgrammingExercise programmingExerciseSCAEnabled;
 
     private ProgrammingExercise programmingExercise;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     private Result result;
 
@@ -631,23 +638,40 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     /**
-     * A request that does not say whether the feedback is deleted keeps it, instead of failing because the flag is missing.
+     * A request that does not say whether the feedback of a removed grading instruction is deleted keeps it, instead of failing because the flag is missing.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void shouldReEvaluateTheExerciseWithoutTheFlagToDeleteFeedback() throws Exception {
+    void shouldKeepTheFeedbackOfARemovedGradingInstructionWhenTheRequestDoesNotSayToDeleteIt() throws Exception {
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
-        createTestCases(false);
-        createTestParticipations();
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(programmingExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+        participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(programmingExercise, TEST_PREFIX + "instructor1");
+        // the score of a result is computed from the credits of its feedback
+        participationUtilService.getResultsForExercise(programmingExercise).forEach(storedResult -> {
+            storedResult.getFeedbacks().forEach(feedback -> feedback.setCredits(1.0));
+            resultRepository.save(storedResult);
+        });
+        assertThat(feedbackOfTheResults()).isNotEmpty();
 
+        // the request leaves out the instruction that the feedback is linked to, and says nothing about deleting the feedback
+        gradingCriteria.removeIf(criterion -> criterion.getTitle() == null);
+        programmingExercise.setGradingCriteria(gradingCriteria);
         final String endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate";
         request.putWithResponseBody(endpoint, UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
                 ProgrammingExercise.class, HttpStatus.OK);
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+
+        assertThat(feedbackOfTheResults()).as("without the parameter, the feedback is not deleted").isNotEmpty();
+    }
+
+    private List<Feedback> feedbackOfTheResults() {
+        return participationUtilService.getResultsForExercise(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId())).stream()
+                .flatMap(result -> result.getFeedbacks().stream()).toList();
     }
 
     /**

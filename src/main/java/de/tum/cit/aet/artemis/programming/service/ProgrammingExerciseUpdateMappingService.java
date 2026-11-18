@@ -28,8 +28,10 @@ import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConf
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 
 /**
- * Applies an update request to a programming exercise and validates the result. The update and the re-evaluation of an exercise share it, so that both accept and refuse the
- * same requests.
+ * Applies an update request to a programming exercise and validates the result. The update and the re-evaluation of an exercise share the validation of the settings (the
+ * build configuration, the participation modes, the plagiarism detection, the settings that cannot be changed and the course), so that both refuse the same requests for these.
+ * Only the ordinary update also checks the stored references of the exercise: its template and solution repositories and build plans. The re-evaluation does not touch
+ * them, so it does not require them, see {@code checkReferences} of {@link #validateUpdatedExercise}.
  */
 @Profile(PROFILE_CORE)
 @Lazy
