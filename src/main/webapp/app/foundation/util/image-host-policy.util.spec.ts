@@ -27,6 +27,15 @@ describe('image host policy', () => {
             expect(isImageSourceAllowed('https://bücher.example/a.png')).toBe(true);
         });
 
+        it('keeps the sharp s and the final sigma, which are other domains than ss and the ordinary sigma', () => {
+            setAllowedImageHosts('faß.example, βόλος.example');
+
+            expect(isImageSourceAllowed('https://xn--fa-hia.example/a.png')).toBe(true);
+            expect(isImageSourceAllowed('https://fass.example/a.png')).toBe(false);
+            expect(isImageSourceAllowed('https://xn--nxasmm1c.example/a.png')).toBe(true);
+            expect(isImageSourceAllowed('https://xn--nxasmq6b.example/a.png')).toBe(false);
+        });
+
         it('does not widen an entry that is no plain host name', () => {
             setAllowedImageHosts('images.example.net:8443, images.example.org/path');
 
