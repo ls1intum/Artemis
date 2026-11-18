@@ -50,6 +50,18 @@ describe('image host policy', () => {
             expect(styleWithoutImages("color: red; font-family:'broken; background: url(https://unlisted.example/p.png)")).toBe('color: red');
         });
 
+        it('keeps the declarations after one with an escaped quote, and leaves that one out', () => {
+            expect(styleWithoutImages('font-family:"Research \\" Group"; color: red')).toBe('color: red');
+        });
+
+        it('does not let an escaped quote hide a function that follows inside the same string', () => {
+            expect(styleWithoutImages('font-family:"a\\"; background: url(https://unlisted.example/p.png)"; color: red')).toBe('color: red');
+        });
+
+        it('reads an escaped semicolon as part of its declaration', () => {
+            expect(styleWithoutImages('content: a\\;b; color: red')).toBe('color: red');
+        });
+
         it('keeps declarations without images apart', () => {
             expect(styleWithoutImages(' color: red ;; margin: 0 ;')).toBe('color: red;margin: 0');
         });

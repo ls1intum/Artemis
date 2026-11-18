@@ -155,31 +155,48 @@ function nextDescriptorState(state: DescriptorState, character: string): Descrip
 
 /**
  * Splits a `style` attribute at the semicolons that end a declaration, and not at those inside a string or inside parentheses, so that a value like `'Research; Group'`
- * stays as it was written.
+ * stays as it was written. A backslash escapes the next character, so an escaped quote does not end a string. The declaration with the backslash is left out later on, but
+ * the declarations after it are kept.
  * @param style the value of a `style` attribute
  */
 function splitDeclarations(style: string): string[] {
     const declarations: string[] = [];
-    let quote: string | undefined;
-    let depth = 0;
+    let state: ScanState = { quote: undefined, depth: 0 };
     let start = 0;
     for (let position = 0; position < style.length; position++) {
         const character = style[position];
-        if (quote) {
-            quote = character === quote ? undefined : quote;
-        } else if (character === '"' || character === "'") {
-            quote = character;
-        } else if (character === '(') {
-            depth++;
-        } else if (character === ')' && depth > 0) {
-            depth--;
-        } else if (character === ';' && depth === 0) {
+        if (character === '\\') {
+            // the escaped character ends nothing, whatever it is
+            position++;
+        } else if (character === ';' && state.quote === undefined && state.depth === 0) {
             declarations.push(style.substring(start, position));
             start = position + 1;
+        } else {
+            state = scanCharacter(character, state);
         }
     }
     declarations.push(style.substring(start));
     return declarations;
+}
+
+interface ScanState {
+    /** The quote that the string around the position was opened with. */
+    quote: string | undefined;
+    /** How many parentheses are open around the position. */
+    depth: number;
+}
+
+function scanCharacter(character: string, { quote, depth }: ScanState): ScanState {
+    if (quote) {
+        return { quote: character === quote ? undefined : quote, depth };
+    }
+    if (character === '"' || character === "'") {
+        return { quote: character, depth };
+    }
+    if (character === '(') {
+        return { quote, depth: depth + 1 };
+    }
+    return { quote, depth: character === ')' && depth > 0 ? depth - 1 : depth };
 }
 
 /**
