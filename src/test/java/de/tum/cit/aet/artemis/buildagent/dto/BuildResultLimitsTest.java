@@ -46,6 +46,20 @@ class BuildResultLimitsTest {
     }
 
     @Test
+    void skippedTestsDoNotDisplaceGradedResults() {
+        // One graded success and more skipped tests than the whole limit: the success carries points and must survive,
+        // the skipped tests may only use what capacity is left.
+        LocalCIJobDTO job = new LocalCIJobDTO(List.of(), List.of(TEST), Collections.nCopies(BuildResultLimits.MAX_TESTS, TEST));
+
+        BuildResult limited = BuildResultLimits.limit(result(List.of(job), List.of(), List.of()));
+
+        LocalCIJobDTO limitedJob = limited.jobs().getFirst();
+        assertThat(limitedJob.successfulTests()).as("the graded success is kept").hasSize(1);
+        assertThat(limitedJob.skippedTests()).as("skipped tests only use leftover capacity").hasSize(BuildResultLimits.MAX_TESTS - 1);
+        assertThat(limitedJob.failedTests().size() + limitedJob.successfulTests().size() + limitedJob.skippedTests().size()).isEqualTo(BuildResultLimits.MAX_TESTS);
+    }
+
+    @Test
     void failedTestsOfALaterJobAreKeptBeforeSuccessfulTestsOfAnEarlierJob() {
         LocalCIJobDTO first = new LocalCIJobDTO(List.of(), Collections.nCopies(BuildResultLimits.MAX_TESTS, TEST));
         LocalCIJobDTO second = new LocalCIJobDTO(Collections.nCopies(5, TEST), Collections.nCopies(10, TEST));

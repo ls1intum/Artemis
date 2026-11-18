@@ -355,6 +355,22 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     }
 
     @Test
+    void shouldCreateSkippedTestFeedbackWithReasonAndNotExecutedSemantics() {
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+
+        var withReason = feedbackCreationService.createSkippedTestFeedback("test1", List.of("Disabled: flaky"), testCases).orElseThrow();
+        assertThat(withReason.isPositive()).isNull();
+        assertThat(withReason.getMessageText()).isEqualTo("This test was skipped, so it did not run. Reason: Disabled: flaky");
+
+        var withoutReason = feedbackCreationService.createSkippedTestFeedback("test2", List.of(), testCases).orElseThrow();
+        assertThat(withoutReason.isPositive()).isNull();
+        assertThat(withoutReason.getMessageText()).isEqualTo("This test was skipped, so it did not run.");
+
+        // A skipped test the exercise does not know yields no feedback, like any other unknown test.
+        assertThat(feedbackCreationService.createSkippedTestFeedback("aTestTheExerciseDoesNotKnow", List.of(), testCases)).isEmpty();
+    }
+
+    @Test
     void shouldGenerateNewTestCases() {
         // We do not want to use the test cases generated in the setup
         testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
@@ -863,6 +879,35 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
             assertThat(testFeedback.isPositive()).isFalse();
             assertThat(testFeedback.getMessageText()).contains("setup exploded");
         });
+    }
+
+    @Test
+    void skippedTestIsShownWithItsReasonWhenProcessingABuildResult() throws IOException {
+        // A report where one test passed and another was skipped (e.g. @Disabled or a failed assumption), with the skip reason.
+        registerClassifiedSolutionTests();
+        String report = """
+                <testsuite name="de.tum.Outer" tests="2" skipped="1">
+                    <testcase name="outerTest" classname="de.tum.Outer"/>
+                    <testcase name="innerTest" classname="de.tum.Outer$Inner"><skipped message="Disabled until bug #42 is fixed"/></testcase>
+                </testsuite>
+                """;
+        List<LocalCITestJobDTO> failedTests = new ArrayList<>();
+        List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        List<LocalCITestJobDTO> skippedTests = new ArrayList<>();
+        TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests, skippedTests);
+        var buildResult = new BuildResult("main", "assignment", "tests", false, null, List.of(new LocalCIJobDTO(failedTests, successfulTests, skippedTests)), List.of(), List.of(),
+                false, 0);
+        var participation = mock(ProgrammingExerciseParticipation.class);
+        when(participation.getProgrammingExercise()).thenReturn(programmingExercise);
+
+        Result result = localCIResultService.createResultFromBuildResult(buildResult, participation);
+
+        var feedback = feedbackByTestName(result);
+        assertThat(feedback).containsOnlyKeys("outerTest", "innerTest");
+        assertThat(feedback.get("outerTest").isPositive()).isTrue();
+        // The skipped test is neither passed nor failed, and keeps its reason instead of the generic "no result" message.
+        assertThat(feedback.get("innerTest").isPositive()).isNull();
+        assertThat(feedback.get("innerTest").getMessageText()).isEqualTo("This test was skipped, so it did not run. Reason: Disabled until bug #42 is fixed");
     }
 
     @Test

@@ -105,6 +105,8 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private static final String LONG_MESSAGE_TRUNCATION_MARKER = "\n\n[Feedback truncated: exceeded maximum length]";
 
+    private static final String SKIPPED_TEST_MESSAGE = "This test was skipped, so it did not run.";
+
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -280,6 +282,36 @@ public class ProgrammingExerciseFeedbackCreationService {
         }
 
         return Optional.of(buildTestCaseFeedback(testCase.get(), successful, resolveMessage(testMessages, successful, exercise)));
+    }
+
+    /**
+     * Creates a feedback row for a test the build reported as skipped (JUnit {@code <skipped>}, e.g. a disabled test or a
+     * failed assumption), matched to its active test case. The row carries the skip reason if the build reported one, and
+     * keeps the not-executed grading semantics (positive = {@code null}): the test counts towards the total, but not as
+     * passed. This is what lets a skipped test be told apart from one that produced no result at all.
+     *
+     * @param testName        the skipped test case's name
+     * @param skipMessages    the skip reason(s) reported by the build, if any
+     * @param activeTestCases all active test cases of the exercise
+     * @return the feedback row, or an empty Optional if the test is not known to Artemis
+     */
+    public Optional<TestCaseFeedback> createSkippedTestFeedback(String testName, List<String> skipMessages, Set<ProgrammingExerciseTestCase> activeTestCases) {
+        String storedTestName = ProgrammingExerciseTestCase.normalizeTestName(testName);
+        var testCase = activeTestCases.stream().filter(test -> storedTestName.equalsIgnoreCase(test.getTestName())).findAny();
+        if (testCase.isEmpty()) {
+            return Optional.empty();
+        }
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(testCase.get());
+        feedback.setPositive(null);
+        feedback.setMessage(feedbackMessageService.getOrCreate(buildSkippedMessageText(skipMessages)));
+        return Optional.of(feedback);
+    }
+
+    private String buildSkippedMessageText(List<String> skipMessages) {
+        String reason = skipMessages.stream().filter(message -> message != null && !message.isBlank()).map(String::trim).collect(Collectors.joining("\n\n"));
+        String message = reason.isEmpty() ? SKIPPED_TEST_MESSAGE : SKIPPED_TEST_MESSAGE + " Reason: " + reason;
+        return truncateTestMessage(message);
     }
 
     /**
