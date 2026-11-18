@@ -1,3 +1,4 @@
+import { AiModeSelectorComponent } from './ai-mode-selector.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LLMSelectionModalComponent } from './llm-selection-popup.component';
@@ -245,6 +246,23 @@ describe('LLMSelectionModalComponent', () => {
             expect(component.isVisible()).toBe(false);
         });
     });
+
+    it.each([LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.LOCAL_AI, LLMSelectionDecision.NO_AI])(
+        'should resolve the shared selector choice %s through the AET dialog',
+        (selection) => {
+            fixture.detectChanges();
+            component.open();
+            fixture.detectChanges();
+            const choiceSpy = vi.spyOn(component.choice, 'emit');
+            const selector = fixture.debugElement.query(By.directive(AiModeSelectorComponent)).componentInstance as AiModeSelectorComponent;
+
+            selector.choice.emit(selection);
+
+            expect(choiceSpy).toHaveBeenCalledWith(selection);
+            expect(modalService.emitChoice).toHaveBeenCalledWith(selection);
+            expect(component.isVisible()).toBe(false);
+        },
+    );
 
     describe('currentSelection', () => {
         it('should set currentSelection when modal is opened with a selection', () => {

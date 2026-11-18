@@ -4,8 +4,9 @@ import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { Subject, of } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
 import { By } from '@angular/platform-browser';
 import { CreateTutorialGroupsConfigurationComponent } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
@@ -88,5 +89,34 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-checklist']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();
         expect(updateCourseSpy).toHaveBeenCalledWith(component.course());
+    });
+
+    it('keeps the form open on save failure and clears loading', () => {
+        const request = new Subject<TutorialGroupConfiguration>();
+        vi.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(request);
+        const navigate = vi.spyOn(router, 'navigate');
+        const updateCourse = vi.spyOn(courseStorageService, 'updateCourse');
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        component.createTutorialsGroupConfiguration(tutorialsGroupsConfigurationDtoToFormData(generateExampleTutorialGroupsConfigurationDTO({})));
+        expect(component.isLoading()).toBe(true);
+        request.error(new HttpErrorResponse({ status: 403 }));
+        expect(component.isLoading()).toBe(false);
+        expect(navigate).not.toHaveBeenCalled();
+        expect(updateCourse).not.toHaveBeenCalled();
+        expect(alert).toHaveBeenCalledOnce();
+    });
+
+    it('cancels an unfinished save on destroy without navigating', () => {
+        const request = new Subject<TutorialGroupConfiguration>();
+        vi.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(request);
+        const navigate = vi.spyOn(router, 'navigate');
+
+        component.createTutorialsGroupConfiguration(tutorialsGroupsConfigurationDtoToFormData(generateExampleTutorialGroupsConfigurationDTO({})));
+        component.ngOnDestroy();
+        request.next(generateExampleTutorialGroupsConfigurationDTO({}));
+        expect(component.isLoading()).toBe(false);
+        expect(request.observed).toBe(false);
+        expect(navigate).not.toHaveBeenCalled();
     });
 });
