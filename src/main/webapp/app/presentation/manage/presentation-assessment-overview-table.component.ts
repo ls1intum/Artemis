@@ -8,6 +8,7 @@ import { PresentationAssessmentStudentRowsRequest } from 'app/presentation/share
 import { PresentationAssessmentInstanceDetailsComponent } from 'app/presentation/manage/presentation-assessment-instance-details.component';
 import { PresentationInstanceActionsComponent } from 'app/presentation/manage/presentation-instance-actions.component';
 import { PresentationStudentToggleComponent } from 'app/presentation/manage/presentation-student-toggle.component';
+import { PresentationResultTagComponent } from 'app/presentation/manage/presentation-result-tag.component';
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
 
 /** Lists the presenters of all presentations of a course, one row per student and presentation. */
@@ -26,6 +27,7 @@ import { PresentationStudentTableRow } from 'app/presentation/manage/presentatio
         PresentationAssessmentInstanceDetailsComponent,
         PresentationInstanceActionsComponent,
         PresentationStudentToggleComponent,
+        PresentationResultTagComponent,
     ],
 })
 export class PresentationAssessmentOverviewTableComponent {
