@@ -278,11 +278,13 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     private tabbableElements(): HTMLElement[] {
         const candidates = Array.from(this.panelElement()?.querySelectorAll<HTMLElement>('*') ?? []);
         // Visibility is asked of the browser: the CDK check needs layout, which a test environment does not provide.
-        return candidates.filter(
-            (element) =>
-                this.interactivityChecker.isFocusable(element, { ignoreVisibility: true }) &&
-                this.interactivityChecker.isTabbable(element) &&
-                (typeof element.checkVisibility !== 'function' || element.checkVisibility({ visibilityProperty: true })),
+        return sequentialFocusOrder(
+            candidates.filter(
+                (element) =>
+                    this.interactivityChecker.isFocusable(element, { ignoreVisibility: true }) &&
+                    this.interactivityChecker.isTabbable(element) &&
+                    (typeof element.checkVisibility !== 'function' || element.checkVisibility({ visibilityProperty: true })),
+            ),
         );
     }
 
@@ -325,4 +327,14 @@ export class TumAetUiPopoverComponent implements OnDestroy {
         this.positionSub?.unsubscribe();
         this.overlayRef?.dispose();
     }
+}
+
+/**
+ * The order in which Tab visits elements: those with a positive `tabindex` first, from the lowest value up, then all others in document order. Elements with the same
+ * value keep their document order, because the sort is stable. The first and the last element of this order are where Tab enters and leaves the panel.
+ * @param elements the tabbable elements of a panel, in document order
+ */
+function sequentialFocusOrder(elements: HTMLElement[]): HTMLElement[] {
+    const prioritized = elements.filter((element) => element.tabIndex > 0).sort((a, b) => a.tabIndex - b.tabIndex);
+    return [...prioritized, ...elements.filter((element) => element.tabIndex <= 0)];
 }

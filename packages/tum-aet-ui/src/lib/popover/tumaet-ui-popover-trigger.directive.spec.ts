@@ -401,3 +401,82 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
         expect(isOpen()).toBe(false);
     });
 });
+
+@Component({
+    template: `
+        <button [tumAetUiPopoverTrigger]="pop" data-testid="trigger">Theme</button>
+        <tumaet-ui-popover #pop openOn="hover" ariaLabel="Theme options">
+            <button data-testid="later" tabindex="2">Later</button>
+            <button data-testid="earlier" tabindex="1">Earlier</button>
+            <button data-testid="unprioritized">Unprioritized</button>
+        </tumaet-ui-popover>
+    `,
+    imports: [TumAetUiPopoverTriggerDirective, TumAetUiPopoverComponent],
+})
+class PositiveTabindexHostComponent {}
+
+describe('TumAetUiPopoverTriggerDirective with positive tabindex values in a hover popover', () => {
+    let fixture: ComponentFixture<PositiveTabindexHostComponent>;
+    let trigger: HTMLButtonElement;
+
+    const inPanel = (testId: string) => document.querySelector<HTMLElement>('[role="dialog"]')!.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`)!;
+    const tab = (target: HTMLElement, shiftKey = false) => {
+        const event = new KeyboardEvent('keydown', { key: 'Tab', shiftKey, bubbles: true, cancelable: true });
+        target.dispatchEvent(event);
+        return event;
+    };
+
+    beforeEach(async () => {
+        vi.useFakeTimers();
+        await TestBed.configureTestingModule({ imports: [PositiveTabindexHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(PositiveTabindexHostComponent);
+        document.body.appendChild(fixture.nativeElement);
+        fixture.detectChanges();
+        trigger = fixture.nativeElement.querySelector('[data-testid="trigger"]');
+        trigger.focus();
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        fixture.nativeElement.remove();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('enters the panel at the control that the browser visits first, not at the first one in the document', () => {
+        const event = tab(trigger);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(inPanel('earlier'));
+    });
+
+    it('stays in the panel on Tab from a control with a positive tabindex that is not the last in the order', () => {
+        inPanel('earlier').focus();
+
+        const event = tab(inPanel('earlier'));
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('leaves the panel on Tab from the last control of the order, which has no positive tabindex', () => {
+        inPanel('unprioritized').focus();
+
+        tab(inPanel('unprioritized'));
+        fixture.detectChanges();
+
+        expect(document.activeElement).toBe(trigger);
+        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('returns to the trigger on Shift+Tab from the control that the browser visits first', () => {
+        inPanel('earlier').focus();
+
+        const event = tab(inPanel('earlier'), true);
+        fixture.detectChanges();
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(document.activeElement).toBe(trigger);
+    });
+});
