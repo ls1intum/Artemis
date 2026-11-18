@@ -6,10 +6,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -20,6 +22,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -456,6 +459,77 @@ class LocalVCAccessLogRecorderServiceTest {
 
         verify(vcsAccessLogService).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.PUSH, AuthenticationMechanism.SSH, "pushed", "10.0.0.2");
         verify(vcsAccessLogService).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.PUSH_FAIL, AuthenticationMechanism.SSH, "before", "10.0.0.2");
+    }
+
+    private GitOperationAudit auditOfAClone() {
+        var audit = new GitOperationAudit();
+        audit.onBeginNegotiateRound(0);
+        audit.onPackSent("head");
+        return audit;
+    }
+
+    @Test
+    void anEntryIsWrittenByAThreadThatWasInterruptedAndTheInterruptIsPassedOn() {
+        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        var stored = new AtomicInteger();
+        doAnswer(invocation -> {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new IllegalStateException("no connection was acquired", new InterruptedException());
+            }
+            stored.incrementAndGet();
+            return null;
+        }).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+
+        Thread.currentThread().interrupt();
+        try {
+            accessLogRecorder.recordFetch(subject, auditOfAClone());
+
+            assertThat(stored).hasValue(1);
+            assertThat(Thread.currentThread().isInterrupted()).as("the interrupt is not lost").isTrue();
+        }
+        finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void anEntryIsWrittenOnceMoreWhenTheInterruptArrivesWhileItIsWritten() {
+        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        var calls = new AtomicInteger();
+        var stored = new AtomicInteger();
+        doAnswer(invocation -> {
+            if (calls.incrementAndGet() == 1) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("no connection was acquired", new InterruptedException());
+            }
+            if (Thread.currentThread().isInterrupted()) {
+                throw new IllegalStateException("no connection was acquired", new InterruptedException());
+            }
+            stored.incrementAndGet();
+            return null;
+        }).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+
+        try {
+            accessLogRecorder.recordFetch(subject, auditOfAClone());
+
+            assertThat(calls).hasValue(2);
+            assertThat(stored).hasValue(1);
+            assertThat(Thread.currentThread().isInterrupted()).as("the interrupt is not lost").isTrue();
+        }
+        finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void aFailureThatIsNoInterruptIsNotWrittenAgainAndLeavesTheThreadAlone() {
+        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        doThrow(new IllegalStateException("the database is away")).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+
+        accessLogRecorder.recordFetch(subject, auditOfAClone());
+
+        verify(vcsAccessLogService, times(1)).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+        assertThat(Thread.currentThread().isInterrupted()).isFalse();
     }
 
     @Test
