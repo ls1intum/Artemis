@@ -247,10 +247,10 @@ describe('PasskeyAuthenticationPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const infoAlert = fixture.nativeElement.querySelector('.alert-info');
+        const infoAlert = fixture.nativeElement.querySelector('tumaet-ui-message[severity="info"]');
         expect(infoAlert).toBeTruthy();
 
-        const alertText = infoAlert.querySelector('p[jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"]');
+        const alertText = infoAlert.querySelector('[jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"]');
         expect(alertText).toBeTruthy();
     });
 
@@ -284,10 +284,10 @@ describe('PasskeyAuthenticationPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const warningAlert = fixture.nativeElement.querySelector('.alert-warning');
+        const warningAlert = fixture.nativeElement.querySelector('tumaet-ui-message[severity="warn"]');
         expect(warningAlert).toBeTruthy();
 
-        const alertText = warningAlert.querySelector('p[jhiTranslate="global.menu.admin.passkeyNotYetApproved"]');
+        const alertText = warningAlert.querySelector('[jhiTranslate="global.menu.admin.passkeyNotYetApproved"]');
         expect(alertText).toBeTruthy();
     });
 

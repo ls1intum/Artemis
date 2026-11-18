@@ -14,8 +14,18 @@
     }
 }
 
-.content-hits-row-spaced {
+.content-hits-row-spaced,
+.search-results-spaced {
     margin-top: 1rem;
+}
+
+.no-results-state {
+    color: var(--secondary);
+}
+
+.no-results-hint {
+    font-size: 0.875em;
+    color: color-mix(in srgb, var(--body-color) 50%, transparent);
 }
 
 .content-hits-row-inner {
@@ -41,6 +51,8 @@
 }
 
 .show-more-results-btn {
+    border: 0;
+    background: transparent;
     font-size: 0.8125rem;
     color: var(--primary);
     cursor: pointer;

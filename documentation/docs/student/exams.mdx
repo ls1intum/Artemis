@@ -2,7 +2,7 @@
 id: exams
 title: Exams
 sidebar_label: Exams
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-18
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -10,8 +10,8 @@ import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
 import examReloadAlert from './assets/exams/reload.png';
 
-Artemis runs exams in the browser. You work through the exercises inside a fixed window of time, hand in, and later
-see your results and your grade in the same place.
+In Artemis, you open the exam in your browser, work through the exercises within the time limit, and hand in.
+You can return later to see your results and grade.
 
 | Page | Description |
 |------|-------------|
@@ -21,38 +21,44 @@ see your results and your grade in the same place.
 
 ## Before You Start
 
-You need a stable internet connection — a wired one if you have the choice — and a current browser. Chromium-based
-browsers such as Chrome and Edge get the most testing.
+Check the date, start time, and any registration requirements in your instructor's exam instructions. Before exam
+day, make sure you can sign in to the Artemis instance your institution uses and open the course. Use an up-to-date
+browser and check that your device can connect to the network you will use during the exam.
 
-If your exam contains programming exercises, check with your instructor whether you are expected to work in the
-browser, in your own editor, or either. If you may use your own machine you need the toolchain for the exercise's
-language installed and working *before* the exam, along with a Git client. Most editors have one built in. Setting
-up repository access, including SSH keys, is described under
-[Integrated Code Lifecycle](/student/tools-reference/integrated-code-lifecycle) — do it in advance, not on the day.
+Check which tools and resources your instructor permits, including AI assistants built into editors. Disable any
+features that the exam rules prohibit.
+
+For programming exercises, check whether you will use the browser editor, a local editor, or either. If you will work
+locally, install the required toolchain and Git client in advance. Set up repository access and test that you can
+clone and push a practice repository. See [Integrated Code Lifecycle](/student/tools-reference/integrated-code-lifecycle).
+
+If your course offers a practice exam, look for it under **Practice Exams** on the **Exams** page. Use it to try the
+exam workflow, including submitting an exercise and handing in the whole attempt.
 
 ## What Happens If Your Connection Drops
 
-Artemis tolerates a short outage. Text, quiz and modeling exercises keep working while you are offline, though you
-may see warnings that your work cannot be saved; when the connection returns, Artemis saves it. Your work is saved
-every 30 seconds and whenever you move between exercises.
+Keep the exam tab open. You can continue working on text, quiz and modeling answers during a short outage. Artemis
+retries saving them when the connection returns. Check the exercise status in the sidebar or **Overview** to make
+sure your answers reached Artemis.
 
-Programming exercises are different, because they need the server. In the online editor you have to submit
-explicitly, and if you work in your own editor you need a connection to clone at the start and to push at the end.
+You can keep editing and committing code locally during an outage. You need a connection to clone or push a
+repository, submit from the browser editor, or upload a file. If you cannot reconnect or save your work, contact the
+exam supervisor promptly using the method your instructor provided.
 
 <Callout variant={CalloutVariant.danger}>
 
-  You must be online and submitted before the working time plus the grace period runs out. An exam that is never
-  submitted is not graded.
+  You need a connection to [hand in the exam](/student/exams/take-an-exam#hand-in) before the submission deadline.
 
 </Callout>
 
 ## Two Rules Worth Following
 
-**Do not reload the page.** Reloading returns you to the welcome screen, where you have to enter your name and
-confirm the rules again. Reload only if something has broken in a way nothing else fixes.
+**Keep the exam open in one browser tab.** Working in several tabs, windows or devices can make changes overwrite
+each other.
 
-**Work in one tab.** Two tabs on the same exam cause your work to be saved out of order, and the pattern is
-recorded as suspicious behaviour that your instructors will look into. Other Artemis tabs are fine, as long as only
-one of them has the exam open.
+**Reload only if you cannot recover otherwise.** For example, if the timer still looks wrong after checking your
+connection and exam notifications, save your work and check its status before reloading. Unsaved changes can be
+lost. If the welcome screen reappears, confirm the rules and enter your name again. Check your answers after you
+return to the exam.
 
 <Image src={examReloadAlert} alt="Warning shown after reloading during an exam" size={ImageSize.large} caption="Reloading during an exam produces a warning" />

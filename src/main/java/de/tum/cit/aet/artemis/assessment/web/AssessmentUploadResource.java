@@ -30,6 +30,9 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller that lets instructors upload manual assessments for the participants of a programming exercise at once.
@@ -128,6 +131,7 @@ public class AssessmentUploadResource {
      * @return {@code 200 (OK)} with the generated template zip as an attachment
      */
     @GetMapping("exercises/{exerciseId}/manual-assessments/template")
+    @ApiResponse(responseCode = "200", description = "The template zip; its file name is in the filename header.", content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary")))
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<byte[]> downloadManualAssessmentTemplate(@PathVariable final long exerciseId) {
         log.debug("REST request to download the manual-assessment template for programming exercise {}", exerciseId);

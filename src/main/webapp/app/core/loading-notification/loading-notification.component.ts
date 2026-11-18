@@ -1,13 +1,18 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
 
 @Component({
     selector: 'jhi-loading-notification',
+    imports: [TumAetUiProgressSpinnerComponent, ArtemisTranslatePipe],
+    // The spinner sits on the dark navbar in both themes; the component draws in the primary colour and has no colour input.
+    styles: ':host { display: flex; --tumaet-ui-primary-color: var(--white); }',
     template: `
         @if (isLoading()) {
-            <div class="spinner-border" role="status" style="width: 18px; height: 18px; color: white"></div>
+            <tumaet-ui-progress-spinner style="width: 18px; height: 18px" [ariaLabel]="'loading' | artemisTranslate" />
         }
     `,
 })
