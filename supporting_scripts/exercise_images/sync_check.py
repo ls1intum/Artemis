@@ -114,8 +114,10 @@ SOURCES = {
         Source("haskell/solution/solution.cabal", "Dockerfile"),
     ],
 }
+# The coordinate of the Go version; it has its own name so that no dependency (an npm package called `go`) can be mistaken for it
+GO_TOOLCHAIN = "go toolchain"
 # Coordinates whose template version may be lower than the one of the image (a toolchain that is at least as new as requested)
-AT_MOST_COORDINATES = {"go"}
+AT_MOST_COORDINATES = {GO_TOOLCHAIN}
 # Packages every GHC installation has without a download
 HASKELL_BOOT_PACKAGES = {"base"}
 
@@ -345,31 +347,45 @@ def csproj_versions(text: str) -> Versions:
     return versions
 
 
+GO_VERSION = re.compile(r"(\d+)\.(\d+)(?:\.(\d+))?(?:(beta|rc)(\d+))?")
+
+
 def _release(version: str) -> tuple[int, ...]:
-    """``1.23`` and ``1.23.2`` as comparable tuples; a Go release without a patch number is its ``.0``."""
-    numbers = tuple(int(part) for part in version.split("."))
-    return numbers + (0,) * (3 - len(numbers))
+    """A Go version as a comparable tuple, in the order of Go: ``1.23rc1`` < ``1.23`` (= ``1.23.0``) < ``1.23.2``.
+
+    Raises ``ValueError`` for a version that is not in the notation of Go, which a comparison could not rely on.
+    """
+    match = GO_VERSION.fullmatch(version)
+    if not match:
+        raise ValueError(f"{version} is not a Go version")
+    major, minor, patch, stage, stage_number = match.groups()
+    return int(major), int(minor), int(patch or 0), {"beta": 0, "rc": 1, None: 2}[stage], int(stage_number or 0)
 
 
 def go_mod_versions(text: str) -> Versions:
     """The Go version a ``go.mod`` asks for (``go`` directive) and its ``toolchain`` line, if any."""
     versions: Versions = {}
     for line in text.splitlines():
-        match = re.fullmatch(r"\s*(?:go|toolchain)\s+(?:go)?(\d+(?:\.\d+){1,2})\s*(?://.*)?", line)
+        match = re.fullmatch(r"\s*(go|toolchain)\s+(\S+)\s*(?://.*)?", line)
         if match:
-            versions.setdefault("go", set()).add(match.group(1))
+            version = match.group(2)
+            # A toolchain line names the toolchain (`go1.23.5`), the directive the language version (`1.23.5`)
+            versions.setdefault(GO_TOOLCHAIN, set()).add(version.removeprefix("go") if match.group(1) == "toolchain" else version)
     return versions
 
 
 def stack_resolver(text: str) -> Versions:
-    """The Stackage snapshot (``resolver``) of a ``stack.yaml``."""
-    match = re.search(r"^resolver:\s*(\S+)", text, re.MULTILINE)
+    """The Stackage snapshot (``resolver``, or its alias ``snapshot``) of a ``stack.yaml``, with or without quotes."""
+    match = re.search(r"^(?:resolver|snapshot):\s*[\"']?([^\s\"'#]+)", text, re.MULTILINE)
     return {"resolver": {match.group(1)}} if match else {}
 
 
 def cabal_packages(text: str) -> Versions:
-    """The packages a cabal file depends on without the ones it defines itself (its libraries and executables) and ``base``."""
-    local = {match.group(1) for match in re.finditer(r"^(?:library|executable|test-suite|benchmark)\s+(\S+)", text, re.MULTILINE)}
+    """The packages a cabal file depends on without its own libraries and ``base``.
+
+    Executables and test suites are no dependencies, so a package that has the name of one of them is still compared.
+    """
+    local = {match.group(1) for match in re.finditer(r"^library\s+(\S+)", text, re.MULTILINE)}
     local |= {match.group(1) for match in re.finditer(r"^name:\s*(\S+)", text, re.MULTILINE)}
     packages: set[str] = set()
     lines = [line for line in text.splitlines() if not line.lstrip().startswith("--")]
@@ -390,11 +406,15 @@ def cabal_packages(text: str) -> Versions:
 
 
 def dockerfile_versions(text: str) -> Versions:
-    """The Go toolchain of the base image and the Haskell packages (``--package``) the image builds ahead."""
+    """The Go toolchain of the image that is published (the last ``FROM``) and the Haskell packages (``--package``) it builds ahead."""
+    # Dockerfile comments are whole lines, also between the lines of a command
+    lines = [line for line in text.splitlines() if not line.lstrip().startswith("#")]
     versions: Versions = {}
-    for match in re.finditer(r"^FROM\s+(?:\S*/)?golang:(\d+(?:\.\d+){1,2})", text, re.MULTILINE):
-        versions.setdefault("go", set()).add(match.group(1))
-    for match in re.finditer(r"--package\s+([A-Za-z][\w-]*)", text):
+    stages = [match.group(1) for line in lines if (match := re.match(r"\s*FROM\s+(?:--\S+\s+)*(\S+)", line, re.IGNORECASE))]
+    published = re.fullmatch(r"(?:\S*/)?golang:(\d+\.\d+(?:\.\d+)?(?:(?:beta|rc)\d+)?)(?:[-@]\S*)?", stages[-1]) if stages else None
+    if published:
+        versions[GO_TOOLCHAIN] = {published.group(1)}
+    for match in re.finditer(r"--package\s+([A-Za-z][\w-]*)", "\n".join(lines)):
         versions[f"package {match.group(1)}"] = {"cached"}
     return versions
 
@@ -438,8 +458,11 @@ def compare(template: Versions, image: Versions) -> list[str]:
             if held is None:
                 problems.append(f"{label} is not in the image")
             elif coordinate in AT_MOST_COORDINATES:
-                if any(_release(version) > _release(newest) for newest in held):
-                    problems.append(f"{label} is newer than the image ({', '.join(sorted(held))})")
+                try:
+                    if any(_release(version) > _release(newest) for newest in held):
+                        problems.append(f"{label} is newer than the image ({', '.join(sorted(held))})")
+                except ValueError as error:
+                    problems.append(f"{label} cannot be compared with the image ({', '.join(sorted(held))}): {error}")
             elif version not in held:
                 problems.append(f"{label} differs from the image ({', '.join(sorted(held))})")
     return problems
@@ -480,6 +503,9 @@ def check_language(language: str, image: str, templates_dir: Path = TEMPLATES_DI
                 properties = gradle_properties(fetch(f"{base_url}/{entry.image_properties}")) if entry.image_properties else None
                 image_files[entry.image_file] = versions_of(entry.image_file, fetch(f"{base_url}/{entry.image_file}"), properties)
             template = versions_of(entry.template_file, (templates_dir / entry.template_file).read_text(encoding="utf-8"))
+            if not template and entry.template_file.endswith(("go.mod", "stack.yaml")):
+                # Nothing to compare would pass for any image
+                problems.append(f"{entry.template_file}: no Go version or Stack snapshot found, the file has to name one")
             problems += [f"{entry.template_file}: {problem}" for problem in compare(template, image_files[entry.image_file])]
     except (urllib.error.URLError, TimeoutError) as error:
         url = error.geturl() if isinstance(error, urllib.error.HTTPError) else base_url

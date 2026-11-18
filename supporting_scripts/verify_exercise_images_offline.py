@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Builds the exercise templates of Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart, C#, Python, R, C, C++, Go, OCaml, Bash, VHDL, Assembler and Haskell in their default images without network access.
+"""Builds the exercise templates of Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart, C#, Python, R, C, C++, Go, OCaml, Bash, VHDL, Assembler and Haskell in the images configured in ``application.yml`` without network access.
 
 Assembles the test and assignment repositories like the server does, runs the build phases of
-``src/main/resources/templates/phases`` in the image configured in ``application.yml`` and fails when a build needs
+``src/main/resources/templates/phases`` in the image configured there (the default image of the language, or the image of its project type where it has one, as for C) and fails when a build needs
 anything the image does not hold. It needs Docker and pulls the images, so it runs nightly, not on every pull request;
 ``check_exercise_image_sync.py`` is the cheap check for pull requests.
 
@@ -25,7 +25,7 @@ def main() -> int:
     parser.add_argument("--variant", action="append", help="build only this variant (repeatable), see --list")
     parser.add_argument("--language", action="append", choices=sorted({variant.language for variant in VARIANTS}), help="build only the variants of this language (repeatable)")
     parser.add_argument("--list", action="store_true", help="list the variants and exit")
-    parser.add_argument("--image", action="append", default=[], metavar="LANGUAGE=IMAGE", help="use this image instead of the configured default")
+    parser.add_argument("--image", action="append", default=[], metavar="LANGUAGE=IMAGE", help="use this image instead of the configured one (default or project type image)")
     parser.add_argument("--platform", help="docker platform, e.g. linux/amd64 for an image that is not published for arm64")
     parser.add_argument("--work-dir", type=Path, help="keep the repositories and logs here (default: a temporary directory)")
     args = parser.parse_args()

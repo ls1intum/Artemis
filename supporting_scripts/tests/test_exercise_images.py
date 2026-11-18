@@ -185,7 +185,8 @@ class VerifyLogTest(unittest.TestCase):
             stdout.write(log_text)
             return subprocess.CompletedProcess(command, returncode)
 
-        with tempfile.TemporaryDirectory() as directory, patch.object(offline.subprocess, "run", run):
+        # These tests are about the log of the build, the reports of the build are tested below
+        with tempfile.TemporaryDirectory() as directory, patch.object(offline.subprocess, "run", run), patch.object(offline, "missing_reports", return_value=[]):
             return offline.verify(TEMPLATES_DIR, assembly.Variant("rust", None), "image:1", Path(directory))
 
     def test_a_cargo_download_failure_is_named(self):
@@ -206,7 +207,7 @@ class VerifyLogTest(unittest.TestCase):
             stdout.write(log_text)
             return subprocess.CompletedProcess(command, returncode)
 
-        with tempfile.TemporaryDirectory() as directory, patch.object(offline.subprocess, "run", run):
+        with tempfile.TemporaryDirectory() as directory, patch.object(offline.subprocess, "run", run), patch.object(offline, "missing_reports", return_value=[]):
             return offline.verify(TEMPLATES_DIR, assembly.Variant("swift", "plain"), "image:1", Path(directory)), len(remaining)
 
     FLAKE = "<unknown>:0: error: module 'SwiftShims' is defined in both 'a.pcm' and 'b.pcm'\n"
@@ -230,6 +231,41 @@ class VerifyLogTest(unittest.TestCase):
         result = self._verify("Compiling\n", 0)
         self.assertTrue(result.passed)
         self.assertEqual(result.missing, [])
+
+
+class TestReportTest(unittest.TestCase):
+    """A build that exits with 0 only passes when its test phases left a report with a test case."""
+
+    PHASES = phases.parse_phases(
+        "- name: test\n  script: 'run-tests || true'\n  resultPaths:\n    - '${testWorkingDirectory}/report.xml'\n    - 'other/*.xml'\n"
+        "- name: static_code_analysis\n  script: analyze\n  forceRun: true\n  resultPaths:\n    - 'analysis.xml'\n"
+    )
+
+    def test_the_result_paths_of_a_phase_are_read(self):
+        self.assertEqual(self.PHASES[0].result_paths, ("${testWorkingDirectory}/report.xml", "other/*.xml"))
+        self.assertEqual(self.PHASES[1].result_paths, ("analysis.xml",))
+        self.assertEqual(phases.load_phases(TEMPLATES_DIR, "c", "gcc.yaml")[-1].result_paths, ("test-reports/*.xml",))
+
+    def test_a_missing_report_or_one_without_a_test_case_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            problems = offline.missing_reports(repository, self.PHASES)
+            self.assertEqual(problems, ["The phase test left no test report with a test case (tests/report.xml, other/*.xml)"])
+            (repository / "tests").mkdir()
+            (repository / "tests" / "report.xml").write_text("<testsuites/>", encoding="utf-8")
+            self.assertEqual(len(offline.missing_reports(repository, self.PHASES)), 1)
+            (repository / "other").mkdir()
+            (repository / "other" / "a.xml").write_text('<testsuite><testcase name="x"/></testsuite>', encoding="utf-8")
+            self.assertEqual(offline.missing_reports(repository, self.PHASES), [])
+
+    def test_a_successful_build_without_a_report_does_not_pass(self):
+        def run(command, stdout, **_):
+            return subprocess.CompletedProcess(command, 0)
+
+        with tempfile.TemporaryDirectory() as directory, patch.object(offline.subprocess, "run", run):
+            result = offline.verify(TEMPLATES_DIR, assembly.Variant("c", "gcc"), "image:1", Path(directory))
+        self.assertFalse(result.passed)
+        self.assertEqual(result.missing, ["The phase test left no test report with a test case (test-reports/*.xml)"])
 
 
 class AssemblyTest(unittest.TestCase):
@@ -760,21 +796,49 @@ executable test
 
 
 class GoAndHaskellTest(unittest.TestCase):
+    GO = sync_check.GO_TOOLCHAIN
+
     def test_go_mod_and_dockerfile_name_the_go_version(self):
-        self.assertEqual(sync_check.versions_of("go.mod", "module artemis/test\n\ngo 1.23.2\n\ntoolchain go1.23.5\n"), {"go": {"1.23.2", "1.23.5"}})
-        self.assertEqual(sync_check.versions_of("Dockerfile", GO_DOCKERFILE), {"go": {"1.23.3"}})
-        self.assertEqual(sync_check.versions_of("Dockerfile", "FROM docker.io/library/golang:1.24\n"), {"go": {"1.24"}})
+        self.assertEqual(sync_check.versions_of("go.mod", "module artemis/test\n\ngo 1.23.2\n\ntoolchain go1.23.5\n"), {self.GO: {"1.23.2", "1.23.5"}})
+        self.assertEqual(sync_check.versions_of("Dockerfile", GO_DOCKERFILE), {self.GO: {"1.23.3"}})
+        self.assertEqual(sync_check.versions_of("Dockerfile", "FROM docker.io/library/golang:1.24-bookworm\n"), {self.GO: {"1.24"}})
 
     def test_a_go_version_newer_than_the_image_is_reported_but_an_older_one_is_not(self):
         image = sync_check.versions_of("Dockerfile", GO_DOCKERFILE)
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23.3\n"), image), [])
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.22\n"), image), [])
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23\n"), image), [])
-        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23.4\n"), image), ["go 1.23.4 is newer than the image (1.23.3)"])
-        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24\n"), image), ["go 1.24 is newer than the image (1.23.3)"])
-        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23\ntoolchain go1.24.0\n"), image), ["go 1.24.0 is newer than the image (1.23.3)"])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23.4\n"), image), [f"{self.GO} 1.23.4 is newer than the image (1.23.3)"])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24\n"), image), [f"{self.GO} 1.24 is newer than the image (1.23.3)"])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23\ntoolchain go1.24.0\n"), image), [f"{self.GO} 1.24.0 is newer than the image (1.23.3)"])
         # 1.9 is older than 1.10, which a comparison of the strings would get wrong
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.9\n"), sync_check.versions_of("Dockerfile", "FROM golang:1.10.1\n")), [])
+
+    def test_release_candidates_are_ordered_like_go_does(self):
+        image = sync_check.versions_of("Dockerfile", GO_DOCKERFILE)
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24rc1\n"), image), [f"{self.GO} 1.24rc1 is newer than the image (1.23.3)"])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23rc2\n"), image), [])
+        rc_image = sync_check.versions_of("Dockerfile", "FROM golang:1.24rc1\n")
+        self.assertEqual(rc_image, {self.GO: {"1.24rc1"}})
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24rc1\n"), rc_image), [])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24\n"), rc_image), [f"{self.GO} 1.24 is newer than the image (1.24rc1)"])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24beta1\n"), rc_image), [])
+
+    def test_a_directive_that_is_not_a_go_version_is_reported_instead_of_ignored(self):
+        problems = sync_check.compare(sync_check.versions_of("go.mod", "go latest\n"), sync_check.versions_of("Dockerfile", GO_DOCKERFILE))
+        self.assertEqual(len(problems), 1)
+        self.assertIn("cannot be compared with the image (1.23.3)", problems[0])
+
+    def test_the_go_version_of_the_image_is_the_one_of_its_last_stage(self):
+        dockerfile = "FROM golang:1.22 AS helper\nRUN true\nFROM golang:1.23.3\nCOPY --from=helper /x /x\n"
+        self.assertEqual(sync_check.versions_of("Dockerfile", dockerfile), {self.GO: {"1.23.3"}})
+        self.assertEqual(sync_check.versions_of("Dockerfile", "FROM golang:1.23.3 AS build\nFROM debian:13\n"), {})
+        self.assertEqual(sync_check.versions_of("Dockerfile", "# FROM golang:1.20\nFROM golang:1.23.3\n"), {self.GO: {"1.23.3"}})
+
+    def test_an_npm_package_called_go_is_not_the_go_toolchain(self):
+        lock = '{"packages": {"": {}, "node_modules/go": {"version": "1.0.0"}}}'
+        image = '{"packages": {"": {}, "node_modules/go": {"version": "2.0.0"}}}'
+        self.assertEqual(sync_check.compare(sync_check.versions_of("package-lock.json", lock), sync_check.versions_of("package-lock.json", image)), ["go 1.0.0 differs from the image (2.0.0)"])
 
     def test_the_resolver_has_to_be_the_snapshot_of_the_image(self):
         self.assertEqual(sync_check.versions_of("stack.yaml", "resolver: lts-22.37\n\npackages:\n- .\n"), {"resolver": {"lts-22.37"}})
@@ -783,9 +847,29 @@ class GoAndHaskellTest(unittest.TestCase):
             ["resolver lts-23.1 differs from the image (lts-22.37)"],
         )
 
+    def test_quotes_and_the_snapshot_alias_do_not_change_the_resolver(self):
+        plain = sync_check.versions_of("stack.yaml", "resolver: lts-22.37\n")
+        for text in ("resolver: 'lts-22.37'\n", 'resolver: "lts-22.37"  # pinned\n', "snapshot: lts-22.37\n"):
+            with self.subTest(text=text):
+                self.assertEqual(sync_check.versions_of("stack.yaml", text), plain)
+
+    def test_a_template_file_without_a_version_is_a_problem(self):
+        with tempfile.TemporaryDirectory() as directory:
+            templates = Path(directory)
+            for entry in sync_check.SOURCES["go"]:
+                (templates / entry.template_file).parent.mkdir(parents=True, exist_ok=True)
+                (templates / entry.template_file).write_text("module artemis/test\n", encoding="utf-8")
+            problems = sync_check.check_language("go", "ghcr.io/ls1intum/artemis-go-docker:v1.1.0", templates, fetch=lambda url: GO_DOCKERFILE)
+        self.assertEqual(len(problems), 3, problems)
+        self.assertTrue(all("has to name one" in problem for problem in problems))
+
     def test_a_cabal_file_lists_its_dependencies_without_its_own_libraries_base_and_comments(self):
         self.assertEqual(sync_check.versions_of("test.cabal", TEST_CABAL), {"package QuickCheck": {"cached"}, "package tasty": {"cached"}, "package tasty-hunit": {"cached"}})
         self.assertEqual(sync_check.versions_of("solution.cabal", "name: solution\nlibrary\n  build-depends:\n    base == 4.*\n"), {})
+
+    def test_an_executable_does_not_hide_the_library_of_the_same_name(self):
+        cabal = "name: test\nexecutable aeson\n  build-depends: aeson >= 2.1, solution\nlibrary solution\n  build-depends: base\n"
+        self.assertEqual(sync_check.versions_of("test.cabal", cabal), {"package aeson": {"cached"}})
 
     def test_a_package_the_image_did_not_build_ahead_is_reported(self):
         image = sync_check.versions_of("Dockerfile", HASKELL_DOCKERFILE)
@@ -793,6 +877,12 @@ class GoAndHaskellTest(unittest.TestCase):
         self.assertEqual(sync_check.compare(sync_check.versions_of("test.cabal", TEST_CABAL), image), [])
         raised = TEST_CABAL.replace("tasty-hunit == 0.*", "tasty-hunit == 0.*, containers-extra == 1.*")
         self.assertEqual(sync_check.compare(sync_check.versions_of("test.cabal", raised), image), ["package containers-extra is not in the image"])
+
+    def test_a_package_in_a_dockerfile_comment_is_not_cached(self):
+        commented = HASKELL_DOCKERFILE.replace("            --package tasty-hunit \\\n", "            # --package tasty-hunit \\\n")
+        self.assertNotIn("package tasty-hunit", sync_check.versions_of("Dockerfile", commented))
+        self.assertIn("package tasty", sync_check.versions_of("Dockerfile", commented))
+        self.assertEqual(sync_check.compare(sync_check.versions_of("test.cabal", TEST_CABAL), sync_check.versions_of("Dockerfile", commented)), ["package tasty-hunit is not in the image"])
 
     def test_the_files_of_the_image_repositories_are_read_at_the_image_tag(self):
         for language, image, repository, files in (

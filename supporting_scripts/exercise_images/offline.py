@@ -38,6 +38,29 @@ class Result:
     attempts: int = 1
 
 
+def checkout_directories(text: str) -> str:
+    """The checkout directories of a build whose exercise sets none (``BuildScriptProviderService.replacePlaceholders``)."""
+    return text.replace("${studentParentWorkingDirectoryName}", ASSIGNMENT_DIRECTORY).replace("${testWorkingDirectory}", TEST_DIRECTORY)
+
+
+def missing_reports(repository: Path, phases: list[Phase]) -> list[str]:
+    """The phases that were meant to leave a test report (JUnit XML) and left none with a test case.
+
+    The test phases of several languages hide the exit status of the test run (``|| true``, a pipe through a converter), so a run that could
+    not even start, for example because a library of the tests is missing in the image, still ends with exit status 0. Its report is the
+    evidence. Static code analysis phases (``forceRun``) and result files of other formats are not looked at.
+    """
+    problems = []
+    for phase in phases:
+        patterns = [checkout_directories(path) for path in phase.result_paths if path.endswith(".xml")]
+        if phase.force_run or not patterns:
+            continue
+        reports = {report for pattern in patterns for report in repository.glob(pattern) if report.is_file()}
+        if not any("<testcase" in report.read_text(encoding="utf-8", errors="replace") for report in reports):
+            problems.append(f"The phase {phase.name} left no test report with a test case ({', '.join(patterns)})")
+    return problems
+
+
 def build_script(phases: list[Phase]) -> str:
     """The script the build agent runs (``LocalCIBuildConfigurationService.computeBuildScript``), with one difference.
 
@@ -49,8 +72,7 @@ def build_script(phases: list[Phase]) -> str:
     regular = [phase for phase in phases if not phase.force_run]
     lines = ["#!/usr/bin/env bash", "set -e", f"cd {WORKING_DIRECTORY}", "export INITIAL_WORKING_DIRECTORY=${PWD}"]
     for phase in phases:
-        # The checkout directories of a build whose exercise sets none (`BuildScriptProviderService.replacePlaceholders`)
-        script = phase.script.replace("${studentParentWorkingDirectoryName}", ASSIGNMENT_DIRECTORY).replace("${testWorkingDirectory}", TEST_DIRECTORY)
+        script = checkout_directories(phase.script)
         lines += [f"{phase.name} () {{", f"  echo '⚙️ executing {phase.name}'"]
         lines += [f"  {line}" if line else "" for line in script.splitlines()]
         lines += ["}", ""]
@@ -96,7 +118,8 @@ def verify(templates_dir: Path, variant: Variant, image: str, work_dir: Path, pl
     repository = work_dir / variant.name / "testing-dir"
     assemble(templates_dir, variant, repository)
     script = work_dir / variant.name / "build.sh"
-    script.write_text(build_script(load_phases(templates_dir, variant.language, variant.phases_file)), encoding="utf-8")
+    phases = load_phases(templates_dir, variant.language, variant.phases_file)
+    script.write_text(build_script(phases), encoding="utf-8")
     log = work_dir / variant.name / "build.log"
 
     attempts = 0
@@ -113,4 +136,6 @@ def verify(templates_dir: Path, variant: Variant, image: str, work_dir: Path, pl
     missing = sorted({next(finding for finding in findings if finding) for findings in MISSING_ARTIFACT.findall(output)})
     if completed.returncode != 0 and not missing:
         missing = [line for line in output.splitlines() if line.strip()][-LOG_TAIL_LINES:]
-    return Result(variant, image, completed.returncode == 0, log, missing, attempts)
+    # A build that exited with 0 is only a success when its test phases left their reports (see `missing_reports`)
+    reports = missing_reports(repository, phases) if completed.returncode == 0 else []
+    return Result(variant, image, completed.returncode == 0 and not reports, log, missing + reports, attempts)

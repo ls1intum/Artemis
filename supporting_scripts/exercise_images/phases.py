@@ -22,6 +22,7 @@ class Phase:
     name: str
     script: str
     force_run: bool
+    result_paths: tuple[str, ...] = ()
 
 
 def _unquote(value: str) -> str:
@@ -37,12 +38,13 @@ def parse_phases(text: str) -> list[Phase]:
     name: str | None = None
     script = ""
     force_run = False
+    result_paths: list[str] = []
     lines = text.splitlines()
     index = 0
 
     def finish() -> None:
         if name is not None:
-            phases.append(Phase(name, script, force_run))
+            phases.append(Phase(name, script, force_run, tuple(result_paths)))
 
     while index < len(lines):
         line = lines[index]
@@ -50,7 +52,7 @@ def parse_phases(text: str) -> list[Phase]:
         item = _ITEM_START.match(line)
         if item:
             finish()
-            name, script, force_run = item.group("name"), "", False
+            name, script, force_run, result_paths = item.group("name"), "", False, []
             continue
         key = _KEY.match(line)
         if not key or name is None:
@@ -58,6 +60,10 @@ def parse_phases(text: str) -> list[Phase]:
         key_name, value = key.group("key"), (key.group("value") or "").strip()
         if key_name == "forceRun":
             force_run = value == "true"
+        elif key_name == "resultPaths":
+            while index < len(lines) and re.match(r"^\s+- ", lines[index]):
+                result_paths.append(_unquote(lines[index].strip()[2:].strip()))
+                index += 1
         elif key_name == "script":
             if value.startswith(_BLOCK_SCALAR_START):
                 if value not in _SUPPORTED_BLOCK_SCALARS:
