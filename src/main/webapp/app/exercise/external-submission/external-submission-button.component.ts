@@ -1,7 +1,7 @@
 import { Component, inject, input, output } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import type { Result } from 'app/openapi/model/result';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
