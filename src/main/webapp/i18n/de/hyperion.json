@@ -122,6 +122,8 @@
                     "failed": "{{ count }} Fragen konnten nicht generiert oder geprüft werden.",
                     "empty": "Noch keine Fragen in dieser Gruppe.",
                     "lectureUnit": "Vorlesungseinheit:",
+                    "showExplanations": "Erklärungen anzeigen",
+                    "hideExplanations": "Erklärungen ausblenden",
                     "showRationale": "Filterurteil anzeigen",
                     "hideRationale": "Filterurteil ausblenden",
                     "score": "Filterwert: {{ score }} / 100",

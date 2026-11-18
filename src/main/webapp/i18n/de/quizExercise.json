@@ -83,7 +83,8 @@
                     "emptyDescription": "Fülle links die Konfiguration aus und klicke auf Generieren, um KI-generierte Quizfragen zu sehen.",
                     "correct": "KORREKT",
                     "oneResultGenerated": "1 Ergebnis generiert",
-                    "multipleResultsGenerated": "{{ count }} Ergebnisse generiert"
+                    "multipleResultsGenerated": "{{ count }} Ergebnisse generiert",
+                    "explanation": "Erklärung"
                 }
             },
             "detail": {

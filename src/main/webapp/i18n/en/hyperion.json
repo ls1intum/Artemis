@@ -122,6 +122,8 @@
                     "failed": "{{ count }} questions could not be generated or judged.",
                     "empty": "No questions in this group yet.",
                     "lectureUnit": "Lecture unit:",
+                    "showExplanations": "Show explanations",
+                    "hideExplanations": "Hide explanations",
                     "showRationale": "Show filter verdict",
                     "hideRationale": "Hide filter verdict",
                     "score": "Filter score: {{ score }} / 100",

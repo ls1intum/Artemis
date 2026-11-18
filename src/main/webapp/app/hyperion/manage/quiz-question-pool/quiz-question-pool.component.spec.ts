@@ -313,6 +313,21 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.remainingQuestions()).toBe(210);
     });
 
+    it('should keep the review queue as the user folded it when the page refreshes', () => {
+        const all = [{ ...question(1, 9, 'Arrays'), flagged: true }, question(2, 9, 'Arrays')];
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'getQuestions').mockImplementation(pagesOf(all));
+        component.refresh();
+        expect(component.queueCollapsed()).toBe(false);
+
+        component.queueCollapsed.set(true);
+        all.push({ ...question(3, 10, 'Loops'), flagged: true });
+        component.refresh();
+
+        expect(component.needsReviewQuestions().map((item) => item.id)).toEqual([1, 3]);
+        expect(component.queueCollapsed()).toBe(true);
+    });
+
     it('should show flagged questions as a queue that folds once every one of them is reviewed', () => {
         const flagged = { ...question(1, 9, 'Arrays'), flagged: true };
         const all = [flagged, question(2, 9, 'Arrays'), question(3, 10, 'Loops')];

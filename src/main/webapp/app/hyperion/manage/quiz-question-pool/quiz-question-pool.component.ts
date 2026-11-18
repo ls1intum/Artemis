@@ -244,6 +244,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     /** Whether a decision was made after the queue was last loaded, so polling must not stop before a newer queue response is applied. */
     private queueOutdated = false;
 
+    /** Whether every flagged question had a decision at the last queue response; the queue folds and unfolds only when this changes. */
+    private queueFullyReviewed = false;
+
     readonly isInstructor = computed(() => !!this.course()?.isAtLeastInstructor);
     readonly canReview = computed(() => !!this.course()?.isAtLeastEditor);
     readonly canDelete = computed(() => !!this.course()?.isAtLeastInstructor);
@@ -370,6 +373,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         this.needsReviewTotal.set(0);
         this.pendingInQueue.set(0);
         this.queueCollapsed.set(false);
+        this.queueFullyReviewed = false;
         this.lectureUnits.set([]);
         this.unitsCollapsed.set(true);
         this.busyLectureUnitIds.set(new Set());
@@ -524,9 +528,21 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                 this.needsReviewQuestions.update((current) => this.keepNewerDecisions(current, page.items, requestedAt));
                 this.needsReviewTotal.set(page.totalCount);
                 this.pendingInQueue.set(this.pendingOf(page));
-                this.queueCollapsed.set(this.allFlaggedReviewed());
+                this.foldQueueWhenReviewChanges();
             }),
         );
+    }
+
+    /**
+     * Folds the queue when its last flagged question gets a decision and unfolds it when undecided ones arrive again. A fold or unfold by
+     * the user holds until that changes, so refreshes during a build keep it.
+     */
+    private foldQueueWhenReviewChanges(): void {
+        const allReviewed = this.allFlaggedReviewed();
+        if (allReviewed !== this.queueFullyReviewed) {
+            this.queueFullyReviewed = allReviewed;
+            this.queueCollapsed.set(allReviewed);
+        }
     }
 
     /** The pending count of a queue response, which was requested after the last decision or deletion on the page. */
@@ -1036,9 +1052,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                         }
                         this.questions.update((questions) => questions.map((question) => (question.id === updated.id ? updated : question)));
                         this.needsReviewQuestions.update((queue) => queue.map((question) => (question.id === updated.id ? updated : question)));
-                        if (this.allFlaggedReviewed()) {
-                            this.queueCollapsed.set(true);
-                        }
+                        this.foldQueueWhenReviewChanges();
                     }
                 },
                 error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.list.reviewFailed'),
@@ -1103,7 +1117,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                         if (queued.reviewState === 'PENDING') {
                             this.changePending(-1);
                         }
-                        this.queueCollapsed.set(this.allFlaggedReviewed());
+                        this.foldQueueWhenReviewChanges();
                         if (this.needsReviewQuestions().length === 0 && this.needsReviewTotal() > 0) {
                             this.reloadNeedsReview(courseId, PAGE_SIZE)
                                 .pipe(takeUntilDestroyed(this.destroyRef))

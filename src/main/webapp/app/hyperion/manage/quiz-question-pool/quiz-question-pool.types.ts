@@ -165,6 +165,9 @@ export interface PoolQuestionView {
     verdicts: PoolVerdictView[];
     scorePercent: number;
     expanded: boolean;
+    /** Whether the question or one of its options carries an explanation. */
+    hasExplanations: boolean;
+    explanationsShown: boolean;
     busy: boolean;
     reviewSeverity: 'success' | 'secondary' | 'contrast';
     reviewLabelKey: string;
