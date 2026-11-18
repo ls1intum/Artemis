@@ -117,12 +117,16 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     constructor() {
         // A logout can create this page while the user is still signed in: the identity lookup then stores the account
         // and leaves the page in its loading state, which hides the form. Show it again once the session has ended.
+        // The lookup skipped the passkey autofill for the signed-in user, so it starts here as well.
         effect(() => {
             const signedIn = !!this.accountService.userIdentity();
             if (this.wasSignedIn && !signedIn) {
                 untracked(() => {
                     this.account.set(undefined);
-                    this.loading.set(false);
+                    if (this.loading()) {
+                        this.loading.set(false);
+                        void this.prefillPasskeysIfPossible();
+                    }
                 });
             }
             this.wasSignedIn = signedIn;

@@ -7,7 +7,7 @@ import { TumAetUiPopoverComponent } from './tumaet-ui-popover.component';
  *
  * What opens the popover follows its `openOn` input. By default a click toggles it. With `openOn="hover"` it opens
  * while the pointer or the keyboard focus is on the trigger, a click is left to the trigger's own handler, and Tab
- * moves from the trigger into the open panel.
+ * moves from the trigger into the open panel. Opened by touch, it stays until it is dismissed.
  *
  * Usage: `<button [tumAetUiPopoverTrigger]="pop">Details</button> <tumaet-ui-popover #pop>...</tumaet-ui-popover>`
  */
@@ -15,9 +15,9 @@ import { TumAetUiPopoverComponent } from './tumaet-ui-popover.component';
     selector: '[tumAetUiPopoverTrigger]',
     host: {
         '(click)': 'onClick()',
-        '(pointerenter)': 'onPointer(true)',
+        '(pointerenter)': 'onPointer(true, $event)',
         '(focus)': 'onEnter()',
-        '(pointerleave)': 'onPointer(false)',
+        '(pointerleave)': 'onPointer(false, $event)',
         '(blur)': 'onLeave()',
         '(keydown.tab)': 'onTab($event)',
         '[attr.aria-haspopup]': "'dialog'",
@@ -34,14 +34,22 @@ export class TumAetUiPopoverTriggerDirective {
         }
     }
 
-    protected onPointer(over: boolean): void {
-        if (this.opensOnHover()) {
-            this.popover().setPointerOverTrigger(over);
+    protected onPointer(over: boolean, event: PointerEvent): void {
+        if (!this.opensOnHover()) {
+            return;
+        }
+        if (event.pointerType === 'touch') {
+            // A finger does not hover: it leaves the trigger the moment it is lifted, which must not close the popover.
             if (over) {
-                this.onEnter();
-            } else {
-                this.onLeave();
+                this.popover().openFromTrigger(this.elementRef, true);
             }
+            return;
+        }
+        this.popover().setPointerOverTrigger(over);
+        if (over) {
+            this.onEnter();
+        } else {
+            this.onLeave();
         }
     }
 

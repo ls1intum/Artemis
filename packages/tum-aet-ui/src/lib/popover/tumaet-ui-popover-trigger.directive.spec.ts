@@ -234,6 +234,42 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
         expect(isOpen()).toBe(false);
     });
 
+    it('stays open after a finger that opened it was lifted, until a tap elsewhere', () => {
+        trigger.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+
+        trigger.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'touch' }));
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+
+        // Touching the panel and lifting the finger again, and the trigger losing focus, do not close it either.
+        panel()!.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
+        panel()!.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'touch' }));
+        trigger.dispatchEvent(new Event('blur'));
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+
+        document.body.click();
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+    });
+
+    it('follows the mouse again after a popover that was opened by touch has been dismissed', () => {
+        trigger.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
+        fixture.detectChanges();
+        document.body.click();
+        fixture.detectChanges();
+
+        hover();
+        trigger.dispatchEvent(new Event('pointerleave'));
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+    });
+
     it('closes on a click elsewhere, but not on a click inside the panel', () => {
         hover();
 

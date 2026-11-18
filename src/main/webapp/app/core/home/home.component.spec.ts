@@ -103,6 +103,7 @@ describe('HomeComponent', () => {
     it('should show the form again when the session ends after the page was created while signed in', async () => {
         const accountService = TestBed.inject(AccountService);
         const wrapper = (fixture.nativeElement as HTMLElement).firstElementChild as HTMLElement;
+        const prefillSpy = vi.spyOn(component as any, 'prefillPasskeysIfPossible').mockResolvedValue(undefined);
         accountService.userIdentity.set({ id: 99, login: 'admin' } as User);
         await fixture.whenStable();
         fixture.detectChanges();
@@ -117,6 +118,7 @@ describe('HomeComponent', () => {
         expect(component.account()).toBeUndefined();
         expect(component.loading()).toBe(false);
         expect(wrapper.hidden).toBe(false);
+        expect(prefillSpy).toHaveBeenCalledOnce();
     });
 
     it('should initialize with profile info and prefilled username', () => {
