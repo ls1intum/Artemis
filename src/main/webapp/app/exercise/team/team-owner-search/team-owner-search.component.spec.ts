@@ -31,6 +31,7 @@ describe('Team Owner Search Component', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 
     it('should initialize with team owner', () => {
@@ -117,5 +118,20 @@ describe('Team Owner Search Component', () => {
 
         expect(comp.ownerOptionsLoaded).toBe(false);
         expect(loadOwnerOptionsResult).toBeUndefined();
+    });
+
+    it('debounces queries before suggesting and selecting a cached owner', () => {
+        vi.useFakeTimers();
+        comp.ownerOptions = [owner];
+        comp.ownerOptionsLoaded = true;
+        const select = vi.spyOn(comp.selectOwner, 'emit');
+        comp.requestSearch('user');
+        vi.advanceTimersByTime(199);
+        expect(comp.suggestions()).toEqual([]);
+        vi.advanceTimersByTime(1);
+        expect(comp.suggestions()).toEqual([{ label: 'name (userLogin)', value: owner, disabled: false }]);
+        comp.selectOption({ value: comp.suggestions()[0] });
+        expect(select).toHaveBeenCalledExactlyOnceWith(owner);
+        expect(comp.inputDisplayValue).toBe('name (userLogin)');
     });
 });
