@@ -14,7 +14,7 @@
                 }
             </div>
             <!-- Section exam configuration -->
-            <div>
+            <div class="mb-6!">
                 <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.configuration"></h5>
                 <jhi-title-channel-name
                     [(title)]="exam.title"
@@ -23,13 +23,9 @@
                     [maxTitleLength]="EXAM_TITLE_MAX_LENGTH"
                     [hideChannelName]="hideChannelNameInput()"
                     [initChannelName]="isImport() || exam.id === undefined"
+                    [titleValidationMessage]="!exam.title?.trim() ? 'artemisApp.examManagement.titleMissingOrNotValid' : undefined"
+                    [channelNameValidationMessage]="isChannelNameMissing ? 'error.examChannelNameMissing' : undefined"
                 />
-                @if (!exam.title?.trim()) {
-                    <div class="-mt-2 block text-sm text-state-danger" data-testid="title-validation-message" jhiTranslate="artemisApp.examManagement.titleMissingOrNotValid"></div>
-                }
-                @if (isChannelNameMissing) {
-                    <div class="-mt-2 block text-sm text-state-danger" data-testid="channel-name-validation-message" jhiTranslate="error.examChannelNameMissing"></div>
-                }
             </div>
             <div class="mb-6!">
                 <div>
@@ -38,7 +34,7 @@
                 </div>
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined" (examModeChanged)="onExamModeChange()" />
             </div>
-            @if (!exam.testExam) {
+            @if (isRealExam(exam)) {
                 <div class="mb-6! flex items-center gap-2">
                     <tumaet-ui-checkbox inputId="examWithAttendanceCheck" name="examWithAttendanceCheck" [(ngModel)]="exam.examWithAttendanceCheck" />
                     <label for="examWithAttendanceCheck" jhiTranslate="artemisApp.examManagement.examWithAttendanceCheck">Exam with attendance check </label>
@@ -84,12 +80,13 @@
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.conduction"></h5>
             <div class="@container">
                 <div class="mb-6! grid grid-cols-1 items-start gap-x-6 gap-y-6! @min-[45.5rem]:grid-cols-2 @min-[69rem]:grid-cols-3">
+                    @let realExam = isRealExam(exam);
                     <div>
                         <jhi-exam-timeline
                             [(visibleDate)]="exam.visibleDate"
                             [(startDate)]="exam.startDate"
                             [(endDate)]="exam.endDate"
-                            [testExam]="exam.testExam ?? false"
+                            [testExam]="!realExam"
                             (datesChanged)="updateExamWorkingTime()"
                             (timelineStatusChange)="timelineStatus.set($event)"
                         />
@@ -144,15 +141,15 @@
                         <div class="mb-6! flex flex-col gap-1">
                             <div>
                                 <label for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
-                                <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
+                                <jhi-help-icon [text]="'artemisApp.examManagement' + (!realExam ? '.testExam' : '') + '.workingTimeTooltip'" />
                             </div>
-                            @if (!exam.testExam) {
+                            @if (realExam) {
                                 <input tumAetUiInput id="workingTimeInMinutes" readonly disabled type="text" class="w-full" [value]="workingTimeInMinutesRounded" />
                                 @if (isWorkingTimeTooHigh) {
                                     <tumaet-ui-message severity="error"><span jhiTranslate="error.examWorkingTimeTooHigh"></span></tumaet-ui-message>
                                 }
                             }
-                            @if (exam.testExam) {
+                            @if (!realExam) {
                                 <input
                                     tumAetUiInput
                                     id="workingTimeInMinutes"
@@ -268,12 +265,12 @@
             }
             <!-- Section exam assessment and student review
         Deactivated for test exam, as results are provided right after a test eam run and complaints are not possible  -->
-            @if (!exam.testExam) {
+            @if (isRealExam(exam)) {
                 <div>
                     <hr class="my-6! border-(--border-color)" />
                     <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment"></h5>
                     <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates"></h6>
-                    @if (!exam.testExam) {
+                    @if (isRealExam(exam)) {
                         <div class="mb-6! grid gap-6! grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
                             <div class="flex flex-col gap-1">
                                 <label for="numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam"></label>

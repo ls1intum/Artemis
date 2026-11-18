@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -72,11 +73,16 @@ examples.forEach((activeConversation) => {
                 expect(component.mode).toBe('individual');
                 expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBe(false);
                 expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBe(true);
-                fixture.debugElement.query(By.css('#group')).nativeElement.click();
+                selectMode('group');
                 fixture.changeDetectorRef.detectChanges();
                 expect(component.mode).toBe('group');
                 expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBe(true);
                 expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBe(false);
+                selectMode('individual');
+                fixture.changeDetectorRef.detectChanges();
+                expect(component.mode).toBe('individual');
+                expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBe(false);
+                expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBe(true);
             } else {
                 expect(fixture.debugElement.query(By.css('.mode-switch')).nativeElement.hidden).toBe(true);
                 expect(component.mode).toBe('individual');
@@ -104,7 +110,7 @@ examples.forEach((activeConversation) => {
         it('should block when in group mode and no mode is selected', () => {
             if (isChannelDTO(activeConversation)) {
                 setFormValid();
-                fixture.debugElement.query(By.css('#group')).nativeElement.click();
+                selectMode('group');
                 fixture.changeDetectorRef.detectChanges();
                 expect(component.mode).toBe('group');
                 expect(component.isSubmitPossible).toBe(false);
@@ -130,7 +136,7 @@ examples.forEach((activeConversation) => {
 
         it('should submit valid form in group mode', async () => {
             if (isChannelDTO(activeConversation)) {
-                fixture.debugElement.query(By.css('#group')).nativeElement.click();
+                selectMode('group');
                 fixture.changeDetectorRef.detectChanges();
                 setValidGroupModeFormValues();
                 fixture.changeDetectorRef.detectChanges();
@@ -147,6 +153,11 @@ examples.forEach((activeConversation) => {
                 await clickSubmitButton(true, expectedAddUsersFormData);
             }
         });
+
+        function selectMode(mode: 'individual' | 'group') {
+            const buttons = fixture.debugElement.queryAll(By.css('[data-testid="add-users-mode-select"] button'));
+            buttons[mode === 'individual' ? 0 : 1].nativeElement.click();
+        }
 
         function setSelectedUsers(selectedUsers?: UserPublicInfoDTO[]) {
             component!.selectedUsersControl!.setValue(selectedUsers);
@@ -181,7 +192,9 @@ examples.forEach((activeConversation) => {
 
             // Flush the reactive form status and the [disabled]="!isSubmitPossible" binding before
             // clicking: under zoneless change detection a form-control setValue() does not mark the
-            // view dirty, so without this the submit button can stay disabled and the click is a no-op.
+            // component view dirty, so it is marked here. Otherwise the submit button can stay disabled
+            // and the click is a no-op.
+            fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
             await fixture.whenStable();
             fixture.detectChanges();
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');

@@ -60,7 +60,7 @@
                 "submissions": "Abgaben der gezählten Studierenden und aller Teams dieser Kurse, unabhängig davon, wann sie gemacht wurden.",
                 "builds": "Abgeschlossene Builds, unabhängig davon, wann sie liefen. Wird nur angezeigt, wenn die Instanz mit Local CI baut. Build-Jobs werden standardmäßig nach einem Jahr gelöscht, deshalb werden Builds nur für Semester angezeigt, die innerhalb dieser Zeit begonnen haben.",
                 "averageBuildDuration": "Durchschnittliche Dauer der erfolgreichen Builds.",
-                "exams": "Echte Klausuren dieser Kurse. Testklausuren und Klausuren, deren Titel mit \"test\" oder \"mock\" beginnt, werden nicht gezählt. Wird nur angezeigt, wenn die Instanz Klausuren anbietet.",
+                "exams": "Echte Klausuren dieser Kurse. Übungsklausuren und Klausuren, deren Titel mit \"test\" oder \"mock\" beginnt, werden nicht gezählt. Wird nur angezeigt, wenn die Instanz Klausuren anbietet.",
                 "examRegistrations": "Nicht eindeutig: Eine Person, die für drei dieser Klausuren angemeldet ist, wird dreimal gezählt.",
                 "examParticipations": "Nicht eindeutig: Studierende, die die Klausur begonnen haben. Wer an drei dieser Klausuren teilgenommen hat, wird dreimal gezählt.",
                 "communication": "Summen über die Kurse des Semesters, unabhängig davon, wann sie stattfanden, einschließlich dessen, was Tutorinnen, Tutoren, Lehrende und das System getan haben.",

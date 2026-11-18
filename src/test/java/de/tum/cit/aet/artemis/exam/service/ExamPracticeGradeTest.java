@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -111,7 +112,7 @@ class ExamPracticeGradeTest {
         exam = new Exam();
         exam.setId(1L);
         exam.setCourse(course);
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         exam.setExamMaxPoints(100);
         User student = new User();
         student.setId(1L);
@@ -717,7 +718,7 @@ class ExamPracticeGradeTest {
         var source = new Exam();
         source.setId(2L);
         source.setCourse(exam.getCourse());
-        source.setTestExam(true);
+        source.setExamMode(ExamMode.TEST);
         source.setExamMaxPoints(20);
         source.setNumberOfCorrectionRoundsInExam(1);
         var group = new ExerciseGroup();

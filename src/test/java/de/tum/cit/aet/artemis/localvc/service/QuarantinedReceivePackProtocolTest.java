@@ -111,7 +111,7 @@ class QuarantinedReceivePackProtocolTest {
         User user = new User();
         user.setId(1L);
         user.setLogin("ge12abc");
-        hook = new LocalVCPrePushHook(localVCServletService, user);
+        hook = new LocalVCPrePushHook(localVCServletService, user, new GitOperationAudit());
     }
 
     @AfterEach
