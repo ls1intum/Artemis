@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.modeling;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.loadFileFromResources;
 import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
@@ -452,6 +453,29 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
         assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testManualAssessmentSave_keepsEmptyDetailTextInResponses() throws Exception {
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        // A title without a description: the empty detail text tells the client that text is a title, not a legacy comment.
+        Feedback titledFeedback = feedbacks.getFirst().text("Missing abstraction").detailText("");
+
+        ResultDTO savedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment?submit=true",
+                new ModelingAssessmentDTO(toFeedbackDTOs(feedbacks), null), ResultDTO.class, HttpStatus.OK);
+        // Only the student can load the result through this route, once the assessment is released.
+        exerciseUtilService.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        ResultDTO loadedResult = request.get(API_MODELING_SUBMISSIONS + submission.getId() + "/result", HttpStatus.OK, ResultDTO.class);
+
+        for (ResultDTO result : List.of(savedResult, loadedResult)) {
+            FeedbackDTO feedback = result.feedbacks().stream().filter(candidate -> titledFeedback.getReference().equals(candidate.reference())).findFirst().orElseThrow();
+            assertThat(feedback.text()).isEqualTo("Missing abstraction");
+            assertThat(feedback.detailText()).isNotNull().isEmpty();
+        }
     }
 
     @Test
@@ -1267,6 +1291,27 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     /**
+     * A generated title follows the points while a typed one stays, even when it reads like the default, so whether Artemis
+     * generated the title has to survive saving and reopening the assessment.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testSaveModelingAssessment_keepsWhetherTheTitleWasGenerated() throws Exception {
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+        List<FeedbackDTO> feedbacks = List.of(new FeedbackDTO(null, "Positive", "generated", false, null, 2.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null, true),
+                new FeedbackDTO(null, "Positive", "typed", false, null, 2.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null, false));
+
+        ResultDTO stored = request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment", new ModelingAssessmentDTO(feedbacks, null),
+                ResultDTO.class, HttpStatus.OK);
+
+        assertThat(stored.feedbacks()).extracting(FeedbackDTO::detailText, FeedbackDTO::titleGenerated).containsExactlyInAnyOrder(tuple("generated", true), tuple("typed", false));
+        Result reloaded = resultRepository.findDistinctWithFeedbackBySubmissionId(submission.getId()).orElseThrow();
+        assertThat(reloaded.getFeedbacks()).extracting(Feedback::getDetailText, Feedback::isTitleGenerated).containsExactlyInAnyOrder(tuple("generated", true),
+                tuple("typed", false));
+    }
+
+    /**
      * Performance guard: mapping preview-only long feedback DTOs must bulk-load both the stored previews and full texts.
      */
     @Test
@@ -1277,7 +1322,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         List<FeedbackDTO> longFeedbackDtos = new ArrayList<>();
         for (int i = 0; i < 12; i++) {
             String detailText = ("long feedback " + i + " ").repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH);
-            longFeedbackDtos.add(new FeedbackDTO(null, null, detailText, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null));
+            longFeedbackDtos.add(new FeedbackDTO(null, null, detailText, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null, false));
         }
         ResultDTO stored = request.putWithResponseBody(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment", new ModelingAssessmentDTO(longFeedbackDtos, "text"),
                 ResultDTO.class, HttpStatus.OK);
@@ -1314,7 +1359,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         for (int i = 0; i < 12; i++) {
             GradingInstruction instruction = instructions.get(i % instructions.size());
             GradingInstructionDTO gradingInstructionDto = GradingInstructionDTO.of(instruction);
-            structuredFeedbackDtos.add(new FeedbackDTO(null, null, "detail " + i, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, gradingInstructionDto, null));
+            structuredFeedbackDtos
+                    .add(new FeedbackDTO(null, null, "detail " + i, false, null, 1.0, null, FeedbackType.MANUAL_UNREFERENCED, null, gradingInstructionDto, null, false));
         }
 
         // One batch query for grading instructions; the count must not grow with the number of feedbacks.

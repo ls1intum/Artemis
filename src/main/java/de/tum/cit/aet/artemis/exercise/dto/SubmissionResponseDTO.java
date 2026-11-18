@@ -228,14 +228,15 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
         @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public record SubmissionFeedbackDTO(Long id, @Nullable String text, @Nullable String detailText, boolean hasLongFeedbackText, @Nullable String reference,
                 @Nullable Double credits, @Nullable Boolean positive, @Nullable FeedbackType type, @Nullable Visibility visibility,
-                @Nullable GradingInstructionDTO gradingInstruction, @Nullable TestCaseDTO testCase) {
+                @Nullable GradingInstructionDTO gradingInstruction, @Nullable TestCaseDTO testCase, boolean titleGenerated) {
 
             static SubmissionFeedbackDTO of(Feedback feedback) {
                 GradingInstructionDTO gradingInstruction = feedback.getGradingInstruction() != null && Hibernate.isInitialized(feedback.getGradingInstruction())
                         ? GradingInstructionDTO.of(feedback.getGradingInstruction())
                         : null;
                 return new SubmissionFeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
-                        feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstruction, TestCaseDTO.of(feedback.getTestCase()));
+                        feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstruction, TestCaseDTO.of(feedback.getTestCase()),
+                        feedback.isTitleGenerated());
             }
         }
     }

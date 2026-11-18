@@ -70,6 +70,13 @@ public class Feedback extends DomainObject {
     @Column(name = "has_long_feedback_text")
     private boolean hasLongFeedbackText = false;
 
+    /**
+     * Whether Artemis filled in {@link #text} as the points-based default title ("Positive", "Needs Revision" or "Feedback"), which then
+     * follows the points, rather than the assessor typing it. A typed title stays as it is, even when it reads like a default.
+     */
+    @Column(name = "title_generated", nullable = false)
+    private boolean titleGenerated = false;
+
     @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore // important, data should only be requested explicitly
     private Set<LongFeedbackText> longFeedbackText = new HashSet<>();
@@ -122,6 +129,14 @@ public class Feedback extends DomainObject {
 
     public String getText() {
         return text;
+    }
+
+    public boolean isTitleGenerated() {
+        return titleGenerated;
+    }
+
+    public void setTitleGenerated(boolean titleGenerated) {
+        this.titleGenerated = titleGenerated;
     }
 
     public Feedback text(String text) {

@@ -20,6 +20,19 @@ describe('Structured Grading Criteria Service', () => {
     });
 
     describe('Service methods', () => {
+        it('should link a dropped instruction to the feedback without the criterion title it carries for display', () => {
+            const feedback = new Feedback();
+            const dropEvent = {
+                preventDefault: () => {},
+                dataTransfer: { getData: () => JSON.stringify({ id: 1, credits: 2, criterionTitle: 'Domain Quality' }) },
+            } as unknown as DragEvent;
+
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, dropEvent);
+
+            expect(feedback.gradingInstruction).toEqual({ id: 1, credits: 2 });
+            expect(feedback.credits).toBe(2);
+        });
+
         it('should calculate the total score', () => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();

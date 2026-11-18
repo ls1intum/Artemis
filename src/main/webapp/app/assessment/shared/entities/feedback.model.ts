@@ -76,6 +76,8 @@ export class Feedback implements BaseEntity {
     public text?: string;
     public detailText?: string;
     public hasLongFeedbackText?: boolean;
+    /** Whether Artemis filled in {@link text} as the points-based default title, which then follows the points, rather than the assessor typing it. */
+    public titleGenerated?: boolean;
     public reference?: string;
     public credits?: number;
     public type?: FeedbackType;
@@ -191,6 +193,32 @@ export class Feedback implements BaseEntity {
     public static hasContent(that: Feedback): boolean {
         // if the feedback is associated with the grading instruction, the detail text is optional
         return Feedback.hasDetailText(that) || !!that.gradingInstruction?.feedback;
+    }
+
+    /**
+     * Whether `text` holds the feedback's title rather than its comment. It is a title once the feedback has a
+     * description, even an empty one, or the feedback of its grading instruction; feedback written before titles
+     * existed never set `detailText` and kept its whole comment in `text`, which is then shown as the body under a
+     * default title.
+     */
+    public static isTextTitle(that: Feedback): boolean {
+        return that.detailText != undefined || !!that.gradingInstruction?.feedback;
+    }
+
+    /** Translation keys of the points-based default titles a feedback gets when its title is left empty. */
+    public static readonly DEFAULT_TITLE_KEYS = ['artemisApp.feedback.type.positive', 'artemisApp.feedback.type.needsRevision', 'artemisApp.feedback.type.feedback'];
+
+    /**
+     * Applies a field's character limit the way `maxlength` does for typing, also to values that bypass it (e.g. set by
+     * a script): the value cannot grow past the limit, but an older value that already exceeds it is left as it is.
+     */
+    public static withinLength(value: string, previous: string, maxLength: number): string {
+        return value.length > maxLength && previous.length <= maxLength ? value.slice(0, maxLength) : value;
+    }
+
+    /** The translation key of the default title for the given points: "Positive", "Needs Revision" or "Feedback". */
+    public static getDefaultTitleKey(credits = 0): string {
+        return this.DEFAULT_TITLE_KEYS[credits > 0 ? 0 : credits < 0 ? 1 : 2];
     }
 
     /**
