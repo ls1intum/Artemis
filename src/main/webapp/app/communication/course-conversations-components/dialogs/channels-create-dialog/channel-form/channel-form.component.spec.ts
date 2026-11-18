@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChannelFormComponent, ChannelFormData } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -6,11 +7,8 @@ import { ChannelIconComponent } from 'app/communication/course-conversations-com
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { SelectButton } from 'primeng/selectbutton';
 
 describe('ChannelFormComponent', () => {
     let component: ChannelFormComponent;
@@ -30,13 +28,8 @@ describe('ChannelFormComponent', () => {
                 MockComponent(ChannelIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
-                SelectButton,
             ],
-            providers: [
-                { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
     });
 
@@ -63,6 +56,19 @@ describe('ChannelFormComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('[data-testid="channel-type-select"]')).toBeNull();
+    });
+
+    it('should show the name error below the name input once the name was edited and is invalid', () => {
+        const errorRegion = (): HTMLElement => fixture.nativeElement.querySelector('[data-testid="channel-name-error"]').closest('.tumaet-ui-form-field-error');
+        expect(errorRegion().hidden).toBe(true);
+
+        component.nameControl!.setValue('has space');
+        component.nameControl!.markAsDirty();
+        fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+        fixture.detectChanges();
+
+        expect(errorRegion().hidden).toBe(false);
+        expect(errorRegion().querySelector('[jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError"]')).toBeTruthy();
     });
 
     it('should block submit when channel name is missing', () => {

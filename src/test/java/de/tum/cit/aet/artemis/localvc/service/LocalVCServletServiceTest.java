@@ -204,10 +204,32 @@ class LocalVCServletServiceTest {
         AuthenticationContext.Session context = new AuthenticationContext.Session(session);
 
         when(accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(any(), eq(testUser), eq(testRepositoryUri))).thenReturn(AuthenticationMechanism.SSH);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(5L);
+        when(programmingExerciseParticipationService.fetchParticipationByRepository(anyString(), anyString(), anyLong())).thenReturn(participation);
 
         localVCServletService.saveFailedAccessVcsAccessLog(context, "student1", testExercise.getId(), testRepositoryUri, testUser, RepositoryActionType.READ);
 
-        verify(vcsAccessLogService).saveAccessLog(eq(testUser), any(), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.SSH), anyString(), anyString());
+        verify(vcsAccessLogService).saveAccessLog(eq(testUser), eq(5L), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.SSH), anyString(), anyString());
+    }
+
+    /**
+     * A push that is refused while the references are advertised never reached the repository and follows no advertisement of its own, so its entry carries no commit. That is
+     * what keeps it from taking away the entry of an earlier push that was up to date.
+     */
+    @Test
+    void saveFailedAccessVcsAccessLog_forARefusedAdvertisement_storesNoCommit() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("GET");
+        when(accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(any(), eq(testUser), eq(testRepositoryUri))).thenReturn(AuthenticationMechanism.PASSWORD);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(5L);
+        when(programmingExerciseParticipationService.fetchParticipationByRepository(anyString(), anyString(), anyLong())).thenReturn(participation);
+
+        localVCServletService.saveFailedAccessVcsAccessLog(new AuthenticationContext.Request(request), "student1", testExercise.getId(), testRepositoryUri, testUser,
+                RepositoryActionType.WRITE);
+
+        verify(vcsAccessLogService).saveAccessLog(eq(testUser), eq(5L), eq(RepositoryActionType.PUSH_FAIL), eq(AuthenticationMechanism.PASSWORD), eq(""), any());
     }
 
     @Test

@@ -394,7 +394,7 @@
                         "description": "Eine Klausur beginnen, bearbeiten und abgeben."
                     },
                     "EXAM_TEST_EXAMS": {
-                        "name": "Testklausuren",
+                        "name": "Übungsklausuren",
                         "description": "Übungsklausuren mit mehreren Versuchen."
                     },
                     "EXAM_RESULTS": {

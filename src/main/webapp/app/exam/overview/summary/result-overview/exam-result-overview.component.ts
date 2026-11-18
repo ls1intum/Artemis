@@ -11,7 +11,7 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from 'app/core/error-reporting/capture-exception';
-import { isExamResultPublished } from 'app/exam/overview/exam.utils';
+import { isExamResultPublished, isRealExam } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
 import { TumAetUiTableDirective } from '@tumaet/ui-angular';
@@ -52,7 +52,7 @@ export class ExamResultOverviewComponent implements OnInit {
     // Derived from the (async) studentExamWithGrade input — computed so the grading-key card renders under zoneless
     // once the grade DTO arrives (previously set only in ngOnInit via setExamGrade + a manual detectChanges).
     readonly gradingScaleExists = computed(() => this.hasAutomaticScore() && !!this.areResultsPublished() && !!this.studentExamWithGrade()?.studentResult?.overallGrade);
-    readonly isTestExam = computed(() => !!this.studentExamWithGrade()?.studentExam?.exam?.testExam);
+    readonly isTestExam = computed(() => !isRealExam(this.studentExamWithGrade()?.studentExam?.exam));
     readonly pendingExerciseIds = computed(() => new Set(this.isTestExam() ? (this.studentExamWithGrade()?.pendingExerciseIds ?? []) : []));
     readonly hasAutomaticScore = computed(() => !this.isTestExam() || (this.studentExamWithGrade()?.maxPoints > 0 && this.pendingExerciseIds().size === 0));
     readonly manuallyAssessedExerciseIds = computed(
@@ -139,7 +139,7 @@ export class ExamResultOverviewComponent implements OnInit {
 
     private areResultsPublished() {
         const studentExam = this.studentExamWithGrade()?.studentExam;
-        return studentExam?.exam?.testExam ? !!studentExam.submitted : isExamResultPublished(this.isTestRun(), studentExam?.exam, this.serverDateService);
+        return isRealExam(studentExam?.exam) ? isExamResultPublished(this.isTestRun(), studentExam?.exam, this.serverDateService) : !!studentExam?.submitted;
     }
 
     private updateLocalVariables() {
