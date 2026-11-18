@@ -1,3 +1,6 @@
+import { signal } from '@angular/core';
+import { AiModeSelectorComponent } from 'app/logos/ai-mode-selector.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AiExperienceSettingsComponent } from './ai-experience-settings.component';
@@ -15,8 +18,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
@@ -25,9 +27,7 @@ describe('AiExperienceSettingsComponent', () => {
     let fixture: ComponentFixture<AiExperienceSettingsComponent>;
     let irisChatHttpService: IrisChatHttpService;
     let irisChatService: IrisChatService;
-    let accountService: AccountService;
     let alertService: AlertService;
-    let llmModalService: LLMSelectionModalService;
 
     const createComponent = () => {
         fixture = TestBed.createComponent(AiExperienceSettingsComponent);
@@ -39,10 +39,10 @@ describe('AiExperienceSettingsComponent', () => {
             imports: [AiExperienceSettingsComponent],
             providers: [
                 MockProvider(IrisChatHttpService),
-                MockProvider(IrisChatService),
+                MockProvider(IrisChatService, { isSavingLLMUsageConsent: signal(false) }),
                 MockProvider(TranslateService),
                 MockProvider(AlertService),
-                MockProvider(LLMSelectionModalService),
+                MockProvider(ProfileService, { isLLMDeploymentEnabled: () => false }),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
@@ -53,13 +53,15 @@ describe('AiExperienceSettingsComponent', () => {
                 remove: { imports: [TranslateDirective, DeleteButtonDirective] },
                 add: { imports: [MockDirective(TranslateDirective), MockDirective(DeleteButtonDirective)] },
             })
+            .overrideComponent(AiModeSelectorComponent, {
+                remove: { imports: [TranslateDirective] },
+                add: { imports: [MockDirective(TranslateDirective)] },
+            })
             .compileComponents();
 
         irisChatHttpService = TestBed.inject(IrisChatHttpService);
         irisChatService = TestBed.inject(IrisChatService);
-        accountService = TestBed.inject(AccountService);
         alertService = TestBed.inject(AlertService);
-        llmModalService = TestBed.inject(LLMSelectionModalService);
     });
 
     afterEach(() => {
@@ -71,6 +73,24 @@ describe('AiExperienceSettingsComponent', () => {
         createComponent();
         fixture.detectChanges();
         expect(component).toBeTruthy();
+    });
+
+    it('disables the mode selector while consent is saving', () => {
+        const saving = signal(false);
+        vi.spyOn(irisChatService, 'isSavingLLMUsageConsent').mockImplementation(saving);
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
+        createComponent();
+        fixture.detectChanges();
+        const selector = fixture.debugElement.query(By.directive(AiModeSelectorComponent)).componentInstance as AiModeSelectorComponent;
+        expect(selector.disabled()).toBe(false);
+
+        saving.set(true);
+        fixture.detectChanges();
+        expect(selector.disabled()).toBe(true);
+
+        saving.set(false);
+        fixture.detectChanges();
+        expect(selector.disabled()).toBe(false);
     });
 
     it('should load session and message counts on init', () => {
@@ -124,20 +144,11 @@ describe('AiExperienceSettingsComponent', () => {
         expect(component.sessionCount()).toBe(3);
     });
 
-    it('should open selection modal and update on choice', async () => {
-        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
+    it('should save a mode selected inline', () => {
         createComponent();
-        fixture.detectChanges();
-
-        const openSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
-        const updateConsentSpy = vi.spyOn(irisChatService, 'updateLLMUsageConsent').mockImplementation(() => {});
-        const setDecisionSpy = vi.spyOn(accountService, 'setUserLLMSelectionDecision').mockImplementation(() => {});
-
-        await component.openSelectionModal();
-
-        expect(openSpy).toHaveBeenCalled();
-        expect(updateConsentSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
-        expect(setDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+        const updateSpy = vi.spyOn(irisChatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+        component.selectMode(LLMSelectionDecision.CLOUD_AI);
+        expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
     });
 
     it('should render delete button when sessions exist', () => {
@@ -156,20 +167,5 @@ describe('AiExperienceSettingsComponent', () => {
 
         const deleteButton = fixture.debugElement.query(By.directive(DeleteButtonDirective));
         expect(deleteButton).toBeNull();
-    });
-
-    it('should not update when modal is dismissed', async () => {
-        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
-        createComponent();
-        fixture.detectChanges();
-
-        vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
-        const updateConsentSpy = vi.spyOn(irisChatService, 'updateLLMUsageConsent');
-        const setDecisionSpy = vi.spyOn(accountService, 'setUserLLMSelectionDecision');
-
-        await component.openSelectionModal();
-
-        expect(updateConsentSpy).not.toHaveBeenCalled();
-        expect(setDecisionSpy).not.toHaveBeenCalled();
     });
 });
