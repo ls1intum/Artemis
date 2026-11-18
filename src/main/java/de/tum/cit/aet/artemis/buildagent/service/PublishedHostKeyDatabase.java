@@ -71,9 +71,12 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
 
     private volatile long lastFailureAtNanos;
 
-    private volatile boolean warnedAboutMissingFingerprints;
+    /** Guards the warning state on its own, so that deciding whether to warn never waits for a request to the core node. */
+    private final Object warningLock = new Object();
 
-    private volatile long lastWarningAtNanos;
+    private boolean warnedAboutMissingFingerprints;
+
+    private long lastWarningAtNanos;
 
     PublishedHostKeyDatabase(Supplier<Set<String>> fingerprintFetcher, Mode mode) {
         this(fingerprintFetcher, mode, System::nanoTime);
@@ -95,12 +98,12 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
     public boolean accept(String connectAddress, InetSocketAddress remoteAddress, PublicKey serverKey, Configuration config, @Nullable CredentialsProvider provider) {
         String presented = HashUtils.getSha256Fingerprint(serverKey);
 
-        Set<String> published = publishedFingerprints(false);
+        Set<String> published = publishedFingerprints(false, presented);
         if (published.contains(presented)) {
             return true;
         }
         // The key may have been replaced since the fingerprints were cached
-        published = publishedFingerprints(true);
+        published = publishedFingerprints(true, presented);
         if (published.contains(presented)) {
             return true;
         }
@@ -130,18 +133,31 @@ class PublishedHostKeyDatabase implements ServerKeyDatabase {
      * @return true if the warning is to be logged now
      */
     boolean shouldWarnAboutMissingFingerprints() {
-        long now = nanoClock.getAsLong();
-        if (warnedAboutMissingFingerprints && now - lastWarningAtNanos < FAILURE_CACHE_DURATION.toNanos()) {
-            return false;
+        synchronized (warningLock) {
+            long now = nanoClock.getAsLong();
+            if (warnedAboutMissingFingerprints && now - lastWarningAtNanos < FAILURE_CACHE_DURATION.toNanos()) {
+                return false;
+            }
+            warnedAboutMissingFingerprints = true;
+            lastWarningAtNanos = now;
+            return true;
         }
-        warnedAboutMissingFingerprints = true;
-        lastWarningAtNanos = now;
-        return true;
     }
 
-    private synchronized Set<String> publishedFingerprints(boolean forceRefresh) {
+    /**
+     * The fingerprints that the core node published, from the cache if they are recent enough, and read again otherwise or if a refresh is forced.
+     *
+     * @param forceRefresh whether the cache is skipped, because the presented key is not in it
+     * @param presented    the fingerprint of the presented key. A forced refresh that finds it in the cache anyway, because another connection refreshed it in the meantime,
+     *                         does not ask the core node again.
+     * @return the published fingerprints, which are the cached ones if the core node cannot be asked
+     */
+    synchronized Set<String> publishedFingerprints(boolean forceRefresh, String presented) {
         long now = nanoClock.getAsLong();
         if (!forceRefresh && !cachedFingerprints.get().isEmpty() && now - cachedAtNanos < CACHE_DURATION.toNanos()) {
+            return cachedFingerprints.get();
+        }
+        if (forceRefresh && cachedFingerprints.get().contains(presented)) {
             return cachedFingerprints.get();
         }
         if (lastFetchFailed && now - lastFailureAtNanos < FAILURE_CACHE_DURATION.toNanos()) {

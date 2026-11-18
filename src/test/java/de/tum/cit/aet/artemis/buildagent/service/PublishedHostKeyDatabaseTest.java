@@ -5,9 +5,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -129,6 +136,53 @@ class PublishedHostKeyDatabaseTest {
         assertThat(accept(database, PUBLISHED_KEY)).isTrue();
 
         assertThat(calls).hasValue(2);
+    }
+
+    @Test
+    void doesNotAskTheCoreNodeAgainForAKeyThatAnotherConnectionJustFound() {
+        var calls = new AtomicInteger();
+        Supplier<Set<String>> fetcher = () -> calls.getAndIncrement() == 0 ? published(PUBLISHED_KEY) : published(OTHER_KEY);
+        var database = new PublishedHostKeyDatabase(fetcher, Mode.REQUIRED);
+        assertThat(accept(database, PUBLISHED_KEY)).isTrue();
+        // one connection presents the replaced key, finds it missing in the cache and reads the published fingerprints again
+        assertThat(accept(database, OTHER_KEY)).isTrue();
+        assertThat(calls).hasValue(2);
+
+        // a second connection with the same key missed the cache before that, and now it is forced to refresh as well
+        Set<String> found = database.publishedFingerprints(true, HashUtils.getSha256Fingerprint(OTHER_KEY));
+
+        assertThat(found).isEqualTo(published(OTHER_KEY));
+        assertThat(calls).as("the cache already has the key, so the core node is not asked a second time").hasValue(2);
+    }
+
+    @Test
+    void warnsOnceWhenManyConnectionsReachTheFallbackAtTheSameTime() throws Exception {
+        var database = new PublishedHostKeyDatabase(Set::of, Mode.IF_AVAILABLE, () -> 0L);
+        int connections = 16;
+        var start = new CountDownLatch(1);
+        var warnings = new AtomicInteger();
+        ExecutorService executor = Executors.newFixedThreadPool(connections);
+        try {
+            List<Future<?>> done = new ArrayList<>();
+            for (int i = 0; i < connections; i++) {
+                done.add(executor.submit(() -> {
+                    start.await();
+                    if (database.shouldWarnAboutMissingFingerprints()) {
+                        warnings.incrementAndGet();
+                    }
+                    return null;
+                }));
+            }
+            start.countDown();
+            for (Future<?> future : done) {
+                future.get(10, TimeUnit.SECONDS);
+            }
+        }
+        finally {
+            executor.shutdownNow();
+        }
+
+        assertThat(warnings).hasValue(1);
     }
 
     @Test
