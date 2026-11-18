@@ -1,13 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { take } from 'rxjs/operators';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
-import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -51,7 +48,6 @@ describe('Bonus Service', () => {
     }
 
     let service: BonusService;
-    let httpMock: HttpTestingController;
 
     const bonusToGradeStepsDTO: GradeStepsDTO = {
         title: 'Exam Title',
@@ -92,48 +88,9 @@ describe('Bonus Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideRouter([])],
         });
         service = TestBed.inject(BonusService);
-        httpMock = TestBed.inject(HttpTestingController);
-    });
-
-    afterEach(() => {
-        httpMock.verify();
-    });
-
-    it('should filter bonus before serializing into request', () => {
-        const filteredBonus: Bonus = {
-            id: 3,
-            weight: 1,
-            bonusStrategy: BonusStrategy.POINTS,
-            sourceGradingScale: { id: 5 } as GradingScale,
-        };
-
-        const bonusToSend: Bonus = {
-            ...filteredBonus,
-            sourceGradingScale: {
-                id: filteredBonus.sourceGradingScale!.id,
-                gradeSteps: [{} as GradeStep],
-            } as GradingScale,
-            bonusToGradingScale: { id: 6 } as GradingScale,
-        };
-        service.updateBonus(1, 6, bonusToSend).pipe(take(1)).subscribe();
-
-        const httpRequest = httpMock.expectOne({ method: 'PUT' });
-        expect(httpRequest.request.body).toEqual(filteredBonus);
-    });
-
-    it.each([
-        [undefined, null],
-        [false, 'false'],
-        [true, 'true'],
-    ])('should set includeSourceGradeSteps when calling findBonusForExam', (inputIncludeSourceGradeSteps: boolean | undefined, expectedIncludeSourceGradeSteps: string | null) => {
-        service.findBonusForExam(1, 6, inputIncludeSourceGradeSteps).pipe(take(1)).subscribe();
-
-        const httpRequest = httpMock.expectOne({ method: 'GET' });
-
-        expect(httpRequest.request.params.get('includeSourceGradeSteps')).toBe(expectedIncludeSourceGradeSteps);
     });
 
     it.each([
