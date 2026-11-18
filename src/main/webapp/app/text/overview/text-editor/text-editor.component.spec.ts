@@ -1129,6 +1129,23 @@ describe('TextEditorComponent', () => {
             expect(comp.participation()).toBe(reloaded);
         });
 
+        it('should not let a later update retry a failed exam summary reload that a newer reload superseded', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const newerReload = new Subject<StudentParticipation>();
+            getTextForParticipationStub.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 }))).mockReturnValueOnce(newerReload.asObservable());
+
+            participationSubject.next(withResults([athenaResult(true)]));
+            participationSubject.next(withResults([{ ...athenaResult(true), id: 6 }]));
+            participationSubject.next(withResults([{ ...athenaResult(true), id: 6 }]));
+
+            expect(getTextForParticipationStub).toHaveBeenCalledTimes(2);
+            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(42, 6, 'owner');
+            expect(newerReload.observed).toBe(true);
+            const newest = withResults([{ ...athenaResult(true), id: 6 }]);
+            newerReload.next(newest);
+            expect(comp.participation()).toBe(newest);
+        });
+
         it('should not treat an unfinished Athena request as new feedback', () => {
             const participationSubject = openWithParticipation(withResults([]));
             const alertService = TestBed.inject(AlertService);

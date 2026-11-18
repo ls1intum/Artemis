@@ -228,15 +228,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     /**
      * Loads the participation with the given result again for the exam summary. Only the latest reload may write its
-     * answer back, so an earlier one is cancelled rather than left to replace it.
+     * answer back, so an earlier one is cancelled rather than left to replace it. Starting it also supersedes a failed
+     * reload, so a later update does not retry the older result and cancel this one.
      *
      * @param resultId the id of the result to load the participation with
      */
     private reloadForExamSummary(resultId: number): void {
         this.examSummaryReload?.unsubscribe();
+        this.failedExamSummaryReloadResultId = undefined;
         this.examSummaryReload = this.textService.get(this.participation().id!, resultId, this.viewingPurpose()).subscribe({
             next: (data) => {
-                this.failedExamSummaryReloadResultId = undefined;
                 this.updateParticipation(data, this.submissionId, resultId);
             },
             error: (error: HttpErrorResponse) => {
