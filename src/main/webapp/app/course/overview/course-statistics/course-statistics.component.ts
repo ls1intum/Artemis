@@ -7,10 +7,9 @@ import { CourseOverviewExercisesService } from 'app/course/overview/services/cou
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
+import type { Grade } from 'app/openapi/model/grade';
+import { GradeStepApi } from 'app/openapi/api/grade-step-api';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
@@ -82,7 +81,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
     private route = inject(ActivatedRoute);
-    private gradingService = inject(GradingService);
+    private gradeStepApi = inject(GradeStepApi);
     categoryFilter = inject(ChartCategoryFilter);
     private readonly statisticsService = inject(CourseStatisticsService);
     private readonly availableTabsService = inject(CourseAvailableTabsService);
@@ -320,7 +319,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     readonly gradingScaleExists = signal<boolean>(false);
     readonly isBonus = signal<boolean>(false);
-    readonly gradeDTO = signal<GradeDTO | undefined>(undefined);
+    readonly gradeDTO = signal<Grade | undefined>(undefined);
 
     // Icons
     readonly faFilter = faFilter;
@@ -455,11 +454,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         if (!Number.isFinite(relativeScore)) {
             return;
         }
-        this.gradeSubscription = this.gradingService.matchPercentageToGradeStep(relativeScore, this.courseId).subscribe((gradeDTO) => {
+        this.gradeSubscription = this.gradeStepApi.getGradeStepByPercentageForCourse(this.courseId, relativeScore).subscribe((gradeDTO) => {
             if (gradeDTO) {
                 this.gradingScaleExists.set(true);
                 this.gradeDTO.set(gradeDTO);
-                this.isBonus.set(gradeDTO.gradeType === GradeType.BONUS);
+                this.isBonus.set(gradeDTO.gradeType === 'BONUS');
             }
         });
     }

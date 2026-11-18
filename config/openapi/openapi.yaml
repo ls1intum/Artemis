@@ -708,6 +708,354 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolLectureUnitRelevance'}
+  /api/assessment/results/{resultId}/rating/{ratingValue}:
+    put:
+      tags: [rating]
+      operationId: updateRatingForResult
+      parameters:
+      - name: resultId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: ratingValue
+        in: path
+        required: true
+        schema: {type: integer, format: int32}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: integer, format: int32}
+    post:
+      tags: [rating]
+      operationId: createRatingForResult
+      parameters:
+      - name: resultId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: ratingValue
+        in: path
+        required: true
+        schema: {type: integer, format: int32}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: integer, format: int32}
+  /api/assessment/exercises/{exerciseId}/example-submissions:
+    put:
+      tags: [example-submission]
+      operationId: updateExampleSubmission
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExampleSubmissionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExampleSubmissionDetail'}
+    post:
+      tags: [example-submission]
+      operationId: createExampleSubmission
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExampleSubmissionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExampleSubmissionDetail'}
+  /api/assessment/courses/{courseId}/presentation-assessments/{assessmentId}:
+    put:
+      tags: [presentation-assessment]
+      operationId: updatePresentationAssessment
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: assessmentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PresentationAssessment'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PresentationAssessment'}
+    delete:
+      tags: [presentation-assessment]
+      operationId: deletePresentationAssessment
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: assessmentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/assessment/courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}:
+    put:
+      tags: [presentation-assessment]
+      operationId: updatePresentationAssessmentInstance
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: assessmentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: instanceId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PresentationAssessmentInstanceRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PresentationAssessmentInstance'}
+    delete:
+      tags: [presentation-assessment]
+      operationId: deletePresentationAssessmentInstance
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: assessmentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: instanceId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/assessment/courses/{courseId}/grading-scale:
+    get:
+      tags: [grading-scale]
+      operationId: getGradingScaleForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GradingScale'}
+    put:
+      tags: [grading-scale]
+      operationId: updateGradingScaleForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GradingScaleUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GradingScale'}
+    post:
+      tags: [grading-scale]
+      operationId: createGradingScaleForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GradingScaleUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GradingScale'}
+    delete:
+      tags: [grading-scale]
+      operationId: deleteGradingScaleForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/assessment/courses/{courseId}/exams/{examId}/grading-scale:
+    get:
+      tags: [grading-scale]
+      operationId: getGradingScaleForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GradingScale'}
+    put:
+      tags: [grading-scale]
+      operationId: updateGradingScaleForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GradingScaleUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GradingScale'}
+    post:
+      tags: [grading-scale]
+      operationId: createGradingScaleForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GradingScaleUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GradingScale'}
+    delete:
+      tags: [grading-scale]
+      operationId: deleteGradingScaleForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/assessment/courses/{courseId}/exams/{examId}/bonuses/{bonusId}:
+    put:
+      tags: [bonus]
+      operationId: updateBonus
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: bonusId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BonusRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BonusResponse'}
+    delete:
+      tags: [bonus]
+      operationId: deleteBonus
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: bonusId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -1876,6 +2224,333 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/assessment/exercises/{exerciseId}/tutor-participations:
+    post:
+      tags: [tutor-participation]
+      operationId: initTutorParticipation
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorParticipation'}
+  /api/assessment/exercises/{exerciseId}/manual-assessments:
+    post:
+      tags: [assessment-upload]
+      operationId: uploadManualAssessments
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: {type: string, format: binary}
+              required: [file]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AssessmentUploadResult'}
+  /api/assessment/exercises/{exerciseId}/external-submission-results:
+    post:
+      tags: [result]
+      operationId: createResultForExternalSubmission
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentLogin
+        in: query
+        required: true
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExternalSubmissionResult'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Result'}
+  /api/assessment/exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/prepare-assessment:
+    post:
+      tags: [example-submission]
+      operationId: prepareExampleAssessment
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exampleSubmissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/assessment/exercises/{exerciseId}/example-submissions/import:
+    post:
+      tags: [example-submission]
+      operationId: importExampleSubmission
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: sourceSubmissionId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExampleSubmissionDetail'}
+  /api/assessment/exercises/{exerciseId}/assess-example-submission:
+    post:
+      tags: [tutor-participation]
+      operationId: assessExampleSubmissionForTutorParticipation
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExampleSubmissionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorParticipation'}
+  /api/assessment/courses/{courseId}/presentation-assessments:
+    get:
+      tags: [presentation-assessment]
+      operationId: getPresentationAssessments
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/PresentationAssessment'}
+    post:
+      tags: [presentation-assessment]
+      operationId: createPresentationAssessment
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PresentationAssessment'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PresentationAssessment'}
+  /api/assessment/courses/{courseId}/presentation-assessments/{assessmentId}/instances:
+    post:
+      tags: [presentation-assessment]
+      operationId: savePresentationAssessmentInstances
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: assessmentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PresentationAssessmentInstancesBatchCreate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/PresentationAssessmentInstance'}
+  /api/assessment/courses/{courseId}/exams/{examId}/bonuses:
+    get:
+      tags: [bonus]
+      operationId: getBonusForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: includeSourceGradeSteps
+        in: query
+        required: false
+        schema: {type: boolean}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BonusResponse'}
+    post:
+      tags: [bonus]
+      operationId: createBonusForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BonusRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BonusResponse'}
+  /api/assessment/complaints:
+    get:
+      tags: [complaint]
+      operationId: getComplaintBySubmissionId
+      parameters:
+      - name: submissionId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      - name: complaintType
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [COMPLAINT, MORE_FEEDBACK]
+      - name: tutorId
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      - name: allComplaintsForTutor
+        in: query
+        required: false
+        schema: {type: boolean}
+      - name: courseId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: array
+                  items: {$ref: '#/components/schemas/Complaint'}
+                - {$ref: '#/components/schemas/Complaint'}
+    post:
+      tags: [complaint]
+      operationId: createComplaint
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ComplaintRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Complaint'}
+  /api/assessment/complaints/{complaintId}/response:
+    post:
+      tags: [complaint-response]
+      operationId: lockComplaint
+      parameters:
+      - name: complaintId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ComplaintResponse'}
+    delete:
+      tags: [complaint-response]
+      operationId: removeLockFromComplaint
+      parameters:
+      - name: complaintId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+    patch:
+      tags: [complaint-response]
+      operationId: refreshLockOrResolveComplaint
+      parameters:
+      - name: complaintId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ComplaintResponseUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ComplaintResponse'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     patch:
       tags: [tutorial-group-session]
@@ -3327,6 +4002,687 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/ModelingFeedback'}
+  /api/assessment/results/{resultId}/rating:
+    get:
+      tags: [rating]
+      operationId: getRatingForResult
+      parameters:
+      - name: resultId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: integer, format: int32}
+  /api/assessment/participations/{participationId}/results/{resultId}/details:
+    get:
+      tags: [result]
+      operationId: getResultDetails
+      parameters:
+      - name: participationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: resultId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Feedback'}
+  /api/assessment/participations/{participationId}/results/build-job-ids:
+    get:
+      tags: [result]
+      operationId: getBuildJobIdsForResultsOfParticipation
+      parameters:
+      - name: participationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {type: string}
+  /api/assessment/grading-scales:
+    get:
+      tags: [grading-scale]
+      operationId: getAllGradingScalesInInstructorGroupOnPage
+      parameters:
+      - name: searchTerm
+        in: query
+        required: true
+        schema: {type: string}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32}
+      - name: pageSize
+        in: query
+        required: false
+        schema: {type: integer, format: int32}
+      - name: sortingOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [ASCENDING, DESCENDING]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SearchResultPageDTOGradingScale'}
+  /api/assessment/feedbacks/{feedbackId}/long-feedback:
+    get:
+      tags: [long-feedback-text]
+      operationId: getLongFeedback
+      parameters:
+      - name: feedbackId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The long feedback text.
+          content:
+            text/plain:
+              schema: {type: string}
+  /api/assessment/exercises/{exerciseId}/results-with-points-per-criterion:
+    get:
+      tags: [result]
+      operationId: getResultsForExerciseWithPointsPerCriterion
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: withSubmissions
+        in: query
+        required: false
+        schema: {type: boolean, default: true}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ResultWithPointsPerGradingCriterion'}
+  /api/assessment/exercises/{exerciseId}/manual-assessments/template:
+    get:
+      tags: [assessment-upload]
+      operationId: downloadManualAssessmentTemplate
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The template zip; its file name is in the filename header.
+          content:
+            application/octet-stream:
+              schema: {type: string, format: binary}
+  /api/assessment/exercises/{exerciseId}/feedback-details:
+    get:
+      tags: [result]
+      operationId: getFeedbackDetailsPaged
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: groupFeedback
+        in: query
+        required: true
+        schema: {type: boolean}
+      - name: filterTasks
+        in: query
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      - name: filterTestCases
+        in: query
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      - name: filterOccurrence
+        in: query
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      - name: searchTerm
+        in: query
+        required: false
+        schema: {type: string}
+      - name: filterErrorCategories
+        in: query
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32}
+      - name: pageSize
+        in: query
+        required: false
+        schema: {type: integer, format: int32}
+      - name: sortingOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [ASCENDING, DESCENDING]
+      - name: sortedColumn
+        in: query
+        required: false
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FeedbackAnalysisResponse'}
+  /api/assessment/exercises/{exerciseId}/feedback-details-participation:
+    get:
+      tags: [result]
+      operationId: getAffectedStudentsWithFeedback
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: feedbackId1
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      - name: feedbackId2
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      - name: feedbackId3
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      - name: feedbackId4
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      - name: feedbackId5
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/FeedbackAffectedStudent'}
+  /api/assessment/exercises/{exerciseId}/feedback-details-max-count:
+    get:
+      tags: [result]
+      operationId: getMaxCount
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: integer, format: int64}
+  /api/assessment/exercises/{exerciseId}/external-submission-candidates:
+    get:
+      tags: [result]
+      operationId: searchExternalSubmissionCandidates
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: searchTerm
+        in: query
+        required: true
+        schema: {type: string}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0, maximum: 100000, minimum: 0}
+      - name: pageSize
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 10, maximum: 50, minimum: 1}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExternalSubmissionCandidate'}
+  /api/assessment/exams/{examId}/exam-scores:
+    get:
+      tags: [participant-score]
+      operationId: getScoresOfExam
+      parameters:
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Score'}
+  /api/assessment/example-submissions/{exampleSubmissionId}:
+    get:
+      tags: [example-submission]
+      operationId: getExampleSubmission
+      parameters:
+      - name: exampleSubmissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExampleSubmissionDetail'}
+    delete:
+      tags: [example-submission]
+      operationId: deleteExampleSubmission
+      parameters:
+      - name: exampleSubmissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/assessment/courses/{courseId}/rating:
+    get:
+      tags: [rating]
+      operationId: getRatingForInstructorDashboard
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema: {type: integer, default: 0, minimum: 0}
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema: {type: integer, default: 20, minimum: 1}
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/RatingListItem'}
+  /api/assessment/courses/{courseId}/presentation-assessments/student-rows:
+    get:
+      tags: [presentation-assessment]
+      operationId: getPresentationAssessmentStudentRows
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: assessmentId
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
+      - name: assessed
+        in: query
+        required: false
+        schema: {type: boolean}
+      - name: linkedToExercise
+        in: query
+        required: false
+        schema: {type: boolean}
+      - name: searchTerm
+        in: query
+        required: false
+        schema: {type: string}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0}
+      - name: size
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 20}
+      - name: sortField
+        in: query
+        required: false
+        schema: {type: string, default: studentLogin}
+      - name: direction
+        in: query
+        required: false
+        schema:
+          type: string
+          default: ASC
+          enum: [ASC, DESC]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/PresentationAssessmentStudentRow'}
+  /api/assessment/courses/{courseId}/presentation-assessments/statistics:
+    get:
+      tags: [presentation-assessment]
+      operationId: getPresentationAssessmentStatistics
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PresentationAssessmentStatistics'}
+  /api/assessment/courses/{courseId}/grading-scale/match-grade-step:
+    get:
+      tags: [grade-step]
+      operationId: getGradeStepByPercentageForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: gradePercentage
+        in: query
+        required: true
+        schema: {type: number, format: double}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Grade'}
+  /api/assessment/courses/{courseId}/grading-scale/grade-steps:
+    get:
+      tags: [grade-step]
+      operationId: getAllGradeStepsForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GradeSteps'}
+  /api/assessment/courses/{courseId}/grading-scale/grade-steps/{gradeStepId}:
+    get:
+      tags: [grade-step]
+      operationId: getGradeStepsByIdForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: gradeStepId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GradeStep'}
+  /api/assessment/courses/{courseId}/grade-scores:
+    get:
+      tags: [participant-score]
+      operationId: getGradeScoresForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseGradeInformation'}
+  /api/assessment/courses/{courseId}/exercises/{exerciseId}/tutor-effort:
+    get:
+      tags: [tutor-effort]
+      operationId: calculateTutorEfforts
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorEffort'}
+  /api/assessment/courses/{courseId}/exams/{examId}/grading-scale/match-grade-step:
+    get:
+      tags: [grade-step]
+      operationId: getGradeStepByPercentageForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: gradePercentage
+        in: query
+        required: true
+        schema: {type: number, format: double}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Grade'}
+  /api/assessment/courses/{courseId}/exams/{examId}/grading-scale/grade-steps:
+    get:
+      tags: [grade-step]
+      operationId: getAllGradeStepsForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GradeSteps'}
+  /api/assessment/courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}:
+    get:
+      tags: [grade-step]
+      operationId: getGradeStepsByIdForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: gradeStepId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GradeStep'}
+  /api/assessment/courses/{courseId}/exams/{examId}/bonuses/calculate-raw:
+    get:
+      tags: [bonus]
+      operationId: calculateGradeWithBonus
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: bonusStrategy
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [GRADES_DISCRETE, GRADES_CONTINUOUS, POINTS]
+      - name: calculationSign
+        in: query
+        required: true
+        schema: {type: number, format: double}
+      - name: bonusToPoints
+        in: query
+        required: true
+        schema: {type: number, format: double}
+      - name: sourceGradingScaleId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      - name: sourcePoints
+        in: query
+        required: true
+        schema: {type: number, format: double}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BonusExample'}
+  /api/assessment/courses/{courseId}/course-scores:
+    get:
+      tags: [participant-score]
+      operationId: getScoresOfCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Score'}
+  /api/assessment/complaints/for-tutor:
+    get:
+      tags: [complaint]
+      operationId: getComplaintsForTutorByExerciseId
+      parameters:
+      - name: exerciseId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      - name: complaintType
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [COMPLAINT, MORE_FEEDBACK]
+      - name: allComplaintsForTutor
+        in: query
+        required: false
+        schema: {type: boolean}
+      - name: courseId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Complaint'}
+  /api/assessment/complaints/for-assessment:
+    get:
+      tags: [complaint]
+      operationId: getComplaintBySubmissionIdForAssessment
+      parameters:
+      - name: submissionId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Complaint'}
   /api/aiworker/admin/workers:
     get:
       tags: [admin-ai-worker]
@@ -3638,6 +4994,10 @@ components:
           type: string
           default: multiple-choice
           enum: [multiple-choice]
+    GradingScaleId:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     ExerciseGenerationRetainedFile:
       type: object
       description: A file of a generated candidate that was not saved to the exercise
@@ -3737,6 +5097,23 @@ components:
         indexed: {type: integer, format: int64}
         missing: {type: integer, format: int64}
         orphaned: {type: integer, format: int64}
+    ResultSimple:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        completionDate: {type: string, format: date-time}
+        score: {type: number, format: double}
+        rated: {type: boolean}
+        successful: {type: boolean}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        submission: {$ref: '#/components/schemas/SubmissionWithParticipation'}
+        assessor: {$ref: '#/components/schemas/UserPublicInfo'}
+        feedbacks:
+          type: array
+          items: {$ref: '#/components/schemas/Feedback'}
+        exerciseTitle: {type: string}
     MultipleChoiceQuestionFromEditor:
       required: [answerOptions, points, scoringType, singleChoice, title, type]
       type: object
@@ -3829,12 +5206,29 @@ components:
         quizQuestions:
           type: array
           items: {$ref: '#/components/schemas/QuizQuestionFromEditor'}
+    ResultForExport:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        score: {type: number, format: double}
+        completionDate: {type: string, format: date-time}
+        submission: {$ref: '#/components/schemas/SubmissionForExport'}
+        feedbacks:
+          type: array
+          items: {$ref: '#/components/schemas/Feedback'}
     ChannelSubTypeReferenceDates:
       type: object
       properties:
         channelId: {type: integer, format: int64}
         startDate: {type: string, format: date-time}
         endDate: {type: string, format: date-time}
+    Bonus:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        weight: {type: number, format: double}
+        sourceGradingScaleId: {type: integer, format: int64}
+      required: [sourceGradingScaleId]
     ExerciseGenerationEvent:
       type: object
       description: A progress event streamed to the instructor while an agentic whole-exercise
@@ -3932,6 +5326,13 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    Participant:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        login: {type: string}
+        isStudent: {type: boolean}
     DragAndDropMappingReEvaluate:
       type: object
       properties:
@@ -4031,6 +5432,16 @@ components:
         startTime: {type: string, format: date-time}
         started: {type: boolean}
         ended: {type: boolean}
+    BonusExample:
+      type: object
+      properties:
+        studentPointsOfBonusTo: {type: number, format: double}
+        studentPointsOfBonusSource: {type: number, format: double}
+        examGrade: {type: string}
+        bonusGrade: {type: number, format: double}
+        finalPoints: {type: number, format: double}
+        finalGrade: {type: string}
+        exceedsMax: {type: boolean}
     QuizQuestionWithoutSolution:
       discriminator:
         propertyName: type
@@ -4097,6 +5508,18 @@ components:
         filesWritten: {type: integer, format: int32, description: 'How many successful
             file writes, edits, and deletions the run has made so far'}
       required: [attempt, filesWritten, modelCalls, toolCalls, turn, waitingOnModel]
+    ComplaintResponse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        responseText: {type: string}
+        submittedTime: {type: string, format: date-time}
+        isCurrentlyLocked: {type: boolean}
+        lockEndDate: {type: string, format: date-time}
+        complaintIsAccepted: {type: boolean}
+        complaintId: {type: integer, format: int64}
+        reviewer: {$ref: '#/components/schemas/UserPublicInfo'}
+      required: [complaintId, id]
     QuizExerciseCreate:
       type: object
       properties:
@@ -4136,6 +5559,15 @@ components:
           items: {$ref: '#/components/schemas/QuizQuestionCreate'}
           minItems: 1
       required: [includedInOverallScore, mode, quizMode, quizQuestions, title]
+    ComplaintRequest:
+      type: object
+      properties:
+        resultId: {type: integer, format: int64}
+        complaintText: {type: string}
+        complaintType:
+          type: string
+          enum: [COMPLAINT, MORE_FEEDBACK]
+        examId: {type: integer, format: int64}
     QuizQuestionPoolLectureUnitRelevance:
       type: object
       description: Whether a lecture unit is excluded from quiz question generation
@@ -4287,6 +5719,15 @@ components:
         typeCounts:
           type: array
           items: {$ref: '#/components/schemas/IngestionTypeCount'}
+    Team:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        shortName: {type: string}
+        students:
+          type: array
+          items: {$ref: '#/components/schemas/UserName'}
     QuizQuestionBulkRefinementRequest:
       type: object
       description: Request to refine multiple quiz questions at once using a single
@@ -4384,6 +5825,23 @@ components:
           items: {$ref: '#/components/schemas/SubmissionOverview'}
           uniqueItems: true
         hasSubmitted: {type: boolean}
+    Submission:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submitted: {type: boolean}
+        type:
+          type: string
+          enum: [MANUAL, TIMEOUT, TEST, OTHER, INSTRUCTOR, EXTERNAL]
+        exampleSubmission: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        commitHash: {type: string}
+        buildFailed: {type: boolean}
+        participation: {$ref: '#/components/schemas/Participation'}
+        submissionExerciseType: {type: string}
+        isProcessing: {type: boolean}
+        buildStartDate: {type: string, format: date-time}
+        estimatedCompletionDate: {type: string, format: date-time}
     QuizQuestionPoolCompetency:
       type: object
       description: A competency with questions in the quiz question pool
@@ -4450,6 +5908,21 @@ components:
         location: {type: string, maxLength: 2000, minLength: 1}
         attendance: {type: integer, format: int32}
       required: [date, endTime, location, startTime]
+    TestCase:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        testName: {type: string}
+        weight: {type: number, format: double}
+        active: {type: boolean}
+        visibility:
+          type: string
+          enum: [ALWAYS, AFTER_DUE_DATE, NEVER]
+        bonusMultiplier: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        type:
+          type: string
+          enum: [STRUCTURAL, BEHAVIORAL, DEFAULT]
     MultipleChoiceQuestionCreate:
       required: [answerOptions, points, scoringType, singleChoice, title, type]
       type: object
@@ -4516,6 +5989,13 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    ExampleSubmissionDetail:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        usedForTutorial: {type: boolean}
+        assessmentExplanation: {type: string}
+        submission: {$ref: '#/components/schemas/SubmissionContent'}
     TextUnit:
       type: object
       properties:
@@ -4597,6 +6077,13 @@ components:
             most recent build, absent before the first'}
         modelConfigured: {type: boolean, description: Whether the pool has a usable
             model configuration; builds are refused without one}
+    SearchResultPageDTOFeedbackDetail:
+      type: object
+      properties:
+        resultsOnPage:
+          type: array
+          items: {$ref: '#/components/schemas/FeedbackDetail'}
+        numberOfPages: {type: integer, format: int32}
     SimpleLectureCourse:
       type: object
       properties:
@@ -4611,6 +6098,23 @@ components:
         properties:
           type: object
           additionalProperties: {}
+    Participation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        testRun: {type: boolean}
+        type: {type: string}
+        initializationState:
+          type: string
+          enum: [UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, INACTIVE, BUILD_PLAN_COPIED,
+            BUILD_PLAN_CONFIGURED, INITIALIZED, FINISHED]
+        submissionCount: {type: integer, format: int32}
+        exercise: {$ref: '#/components/schemas/ParticipationExercise'}
+    ParticipationWithExercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exercise: {$ref: '#/components/schemas/Exercise'}
     ExerciseGenerationRetainedArtifacts:
       type: object
       description: The current bounded, read-only generated candidate, also retained
@@ -4629,6 +6133,20 @@ components:
           items: {$ref: '#/components/schemas/ExerciseGenerationRetainedFile'}
         empty: {type: boolean}
       required: [completeness, files, jobId]
+    SubmissionContent:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submissionExerciseType: {type: string}
+        text: {type: string}
+        language:
+          type: string
+          enum: [ENGLISH, GERMAN]
+        blocks:
+          type: array
+          items: {$ref: '#/components/schemas/TextBlock'}
+        model: {type: string}
+        explanationText: {type: string}
     TutorialGroupSessionCount:
       type: object
       properties:
@@ -4693,6 +6211,26 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    PresentationAssessmentInstanceRequest:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        presentationDate: {type: string, format: date-time}
+        resultPoints: {type: number, format: double, maximum: 10000, minimum: 0}
+        studentLogin: {type: string, minLength: 1}
+        language: {type: string, maxLength: 10, minLength: 0}
+        mode:
+          type: string
+          enum: [ONLINE, IN_PERSON]
+        location: {type: string, maxLength: 255, minLength: 0}
+        meetingLink: {type: string, maxLength: 1000, minLength: 0, pattern: '^https?://\S+$'}
+        remark: {type: string, maxLength: 1000, minLength: 0}
+      required: [language, mode, presentationDate, studentLogin]
+    SubmissionWithParticipation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        participation: {$ref: '#/components/schemas/ParticipationWithExercise'}
     QuizExerciseWithoutQuestionsForStudent:
       required: [quizQuestionsType]
       type: object
@@ -4759,6 +6297,24 @@ components:
           type: string
           enum: [FILE, URL]
         studentVersion: {type: string}
+    FeedbackAffectedStudent:
+      type: object
+      properties:
+        participationId: {type: integer, format: int64}
+        firstName: {type: string}
+        lastName: {type: string}
+        login: {type: string}
+        repositoryURI: {type: string}
+    BonusResponse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        weight: {type: number, format: double}
+        bonusStrategy:
+          type: string
+          enum: [GRADES_DISCRETE, GRADES_CONTINUOUS, POINTS]
+        sourceGradingScale: {$ref: '#/components/schemas/GradingScaleForBonus'}
+        bonusToGradingScale: {$ref: '#/components/schemas/GradingScaleForBonus'}
     LectureDetailsExerciseUnit:
       allOf:
       - {$ref: '#/components/schemas/LectureUnitDetails'}
@@ -4782,6 +6338,14 @@ components:
         text: {type: string}
         hint: {type: string}
         invalid: {type: boolean}
+    ResultWithPointsPerGradingCriterion:
+      type: object
+      properties:
+        result: {$ref: '#/components/schemas/ResultForExport'}
+        totalPoints: {type: number, format: double}
+        pointsPerCriterion:
+          type: object
+          additionalProperties: {type: number, format: double}
     Competency:
       type: object
       properties:
@@ -4794,12 +6358,25 @@ components:
         spotNr: {type: integer, format: int32}
         width: {type: integer, format: int32}
         invalid: {type: boolean}
+    ExternalSubmissionResult:
+      type: object
+      properties:
+        score: {type: number, format: double}
+        rated: {type: boolean}
+        feedbacks:
+          type: array
+          items: {$ref: '#/components/schemas/Feedback'}
     DropLocationReEvaluate:
       type: object
       properties:
         id: {type: integer, format: int64}
         invalid: {type: boolean}
       required: [id, invalid]
+    Course:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        accuracyOfScores: {type: integer, format: int32}
     CompetencyLink:
       type: object
       properties:
@@ -4917,6 +6494,14 @@ components:
         accuracyOfScores: {type: integer, format: int32}
         athenaGradingFeedbackEnabled: {type: boolean}
         athenaFormativeFeedbackEnabled: {type: boolean}
+    Score:
+      type: object
+      properties:
+        studentId: {type: integer, format: int64}
+        studentLogin: {type: string}
+        pointsAchieved: {type: number, format: double}
+        scoreAchieved: {type: number, format: double}
+        regularPointsAchievable: {type: number, format: double}
     GeneratedAssessmentCriterion:
       type: object
       description: Generated structured assessment criterion
@@ -4980,6 +6565,51 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    FeedbackDetail:
+      type: object
+      properties:
+        feedbackIds:
+          type: array
+          items: {type: integer, format: int64}
+        count: {type: integer, format: int64}
+        relativeCount: {type: number, format: double}
+        detailTexts:
+          type: array
+          items: {type: string}
+        testCaseName: {type: string}
+        taskName: {type: string}
+        errorCategory: {type: string}
+        hasLongFeedbackText: {type: boolean}
+    TextBlock:
+      type: object
+      properties:
+        id: {type: string}
+        text: {type: string}
+        startIndex: {type: integer, format: int32}
+        endIndex: {type: integer, format: int32}
+        type:
+          type: string
+          enum: [AUTOMATIC, MANUAL]
+    GradingScaleForBonus:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        gradeType:
+          type: string
+          enum: [NONE, BONUS, GRADE]
+        bonusStrategy:
+          type: string
+          enum: [GRADES_DISCRETE, GRADES_CONTINUOUS, POINTS]
+        plagiarismGrade: {type: string}
+        noParticipationGrade: {type: string}
+        presentationsNumber: {type: integer, format: int32}
+        presentationsWeight: {type: number, format: double}
+        gradeSteps:
+          type: array
+          items: {$ref: '#/components/schemas/GradeStep'}
+          uniqueItems: true
+        course: {$ref: '#/components/schemas/CourseForBonus'}
+        exam: {$ref: '#/components/schemas/ExamForBonus'}
     CourseWithId:
       type: object
       properties:
@@ -5014,6 +6644,21 @@ components:
       type: object
       properties:
         title: {type: string}
+    ParticipationExercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseType:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        type: {type: string}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        maxPoints: {type: number, format: double}
+        course: {$ref: '#/components/schemas/Course'}
     QuizQuestionFilterVerdict:
       type: object
       description: The filter's judgement of one generated quiz question on one failure
@@ -5182,6 +6827,19 @@ components:
         competency: {$ref: '#/components/schemas/LectureDetailsCompetency'}
         weight: {type: number, format: double}
         generatedByAi: {type: boolean}
+    CourseGradeScore:
+      type: object
+      properties:
+        participationId: {type: integer, format: int64}
+        userId: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        score: {type: number, format: double}
+        rated: {type: boolean}
+        presentationScore: {type: number, format: double}
+        type:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+      required: [type]
     InferredCompetency:
       type: object
       properties:
@@ -5219,6 +6877,23 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    ComplaintResponseUpdate:
+      type: object
+      properties:
+        responseText: {type: string}
+        complaintIsAccepted: {type: boolean}
+        action:
+          type: string
+          enum: [REFRESH_LOCK, RESOLVE_COMPLAINT]
+    CourseGradeInformation:
+      type: object
+      properties:
+        gradeScores:
+          type: array
+          items: {$ref: '#/components/schemas/CourseGradeScore'}
+        students:
+          type: array
+          items: {$ref: '#/components/schemas/Student'}
     LectureUnitMaterialVersions:
       type: object
       properties:
@@ -5231,6 +6906,19 @@ components:
         points: {type: number, format: double}
         ratedCounter: {type: integer, format: int32}
         unRatedCounter: {type: integer, format: int32}
+    UserName:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+    ExamForBonus:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        examMaxPoints: {type: integer, format: int32}
+        course: {$ref: '#/components/schemas/CourseForBonus'}
     ExerciseGenerationCapabilities:
       type: object
       properties:
@@ -5469,6 +7157,11 @@ components:
         afterVersionId: {type: integer, format: int64}
         revertedAt: {type: string, format: date-time}
       required: [courseId, exerciseId, jobId, kind, running, startedAt, status]
+    PresentationAssessmentStatistics:
+      type: object
+      properties:
+        totalCount: {type: integer, format: int64}
+        assessedCount: {type: integer, format: int64}
     ProblemStatementGlobalRefinementRequest:
       type: object
       description: Request to refine a problem statement globally using a user prompt
@@ -5478,6 +7171,16 @@ components:
         userPrompt: {type: string, description: User prompt for global refinement,
           maxLength: 1000, minLength: 1}
       required: [problemStatementText, userPrompt]
+    SubmissionRequest:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        text: {type: string}
+        model: {type: string}
+        explanationText: {type: string}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/ResultRequest'}
     QuizQuestionRefinementSuccess:
       description: Successful refinement result containing the refined question and
         an explanation of the changes
@@ -5660,6 +7363,11 @@ components:
         assessmentType:
           type: string
           enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+    AssessmentNote:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        note: {type: string}
     ShortAnswerSpotCreate:
       type: object
       properties:
@@ -6004,6 +7712,22 @@ components:
         id: {type: integer, format: int64}
         dragItemTempId: {type: integer, format: int64}
         dropLocationTempId: {type: integer, format: int64}
+    FeedbackAnalysisResponse:
+      type: object
+      properties:
+        feedbackDetails: {$ref: '#/components/schemas/SearchResultPageDTOFeedbackDetail'}
+        totalItems: {type: integer, format: int64}
+        taskNames:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+        testCaseNames:
+          type: array
+          items: {type: string}
+        errorCategories:
+          type: array
+          items: {type: string}
+        highestOccurrenceOfGroupedFeedback: {type: integer, format: int64}
     AnswerOptionCreate:
       type: object
       properties:
@@ -6019,6 +7743,10 @@ components:
         endDate: {type: string, format: date-time}
         reason: {type: string}
       required: [endDate, startDate]
+    ExerciseReference:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     Timing:
       type: object
       description: Response containing consistency check timing
@@ -6054,6 +7782,21 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    PresentationAssessmentInstance:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        presentationDate: {type: string, format: date-time}
+        resultPoints: {type: number, format: double, maximum: 10000, minimum: 0}
+        language: {type: string, maxLength: 10, minLength: 0}
+        mode:
+          type: string
+          enum: [ONLINE, IN_PERSON]
+        location: {type: string, maxLength: 255, minLength: 0}
+        meetingLink: {type: string, maxLength: 1000, minLength: 0}
+        remark: {type: string, maxLength: 1000, minLength: 0}
+        student: {$ref: '#/components/schemas/PresentationAssessmentStudent'}
+      required: [language, mode, presentationDate]
     IndexedEntityRecord:
       type: object
       properties:
@@ -6097,6 +7840,14 @@ components:
           enum: [LOWER, MATCH, HIGHER, UNKNOWN]
         taskCount: {type: integer, format: int32}
         testCount: {type: integer, format: int32}
+    ExampleSubmissionRequest:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        usedForTutorial: {type: boolean}
+        assessmentExplanation: {type: string}
+        exercise: {$ref: '#/components/schemas/ExerciseReference'}
+        submission: {$ref: '#/components/schemas/SubmissionRequest'}
     ModelingFeedback:
       type: object
       properties:
@@ -6188,6 +7939,14 @@ components:
         displayPageNumbers:
           type: array
           items: {type: integer, format: int32}
+    ExternalSubmissionCandidate:
+      type: object
+      properties:
+        login: {type: string}
+        name: {type: string}
+        ineligibility:
+          type: string
+          enum: [NOT_IN_COURSE, NO_STUDENT_EXAM, EXERCISE_NOT_IN_STUDENT_EXAM, RESULT_ALREADY_EXISTS]
     QuizQuestionGenerationRequest:
       type: object
       description: Request to generate quiz questions. Either topic or competencyIds
@@ -6301,6 +8060,12 @@ components:
           type: array
           items: {$ref: '#/components/schemas/WorkerExecution'}
         capability: {$ref: '#/components/schemas/WorkloadCapability'}
+    ResultRequest:
+      type: object
+      properties:
+        feedbacks:
+          type: array
+          items: {$ref: '#/components/schemas/Feedback'}
     DropLocationCreate:
       type: object
       properties:
@@ -6331,6 +8096,21 @@ components:
           type: string
           default: after-quiz-end
           enum: [after-quiz-end]
+    Complaint:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        complaintText: {type: string}
+        submittedTime: {type: string, format: date-time}
+        complaintType:
+          type: string
+          enum: [COMPLAINT, MORE_FEEDBACK]
+        complaintIsAccepted: {type: boolean}
+        complaintResponse: {$ref: '#/components/schemas/ComplaintResponse'}
+        result: {$ref: '#/components/schemas/ResultSimple'}
+        participant: {$ref: '#/components/schemas/Participant'}
+        assessorKey: {type: string}
+        assessorLabel: {type: string}
     QuizExerciseForSearch:
       type: object
       properties:
@@ -6339,6 +8119,27 @@ components:
         title: {type: string}
         course: {$ref: '#/components/schemas/QuizSearchCourse'}
         exerciseGroup: {$ref: '#/components/schemas/QuizSearchExerciseGroup'}
+    SubmissionForExport:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        participation: {$ref: '#/components/schemas/ParticipationForExport'}
+    PresentationAssessment:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string, maxLength: 255, minLength: 0}
+        description: {type: string, maxLength: 1000, minLength: 0}
+        maxPoints: {type: number, format: double, exclusiveMinimum: 0, maximum: 10000}
+        courseId: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+      required: [maxPoints, title]
+    PresentationAssessmentStudentRow:
+      type: object
+      properties:
+        presentationAssessment: {$ref: '#/components/schemas/PresentationAssessment'}
+        instance: {$ref: '#/components/schemas/PresentationAssessmentInstance'}
     ProblemStatementGenerationRequest:
       type: object
       description: Request to generate a problem statement
@@ -6453,6 +8254,24 @@ components:
           type: string
           default: multiple-choice
           enum: [multiple-choice]
+    PresentationAssessmentInstancesBatchCreate:
+      type: object
+      properties:
+        presentationDate: {type: string, format: date-time}
+        resultPoints: {type: number, format: double, maximum: 10000, minimum: 0}
+        studentLogins:
+          type: array
+          items: {type: string, minLength: 1}
+          maxItems: 500
+          minItems: 0
+        language: {type: string, maxLength: 10, minLength: 0}
+        mode:
+          type: string
+          enum: [ONLINE, IN_PERSON]
+        location: {type: string, maxLength: 255, minLength: 0}
+        meetingLink: {type: string, maxLength: 1000, minLength: 0, pattern: '^https?://\S+$'}
+        remark: {type: string, maxLength: 1000, minLength: 0}
+      required: [language, mode, presentationDate, studentLogins]
     MultipleChoiceQuizQuestionWithoutSolution:
       required: [type]
       type: object
@@ -6624,6 +8443,13 @@ components:
         maxTokens: {type: integer, format: int64, exclusiveMinimum: 0}
         maxJobDuration: {type: string, format: duration}
       required: [mode]
+    ExampleSubmission:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        usedForTutorial: {type: boolean}
+        submissionId: {type: integer, format: int64}
+        assessmentExplanation: {type: string}
     QuizExerciseForStudentResponse:
       discriminator:
         propertyName: quizQuestionsType
@@ -6636,6 +8462,14 @@ components:
       properties:
         quizQuestionsType: {type: string}
       required: [quizQuestionsType]
+    ParticipationForExport:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        participantName: {type: string}
+        participantIdentifier: {type: string}
+        repositoryUri: {type: string}
+        team: {$ref: '#/components/schemas/Team'}
     AnswerOptionWithSolution:
       type: object
       properties:
@@ -6759,6 +8593,19 @@ components:
         id: {type: integer, format: int64}
         title: {type: string}
         active: {type: boolean}
+    GradingScale:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        gradeSteps: {$ref: '#/components/schemas/GradeSteps'}
+        bonusStrategy:
+          type: string
+          enum: [GRADES_DISCRETE, GRADES_CONTINUOUS, POINTS]
+        bonusFrom:
+          type: array
+          items: {$ref: '#/components/schemas/Bonus'}
+          uniqueItems: true
+      required: [gradeSteps]
     QuizQuestionPoolPage:
       type: object
       description: One page of a course's quiz question pool
@@ -6819,6 +8666,22 @@ components:
         explanation: {type: string, description: Optional explanation for the overall
             question, maxLength: 2000, minLength: 0}
       required: [options, questionText, title, type]
+    GradeSteps:
+      type: object
+      properties:
+        title: {type: string}
+        gradeType:
+          type: string
+          enum: [NONE, BONUS, GRADE]
+        gradeSteps:
+          type: array
+          items: {$ref: '#/components/schemas/GradeStep'}
+          uniqueItems: true
+        maxPoints: {type: integer, format: int32}
+        plagiarismGrade: {type: string}
+        noParticipationGrade: {type: string}
+        presentationsNumber: {type: integer, format: int32}
+        presentationsWeight: {type: number, format: double}
     HiddenPageInfo:
       type: object
       properties:
@@ -6833,6 +8696,28 @@ components:
           items: {$ref: '#/components/schemas/LectureUnitSplit'}
         numberOfPages: {type: integer, format: int32}
         removeSlidesCommaSeparatedKeyPhrases: {type: string}
+    Result:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        completionDate: {type: string, format: date-time}
+        successful: {type: boolean}
+        score: {type: number, format: double}
+        rated: {type: boolean}
+        submission: {$ref: '#/components/schemas/Submission'}
+        participation: {$ref: '#/components/schemas/Participation'}
+        feedbacks:
+          type: array
+          items: {$ref: '#/components/schemas/Feedback'}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        correctionRound: {type: integer, format: int32}
+        hasComplaint: {type: boolean}
+        exampleResult: {type: boolean}
+        assessor: {$ref: '#/components/schemas/UserName'}
+        assessmentNote: {$ref: '#/components/schemas/AssessmentNote'}
+        exerciseId: {type: integer, format: int64}
     LectureDetailsAttachment:
       type: object
       properties:
@@ -6917,6 +8802,20 @@ components:
         instruction: {type: string, description: Instruction describing what should
             change, maxLength: 500, minLength: 1}
       required: [endLine, instruction, problemStatementText, startLine]
+    Exercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+    CourseForBonus:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        maxPoints: {type: integer, format: int32}
+        accuracyOfScores: {type: integer, format: int32}
     TutorialGroupExportData:
       type: object
       properties:
@@ -7044,6 +8943,14 @@ components:
         subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
+    Grade:
+      type: object
+      properties:
+        gradeName: {type: string}
+        isPassingGrade: {type: boolean}
+        gradeType:
+          type: string
+          enum: [NONE, BONUS, GRADE]
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -7107,6 +9014,24 @@ components:
       properties:
         quizQuestionsType: {type: string}
       required: [quizQuestionsType]
+    RatingListItem:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        rating: {type: integer, format: int32}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        assessorLogin: {type: string}
+        assessorName: {type: string}
+        resultId: {type: integer, format: int64}
+        submissionId: {type: integer, format: int64}
+        participationId: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        exerciseType:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
     LectureUnitForLearningPathNodeDetails:
       type: object
       properties:
@@ -7150,6 +9075,19 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    UserPublicInfo:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        firstName: {type: string}
+        lastName: {type: string}
+        imageUrl: {type: string}
+        isInstructor: {type: boolean}
+        isEditor: {type: boolean}
+        isTeachingAssistant: {type: boolean}
+        isStudent: {type: boolean}
     MultipleChoiceSubmittedAnswerAfterEvaluation:
       required: [type]
       type: object
@@ -7281,6 +9219,13 @@ components:
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+    SearchResultPageDTOGradingScale:
+      type: object
+      properties:
+        resultsOnPage:
+          type: array
+          items: {$ref: '#/components/schemas/GradingScale'}
+        numberOfPages: {type: integer, format: int32}
     VariantPlacement:
       type: object
       properties:
@@ -7310,11 +9255,58 @@ components:
           type: string
           default: live-quiz
           enum: [live-quiz]
+    Feedback:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        text: {type: string}
+        detailText: {type: string}
+        hasLongFeedbackText: {type: boolean}
+        reference: {type: string}
+        credits: {type: number, format: double}
+        positive: {type: boolean}
+        type:
+          type: string
+          enum: [MANUAL, MANUAL_UNREFERENCED, AUTOMATIC_ADAPTED, AUTOMATIC]
+        visibility:
+          type: string
+          enum: [ALWAYS, AFTER_DUE_DATE, NEVER]
+        gradingInstruction: {$ref: '#/components/schemas/GradingInstruction'}
+        testCase: {$ref: '#/components/schemas/TestCase'}
+    PresentationAssessmentStudent:
+      type: object
+      properties:
+        login: {type: string}
+        name: {type: string}
+        firstName: {type: string}
+        lastName: {type: string}
+        email: {type: string}
     StepOutput:
       type: object
       properties:
         summary: {type: string}
         detail: {type: string}
+    GradingScaleUpdate:
+      type: object
+      properties:
+        gradeType:
+          type: string
+          enum: [NONE, BONUS, GRADE]
+        bonusStrategy:
+          type: string
+          enum: [GRADES_DISCRETE, GRADES_CONTINUOUS, POINTS]
+        plagiarismGrade: {type: string, maxLength: 100, minLength: 0}
+        noParticipationGrade: {type: string, maxLength: 100, minLength: 0}
+        presentationsNumber: {type: integer, format: int32, maximum: 100, minimum: 1}
+        presentationsWeight: {type: number, format: double}
+        gradeSteps:
+          type: array
+          items: {$ref: '#/components/schemas/GradeStep'}
+          uniqueItems: true
+        courseMaxPoints: {type: integer, format: int32, maximum: 9999, minimum: 1}
+        coursePresentationScore: {type: integer, format: int32, maximum: 100, minimum: 0}
+        examMaxPoints: {type: integer, format: int32, maximum: 9999, minimum: 1}
+      required: [gradeType]
     TutorialGroupSummarySchedule:
       type: object
       properties:
@@ -7389,6 +9381,17 @@ components:
       properties:
         refinedProblemStatement: {type: string, description: Refined problem statement
             text}
+    AssessmentUploadError:
+      type: object
+      properties:
+        identifier: {type: string}
+        type:
+          type: string
+          enum: [MISSING_CSV, MULTIPLE_CSV, EMPTY_CSV, MALFORMED_CSV, MISSING_MANUAL_POINTS_COLUMN,
+            MISSING_IDENTIFIER, INVALID_IDENTIFIER_FORMAT, DUPLICATE_IDENTIFIER, PARTICIPATION_NOT_FOUND,
+            IDENTIFIER_MISMATCH, EXISTING_COMPLAINT, INVALID_POINTS, DUPLICATE_TEXT_FILE,
+            AMBIGUOUS_TEXT_FILE, MISSING_TEXT_FILE, UNMATCHED_TEXT_FILE]
+        detail: {type: string}
     ExerciseGenerationLiveUsage:
       type: object
       description: What a generation run has spent so far, streamed while it runs
@@ -7417,6 +9420,15 @@ components:
         text: {type: string, maxLength: 255, minLength: 0}
         spotId: {type: integer, format: int64}
       required: [spotId, text]
+    BonusRequest:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        weight: {type: number, format: double}
+        bonusStrategy:
+          type: string
+          enum: [GRADES_DISCRETE, GRADES_CONTINUOUS, POINTS]
+        sourceGradingScale: {$ref: '#/components/schemas/GradingScaleId'}
     LectureSlidesAttachmentVideoUnit:
       type: object
       properties:
@@ -7451,6 +9463,30 @@ components:
         suggestedFix: {type: string, description: Concrete suggestion to fix the issue}
         impactOnLearners: {type: string, description: How this issue increases extraneous
             cognitive load}
+    TutorParticipation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        tutorId: {type: integer, format: int64}
+        status:
+          type: string
+          enum: [NOT_PARTICIPATED, REVIEWED_INSTRUCTIONS, TRAINED, COMPLETED]
+        trainedExampleSubmissions:
+          type: array
+          items: {$ref: '#/components/schemas/ExampleSubmission'}
+          uniqueItems: true
+      required: [status]
+    AssessmentUploadResult:
+      type: object
+      properties:
+        numberOfCreatedAssessments: {type: integer, format: int32}
+        createdStudentIdentifiers:
+          type: array
+          items: {type: string}
+        errors:
+          type: array
+          items: {$ref: '#/components/schemas/AssessmentUploadError'}
     QuizExerciseWithSolutionForStudent:
       required: [quizQuestionsType]
       type: object
@@ -7573,6 +9609,14 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ExerciseGenerationFeedback'}
         sourceExerciseId: {type: integer, format: int64}
+    TutorEffort:
+      type: object
+      properties:
+        userId: {type: integer, format: int64}
+        numberOfSubmissionsAssessed: {type: integer, format: int32}
+        totalTimeSpentMinutes: {type: number, format: double}
+        exerciseId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
     AnswerOptionFromEditor:
       type: object
       properties:
@@ -7649,6 +9693,16 @@ components:
         fresh: {type: integer, format: int32, description: How many of this round's
             findings are new since the previous round}
       required: [advisory, attempt, blocking, carriedOver, drained, fresh, round]
+    GradeStep:
+      type: object
+      properties:
+        lowerBoundPercentage: {type: number, format: double}
+        lowerBoundInclusive: {type: boolean}
+        upperBoundPercentage: {type: number, format: double}
+        upperBoundInclusive: {type: boolean}
+        gradeName: {type: string}
+        isPassingGrade: {type: boolean}
+      required: [gradeName]
     ConversationUser:
       type: object
       properties:

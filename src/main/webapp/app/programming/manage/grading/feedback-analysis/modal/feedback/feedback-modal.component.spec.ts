@@ -4,20 +4,14 @@ import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { provideTranslateService } from '@ngx-translate/core';
-import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('FeedbackModalComponent', () => {
     let fixture: ComponentFixture<FeedbackModalComponent>;
     let component: FeedbackModalComponent;
     let activeModal: NgbActiveModal;
-
-    const mockLongFeedbackTextService = {
-        find: vi.fn().mockReturnValue({
-            subscribe: (callback: (response: { body: string }) => void) => callback({ body: 'Loaded long feedback' }),
-        }),
-    };
+    let http: HttpTestingController;
 
     const mockFeedbackDetail: FeedbackDetail = {
         feedbackIds: [1, 2, 3, 4, 5],
@@ -33,37 +27,42 @@ describe('FeedbackModalComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FeedbackModalComponent],
-            providers: [
-                NgbActiveModal,
-                { provide: LongFeedbackTextService, useValue: mockLongFeedbackTextService },
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                provideTranslateService(),
-            ],
+            providers: [NgbActiveModal, provideHttpClient(), provideHttpClientTesting(), provideTranslateService()],
         }).compileComponents();
         fixture = TestBed.createComponent(FeedbackModalComponent);
         component = fixture.componentInstance;
         activeModal = TestBed.inject(NgbActiveModal);
+        http = TestBed.inject(HttpTestingController);
         fixture.componentRef.setInput('feedbackDetail', mockFeedbackDetail);
         fixture.detectChanges();
     });
 
     afterEach(() => {
+        http.verify();
         vi.restoreAllMocks();
     });
 
-    it('should load long feedback text if hasLongFeedbackText is true', () => {
-        expect(mockLongFeedbackTextService.find).toHaveBeenCalledWith(1);
+    it('should load long feedback text of the first feedback as plain text', () => {
+        const request = http.expectOne('/api/assessment/feedbacks/1/long-feedback');
+        expect(request.request.responseType).toBe('text');
+        request.flush('Loaded long feedback');
         expect(component.longFeedbackText()).toBe('Loaded long feedback');
     });
 
+    it('should fall back to the first detail text when the long feedback is empty', () => {
+        http.expectOne('/api/assessment/feedbacks/1/long-feedback').flush('');
+        expect(component.longFeedbackText()).toBe('Some feedback detail');
+    });
+
     it('should initialize with the provided feedback detail', () => {
+        http.expectOne('/api/assessment/feedbacks/1/long-feedback').flush('Loaded long feedback');
         expect(component.feedbackDetail()).toEqual(mockFeedbackDetail);
         expect(component.feedbackDetail().detailTexts).toStrictEqual(['Some feedback detail']);
         expect(component.feedbackDetail().testCaseName).toBe('testCase1');
     });
 
     it('should call close on activeModal when close is triggered', () => {
+        http.expectOne('/api/assessment/feedbacks/1/long-feedback').flush('Loaded long feedback');
         const closeSpy = vi.spyOn(activeModal, 'close');
         component.activeModal.close();
         expect(closeSpy).toHaveBeenCalledOnce();

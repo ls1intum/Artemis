@@ -98,7 +98,7 @@ public class StudentExamAthenaFeedbackService {
         }
         // Test runs are an instructor's own rehearsal of a real exam, so they get the same formative feedback as a
         // student's test-exam attempt. Regular attempts of a real exam are excluded: those are graded by the course.
-        if (!studentExam.isTestExam() && !studentExam.isTestRun()) {
+        if (studentExam.getExamMode().isReal() && !studentExam.isTestRun()) {
             throw new BadRequestAlertException("Athena feedback is only available for test exams and test runs", "StudentExam", "notTestExam");
         }
         if (athenaFeedbackApi.isEmpty() || (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty())) {

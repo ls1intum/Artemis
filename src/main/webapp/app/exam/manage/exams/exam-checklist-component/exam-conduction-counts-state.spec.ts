@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, of } from 'rxjs';
 import { ExamConductionCountsState } from './exam-conduction-counts-state';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
 
@@ -13,7 +14,7 @@ const counts = (generated: number, started: number, submitted = 2): ExamConducti
 const checklist = (generated: number, started: number, submitted = 2) => Object.assign(new ExamChecklist(), counts(generated, started, submitted));
 
 describe('ExamConductionCountsState', () => {
-    const exam: Exam = { id: 1, testExam: true };
+    const exam: Exam = { id: 1, examMode: ExamMode.TEST };
     let state: ExamConductionCountsState;
     let fetchCounts: ReturnType<typeof vi.fn<(exam: Exam) => Subject<ExamConductionCounts>>>;
 
@@ -141,7 +142,7 @@ describe('ExamConductionCountsState', () => {
         state.started();
         fetchCounts.mock.results[0].value.error(new Error('offline'));
         if (action === 'reset') {
-            state.reset({ id: 2, testExam: false });
+            state.reset({ id: 2, examMode: ExamMode.REAL });
             state.initialize(checklist(1, 0, 0));
         } else {
             state.destroy();
@@ -162,7 +163,7 @@ describe('ExamConductionCountsState', () => {
         state.initialize(checklist(6, 5));
         state.started();
         const previous = fetchCounts.mock.results[0].value;
-        state.reset({ id: 2, testExam: true });
+        state.reset({ id: 2, examMode: ExamMode.TEST });
         expect(previous.observed).toBe(false);
         state.initialize(checklist(1, 0, 0));
         previous.next(counts(8, 7));
@@ -188,7 +189,7 @@ describe('ExamConductionCountsState', () => {
     });
 
     it.each(['snapshot-before-event', 'event-before-response'])('reconciles regular exam counters for %s', (ordering) => {
-        const regularExam = { id: 1, testExam: false };
+        const regularExam = { id: 1, examMode: ExamMode.REAL };
         state.reset(regularExam);
         if (ordering === 'snapshot-before-event') {
             // The snapshot already includes the persisted start whose notification arrives later.

@@ -2,7 +2,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
-import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -13,9 +13,11 @@ import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation, ParticipationType, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
-import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
+import type { ResultWithPointsPerGradingCriterion } from 'app/openapi/model/result-with-points-per-grading-criterion';
+import type { Feedback as FeedbackResponse } from 'app/openapi/model/feedback';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -461,16 +463,21 @@ export const isManualResult = (result?: Result) => {
 export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingCriterion[]): string[] {
     const testCasesNames: Set<string> = new Set();
     results.forEach((result) => {
-        if (!result.result.feedbacks) {
+        const feedbacks = result.result?.feedbacks;
+        if (!feedbacks) {
             return;
         }
-        result.result.feedbacks.forEach((feedback) => {
-            if (Feedback.isTestCaseFeedback(feedback)) {
-                testCasesNames.add(feedback.testCase?.testName ?? 'Test ' + (result.result.feedbacks!.indexOf(feedback) + 1));
+        feedbacks.forEach((feedback) => {
+            if (isTestCaseFeedback(feedback)) {
+                testCasesNames.add(feedback.testCase?.testName ?? 'Test ' + (feedbacks.indexOf(feedback) + 1));
             }
         });
     });
     return Array.from(testCasesNames);
+}
+
+function isTestCaseFeedback(feedback: FeedbackResponse): boolean {
+    return feedback.type === 'AUTOMATIC' && !!feedback.testCase;
 }
 
 /**
@@ -484,7 +491,7 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
     const testCaseResults: TestCaseResult[] = [];
 
     testCaseNames.forEach((testName) => {
-        const feedback = getFeedbackByTestCase(testName, result.result.feedbacks);
+        const feedback = getFeedbackByTestCase(testName, result.result?.feedbacks);
 
         let resultText;
         if (feedback?.positive) {
@@ -504,7 +511,7 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
  * @param feedbacks the list of result feedbacks to search in
  * @param testCase the name of the test case to search for
  */
-export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]): Feedback | null {
+export function getFeedbackByTestCase<T extends FeedbackResponse>(testCase: string, feedbacks?: T[]): T | null {
     if (!feedbacks) {
         return null;
     }

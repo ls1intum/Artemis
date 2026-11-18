@@ -154,4 +154,23 @@ describe('Team Exercise Search Component', () => {
             expect(exerciseOptions!.length).toBeGreaterThan(0);
         });
     });
+    it('maps cached query results to sorted selectable suggestions and cleans up on destroy', () => {
+        const first = new TextExercise(undefined, undefined);
+        first.id = 1;
+        first.title = 'Team first';
+        const second = new TextExercise(undefined, undefined);
+        second.id = 2;
+        second.title = 'Team second';
+        comp.exerciseOptions = [second, first];
+        comp.exerciseOptionsLoaded = true;
+        const select = vi.spyOn(comp.selectExercise, 'emit');
+        comp.requestSearch('team');
+        expect(comp.suggestions().map((option) => option.value)).toEqual([first, second]);
+        comp.selectOption({ value: comp.suggestions()[0] });
+        expect(select).toHaveBeenCalledExactlyOnceWith(first);
+        expect(comp.inputDisplayValue).toBe('Team first');
+        fixture.destroy();
+        comp.requestSearch('no match');
+        expect(comp.suggestions()).toHaveLength(2);
+    });
 });

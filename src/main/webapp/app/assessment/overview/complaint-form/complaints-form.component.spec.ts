@@ -1,13 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -23,30 +21,27 @@ describe('ComplaintsFormComponent', () => {
     const courseTeamExercise: Exercise = { id: 1, teamMode: true, course } as Exercise;
     let component: ComplaintsFormComponent;
     let fixture: ComponentFixture<ComplaintsFormComponent>;
-    let complaintService: ComplaintService;
+    let httpMock: HttpTestingController;
     let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                {
-                    provide: ComplaintService,
-                    useClass: MockComplaintService,
-                },
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(AlertService),
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }, MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ComplaintsFormComponent);
-                complaintService = TestBed.inject(ComplaintService);
+                httpMock = TestBed.inject(HttpTestingController);
                 alertService = TestBed.inject(AlertService);
                 component = fixture.componentInstance;
                 fixture.componentRef.setInput('exercise', exercise);
                 fixture.componentRef.setInput('resultId', undefined);
                 fixture.componentRef.setInput('complaintType', undefined);
             });
+    });
+
+    afterEach(() => {
+        httpMock.verify();
     });
 
     it('should initialize with correct values for exam complaints', () => {
@@ -70,36 +65,47 @@ describe('ComplaintsFormComponent', () => {
         expect(component.maxComplaintsPerCourse).toStrictEqual(teamComplaints);
     });
 
-    it('should submit after complaint creation', () => {
-        const createMock = vi.spyOn(complaintService, 'create').mockReturnValue(of({} as EntityResponseType));
+    it('should post the complaint and submit after complaint creation', () => {
+        fixture.componentRef.setInput('exercise', courseExercise);
+        component.ngOnInit();
+        fixture.componentRef.setInput('resultId', 7);
+        fixture.componentRef.setInput('complaintType', ComplaintType.COMPLAINT);
+        fixture.componentRef.setInput('examId', 3);
+        component.complaintText = 'please check';
         const submitSpy = vi.spyOn(component.onSubmit, 'emit');
+
         component.createComplaint();
-        expect(createMock).toHaveBeenCalledTimes(1);
-        expect(submitSpy).toHaveBeenCalledTimes(1);
+
+        const request = httpMock.expectOne({ method: 'POST', url: '/api/assessment/complaints' });
+        expect(request.request.body).toEqual({ resultId: 7, complaintType: 'COMPLAINT', complaintText: 'please check', examId: 3 });
+        expect(submitSpy).not.toHaveBeenCalled();
+        request.flush({ id: 1 }, { status: 201, statusText: 'Created' });
+        expect(submitSpy).toHaveBeenCalledOnce();
         expect(submitSpy).toHaveBeenCalledWith();
     });
 
-    it('should throw unknown error after complaint creation', () => {
-        const createMock = vi.spyOn(complaintService, 'create').mockReturnValue(throwError(() => ({ status: 400 })));
+    it('should report an unknown error after complaint creation', () => {
         const submitSpy = vi.spyOn(component.onSubmit, 'emit');
         const errorSpy = vi.spyOn(alertService, 'error');
+
         component.createComplaint();
-        expect(createMock).toHaveBeenCalledTimes(1);
+        httpMock.expectOne({ method: 'POST', url: '/api/assessment/complaints' }).flush(null, { status: 400, statusText: 'Bad Request' });
+
         expect(submitSpy).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledOnce();
     });
 
-    it('should throw known error after complaint creation', () => {
-        const error = { error: { errorKey: 'tooManyComplaints' } } as HttpErrorResponse;
-        const createMock = vi.spyOn(complaintService, 'create').mockReturnValue(throwError(() => error));
+    it('should report the known error after complaint creation', () => {
         const submitSpy = vi.spyOn(component.onSubmit, 'emit');
         const errorSpy = vi.spyOn(alertService, 'error');
         const numberOfComplaints = 42;
         component.maxComplaintsPerCourse = numberOfComplaints;
+
         component.createComplaint();
-        expect(createMock).toHaveBeenCalledTimes(1);
+        httpMock.expectOne({ method: 'POST', url: '/api/assessment/complaints' }).flush({ errorKey: 'tooManyComplaints' }, { status: 400, statusText: 'Bad Request' });
+
         expect(submitSpy).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledOnce();
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: numberOfComplaints });
     });
 

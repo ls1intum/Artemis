@@ -496,7 +496,7 @@ public class ExamService {
 
         // Adding registered student information to DTO
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(examId);
-        if (latestSubmittedPracticeAttemptsOnly && exam.isTestExam()) {
+        if (latestSubmittedPracticeAttemptsOnly && !exam.getExamMode().isReal()) {
             studentExams = new HashSet<>(latestSubmittedPracticeAttempts(studentExams).values());
         }
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(examId);
@@ -505,7 +505,7 @@ public class ExamService {
 
         Map<Long, List<StudentParticipation>> participationsByStudentId = new HashMap<>();
 
-        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestExam()).toList();
+        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestRun() && se.getExamMode().isReal()).toList();
 
         if (!regularStudentExams.isEmpty()) {
             var regularStudentIds = regularStudentExams.stream().map(se -> se.getUser().getId()).toList();
@@ -524,7 +524,7 @@ public class ExamService {
         Map<Long, List<StudentParticipation>> participationsByStudentExamId = new LinkedHashMap<>();
         for (StudentExam studentExam : studentExams) {
             List<StudentParticipation> participations;
-            if (studentExam.isTestExam()) {
+            if (studentExam.isTestRun() || !studentExam.getExamMode().isReal()) {
                 participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
             }
             else {
@@ -604,7 +604,7 @@ public class ExamService {
     /** Selects exactly the automatically assessed exercises and participations of a test-exam attempt for every score audience. */
     private ExamResultInputs selectExamResultInputs(StudentExam studentExam, Set<ExamGradeScoreDTO> grades, List<StudentParticipation> participations) {
         var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
-        if (!studentExam.isTestExam()) {
+        if (studentExam.getExamMode().isReal()) {
             return new ExamResultInputs(exercises, grades, List.of());
         }
         exercises = exercises.stream()
@@ -724,7 +724,7 @@ public class ExamService {
             Long studentId = studentIds.iterator().next();
             User targetUser = userRepository.findByIdWithAuthoritiesElseThrow(studentId);
             StudentExam studentExam;
-            if (sourceExam.isTestExam()) {
+            if (!sourceExam.getExamMode().isReal()) {
                 var latest = latestSubmittedPracticeAttempts(studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(studentId, examId)).get(studentId);
                 if (latest == null) {
                     return Map.of();
@@ -978,8 +978,8 @@ public class ExamService {
     private ExamScoresDTO.StudentResultDTO calculateStudentResultWithGrade(StudentExam studentExam, ExamResultInputs inputs, List<StudentParticipation> participations,
             ExamGradingContext context) {
         User user = studentExam.getUser();
-        Double attemptMaxPoints = studentExam.isTestExam() ? calculateMaxPointsSum(inputs.exercises(), context.exam().getCourse()) : null;
-        Map<Long, ExamScoresDTO.ExerciseResultDTO> exerciseResults = studentExam.isTestExam()
+        Double attemptMaxPoints = !studentExam.getExamMode().isReal() ? calculateMaxPointsSum(inputs.exercises(), context.exam().getCourse()) : null;
+        Map<Long, ExamScoresDTO.ExerciseResultDTO> exerciseResults = !studentExam.getExamMode().isReal()
                 ? buildPracticeAttemptExerciseMetadata(studentExam, participations, context.quizSubmittedAnswerCounts())
                 : new HashMap<>();
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
@@ -1007,7 +1007,7 @@ public class ExamService {
             @Nullable Double attemptMaxPoints, String grade, @Nullable PlagiarismVerdict verdict) {
         User user = studentExam.getUser();
         return new ExamScoresDTO.StudentResultDTO(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0, 0.0,
-                grade, grade, false, 0.0, null, studentExam.isTestExam() ? exerciseResults : null, verdict, attemptMaxPoints);
+                grade, grade, false, 0.0, null, !studentExam.getExamMode().isReal() ? exerciseResults : null, verdict, attemptMaxPoints);
     }
 
     private ExamPointTotals calculateExamPointTotals(ExamResultInputs inputs, List<StudentParticipation> participations, Map<Long, PlagiarismCase> plagiarismCases,
@@ -1059,7 +1059,7 @@ public class ExamService {
     }
 
     private ExamGradeOutcome calculateExamGrade(StudentExam studentExam, ExamResultInputs inputs, ExamPointTotals points, ExamGradingContext context) {
-        double maxPoints = context.exam().isTestExam() ? calculateMaxPointsSum(inputs.exercises(), context.exam().getCourse()) : context.exam().getExamMaxPoints();
+        double maxPoints = !context.exam().getExamMode().isReal() ? calculateMaxPointsSum(inputs.exercises(), context.exam().getCourse()) : context.exam().getExamMaxPoints();
         boolean canCalculateGrade = maxPoints > 0 && inputs.pendingExerciseIds().isEmpty();
         if (!canCalculateGrade) {
             return new ExamGradeOutcome(0.0, "", "", false, null);
@@ -1083,9 +1083,9 @@ public class ExamService {
         }
         GradingScale scale = context.gradingScale().orElseThrow();
         // Apply the bonus on the configured grading scale, then convert back to the attempt's denominator.
-        double factor = studentExam.isTestExam() ? scale.getMaxPoints() / maxPoints : 1.0;
+        double factor = !studentExam.getExamMode().isReal() ? scale.getMaxPoints() / maxPoints : 1.0;
         BonusResultDTO bonus = context.examBonusCalculator().calculateStudentGradesWithBonus(studentExam.getUser().getId(), achievedPoints * factor);
-        if (studentExam.isTestExam() && factor > 0 && bonus.finalPoints() != null) {
+        if (!studentExam.getExamMode().isReal() && factor > 0 && bonus.finalPoints() != null) {
             return new BonusResultDTO(bonus.bonusStrategy(), bonus.bonusFromTitle(), bonus.studentPointsOfBonusSource(), bonus.bonusGrade(), bonus.finalPoints() / factor,
                     bonus.finalGrade(), bonus.mostSeverePlagiarismVerdict(), bonus.achievedPresentationScore(), bonus.presentationScoreThreshold());
         }
