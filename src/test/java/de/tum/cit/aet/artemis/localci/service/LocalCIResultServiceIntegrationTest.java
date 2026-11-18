@@ -63,9 +63,11 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPena
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionInfoDTO;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.FailedBuildLogService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
@@ -96,6 +98,9 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
     @Autowired
     private ResultService resultService;
+
+    @Autowired
+    private ProgrammingSubmissionService programmingSubmissionService;
 
     @Override
     protected String getTestPrefix() {
@@ -154,6 +159,52 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultAgain.getId(), participation, true, false, ZonedDateTime.now(), null);
         assertThat(finalizedResult.getCompletionDate()).isNotNull();
         assertThat(finalizedResult.isSuccessful()).isFalse();
+    }
+
+    /**
+     * The first finished container already creates the build's result, without a completion date. Until the last container finishes, the
+     * submission has to stay pending and the result must not be shown as the student's latest one.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testASubmissionWhoseSiblingContainerIsStillRunningStaysPending() {
+        BuildContainerDTO containerA = new BuildContainerDTO("container_a", "image-a:1",
+                List.of(new BuildPhaseDTO("phase_a", "echo a", BuildPhaseCondition.ALWAYS, false, List.of("results/a/*.xml"))));
+        BuildContainerDTO containerB = new BuildContainerDTO("container_b", "image-b:2",
+                List.of(new BuildPhaseDTO("phase_b", "echo b", BuildPhaseCondition.ALWAYS, false, List.of("results/b/*.xml"))));
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise.getId());
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(containerA, containerB)).toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "2234567890123456789012345678901234567890";
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submission.setType(SubmissionType.MANUAL);
+        submission.setSubmitted(true);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepository.save(submission);
+
+        // container_a has finished, container_b is still running
+        BuildResult resultA = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, false, "container_a", null).result();
+        assertThat(aggregatedResult.getCompletionDate()).isNull();
+
+        long submissionId = submission.getId();
+        assertThat(programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false)).map(ProgrammingSubmission::getId).contains(submissionId);
+        assertThat(programmingSubmissionService.getLatestPendingSubmissionsForProgrammingExercise(programmingExercise.getId()))
+                .filteredOn(pending -> pending.participationId() == participation.getId()).singleElement()
+                .satisfies(pending -> assertThat(pending.submission()).isNotNull().extracting(ProgrammingSubmissionInfoDTO::id).isEqualTo(submissionId));
+        assertThat(resultRepository.findLatestResultWithFeedbacksBySubmissionId(submissionId, ZonedDateTime.now())).isEmpty();
+        assertThat(resultRepository.findLatestVisibleResultIdForParticipation(participation.getId(), ZonedDateTime.now())).isEmpty();
+
+        // once the last container has finished, the submission has its result
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult.getId(), participation, true, false, ZonedDateTime.now(), null);
+        assertThat(programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false)).isEmpty();
+        assertThat(resultRepository.findLatestResultWithFeedbacksBySubmissionId(submissionId, ZonedDateTime.now())).map(Result::getId).contains(finalizedResult.getId());
+        assertThat(resultRepository.findLatestVisibleResultIdForParticipation(participation.getId(), ZonedDateTime.now())).contains(finalizedResult.getId());
     }
 
     /** Finalize itself persists the lock-repository policy's unrated flag; this test calls it outside a transaction. */

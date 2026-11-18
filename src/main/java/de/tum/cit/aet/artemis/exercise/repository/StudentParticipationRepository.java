@@ -770,7 +770,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<AssessmentPublicationRecipientDTO> findAssessmentPublicationRecipients(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get all participations for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
+     * Get all participations for an exercise with each latest completed {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
      *
      * @param exerciseId Exercise id.
      * @return participations for exercise.
@@ -787,12 +787,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     FROM Submission s2 JOIN s2.results r2
                     WHERE s2.participation = p
                       AND r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                      AND r2.completionDate IS NOT NULL
                 ))
             """)
     List<StudentParticipation> findByExerciseIdWithLatestAutomaticResultAndFeedbacks(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get all participations without individual due date for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
+     * Get all participations without individual due date for an exercise with each latest completed {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).
      *
      * @param exerciseId Exercise id.
      * @return participations for the exercise.
@@ -813,6 +814,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     FROM Submission s2 JOIN s2.results r2
                     WHERE s2.participation = p
                         AND r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                        AND r2.completionDate IS NOT NULL
                 )
             """)
     Optional<StudentParticipation> findByIdWithLatestAutomaticResultAndFeedbacks(@Param("participationId") long participationId);

@@ -254,7 +254,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * A pending submission is one that does not have a result yet.
+     * A pending submission is one whose build has not finished yet, see {@link #isPending(ProgrammingSubmission)}.
      *
      * @param participationId the id of the participation get the latest submission for
      * @param filterGraded    if true will not use the latest submission, but the latest graded submission.
@@ -277,7 +277,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      *
      * @param programmingExerciseId for which to search pending submissions
      * @return a list with one {@link PendingProgrammingSubmissionDTO} per student participation of the exercise; the
-     *         submission is populated if the participation's latest submission has no result yet, and {@code null} otherwise.
+     *         submission is populated if the participation's latest submission is still pending, and {@code null} otherwise.
      */
     public List<PendingProgrammingSubmissionDTO> getLatestPendingSubmissionsForProgrammingExercise(Long programmingExerciseId) {
         // Only the latest submission per participation is fetched (with its results), instead of the exercise's entire
@@ -292,10 +292,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<PendingProgrammingSubmissionDTO> pendingSubmissions = new ArrayList<>();
         for (Long participationId : participationIds) {
             ProgrammingSubmission latestSubmission = latestSubmissionByParticipationId.get(participationId);
-            // A pending submission is the latest submission of a participation that does not have a result yet. There is
+            // A pending submission is the latest submission of a participation whose build has not finished yet. There is
             // one entry per participation; a participation without a pending submission has a null submission (which the
             // client uses to prime its per-participation build-state cache), and is not an error case.
-            boolean isPending = latestSubmission != null && latestSubmission.getLatestResult() == null;
+            boolean isPending = latestSubmission != null && isPending(latestSubmission);
             pendingSubmissions.add(new PendingProgrammingSubmissionDTO(participationId, isPending ? ProgrammingSubmissionInfoDTO.of(latestSubmission) : null));
         }
         return pendingSubmissions;
@@ -306,11 +306,23 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 ? programmingSubmissionRepository.findGradedByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
                 : programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId);
 
-        if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() != null) {
+        if (optionalSubmission.isEmpty() || !isPending(optionalSubmission.get())) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
             return Optional.empty();
         }
         return optionalSubmission;
+    }
+
+    /**
+     * Whether the build of the submission has not finished yet: it has no result, or only the result of a multi-container build whose last
+     * container is still running. That result is created by the first finished container and gets its completion date once all have finished.
+     *
+     * @param submission the submission with its results
+     * @return true if the submission is still waiting for its build result
+     */
+    private static boolean isPending(ProgrammingSubmission submission) {
+        Result latestResult = submission.getLatestResult();
+        return latestResult == null || latestResult.isBuildInProgress();
     }
 
     /**
