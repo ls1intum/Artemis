@@ -6,12 +6,7 @@
     data-testid="security-browse-dialog"
 >
     <div class="sp-stack-3">
-        <tumaet-ui-search-field
-            [(value)]="search"
-            [placeholder]="mode() === 'paths' ? prefix + 'searchPaths' : prefix + 'searchScripts'"
-            [ariaLabel]="(mode() === 'paths' ? prefix + 'searchPaths' : prefix + 'searchScripts') | artemisTranslate"
-            data-testid="security-browse-search"
-        />
+        <tumaet-ui-search-field [(value)]="search" [placeholder]="mode() === 'paths' ? prefix + 'searchPaths' : prefix + 'searchScripts'" data-testid="security-browse-search" />
         <div class="sp-tree" role="group" [attr.aria-label]="(mode() === 'paths' ? prefix + 'inTemplate' : prefix + 'scriptsInTemplate') | artemisTranslate">
             <div class="sp-tree-group" aria-hidden="true" [jhiTranslate]="mode() === 'paths' ? prefix + 'inTemplate' : prefix + 'scriptsInTemplate'"></div>
             @if (files() === undefined) {

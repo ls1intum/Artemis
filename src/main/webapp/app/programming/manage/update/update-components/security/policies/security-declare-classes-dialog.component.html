@@ -2,7 +2,7 @@
 <tumaet-ui-dialog [header]="prefix + 'title' | artemisTranslate" [(visible)]="visible" size="medium" data-testid="security-declare-classes-dialog">
     <div class="sp-stack-3">
         <p class="sp-mut m-0 text-sm">{{ prefix + 'description' | artemisTranslate: { file: policyFile() } }}</p>
-        <tumaet-ui-search-field [(value)]="search" [placeholder]="prefix + 'search'" [ariaLabel]="prefix + 'search' | artemisTranslate" />
+        <tumaet-ui-search-field [(value)]="search" [placeholder]="prefix + 'search'" />
         <div class="sp-tree" role="group" [attr.aria-label]="prefix + 'inRepository' | artemisTranslate">
             <div class="sp-tree-group" aria-hidden="true" [jhiTranslate]="prefix + 'inRepository'"></div>
             @if (structure() === undefined) {
