@@ -23,7 +23,7 @@
             "error": {
                 "fail": "<strong>An error has occurred!</strong> Settings could not be saved.",
                 "emailExists": "<strong>Email is already in use!</strong> Please choose another one.",
-                "emailInvalid": "<strong>This email address is not allowed.</strong> Please use an address that matches the allowed pattern.",
+                "emailInvalid": "<strong>This email address is not allowed.</strong> Please use one of the allowed email addresses.",
                 "emailChangeUnavailable": "<strong>The email address cannot be changed here.</strong> This Artemis instance cannot send emails. Please ask an administrator.",
                 "emailChangeRequestedTooRecently": "<strong>Please wait a moment.</strong> You requested an email change less than a minute ago. Try again in a minute.",
                 "emailChangeDailyLimitReached": "<strong>Too many requests.</strong> You requested too many email changes today. Try again tomorrow.",
@@ -45,7 +45,8 @@
                     "maxlength": "Your last name cannot be longer than 50 characters"
                 },
                 "email": {
-                    "pattern": "Domain must be one of: {{ pattern }}."
+                    "hint": "Allowed email addresses: {{ pattern }}",
+                    "notAllowed": "This email address is not allowed."
                 }
             }
         }

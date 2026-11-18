@@ -22,6 +22,27 @@
     }
 }
 
+.connection-warning-panel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-sizing: border-box;
+    max-width: 70vw;
+    width: 400px;
+    padding: 0.5rem 1rem 0.5rem 20px;
+    border-radius: 0.375rem;
+    background-color: var(--artemis-alert-danger-background);
+    color: var(--artemis-alert-danger-color);
+    font-size: 14px;
+}
+
+@media only screen and (max-width: 400px) {
+    .connection-warning-panel .ng-fa-icon {
+        display: none;
+    }
+}
+
 #pulse-icon {
     position: absolute;
     left: 0;

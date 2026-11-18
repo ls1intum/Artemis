@@ -1,23 +1,25 @@
 <div class="flex gap-2">
-    <p-button
-        icon="pi pi-chevron-left"
+    <tumaet-ui-button
         severity="secondary"
-        [text]="true"
+        variant="text"
         size="small"
+        data-testid="slice-navigator-previous"
+        [icon]="faChevronLeft"
         [disabled]="previousDisabled()"
-        [pTooltip]="'entity.action.previous' | artemisTranslate"
+        [tumAetUiTooltip]="'entity.action.previous' | artemisTranslate"
         [ariaLabel]="'entity.action.previous' | artemisTranslate"
-        (onClick)="previousPage()"
+        (clicked)="previousPage()"
     />
 
-    <p-button
-        icon="pi pi-chevron-right"
+    <tumaet-ui-button
         severity="secondary"
-        [text]="true"
+        variant="text"
         size="small"
+        data-testid="slice-navigator-next"
+        [icon]="faChevronRight"
         [disabled]="nextDisabled()"
-        [pTooltip]="'entity.action.next' | artemisTranslate"
+        [tumAetUiTooltip]="'entity.action.next' | artemisTranslate"
         [ariaLabel]="'entity.action.next' | artemisTranslate"
-        (onClick)="nextPage()"
+        (clicked)="nextPage()"
     />
 </div>

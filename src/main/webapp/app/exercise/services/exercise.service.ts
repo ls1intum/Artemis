@@ -450,9 +450,9 @@ export class ExerciseService {
 
     /**
      * Parses the exercise categories JSON string into {@link ExerciseCategory} objects.
-     * @param exercise - the exercise
+     * @param exercise - the exercise, or any other server entity that carries categories (for example a course statistics entry)
      */
-    static parseExerciseCategories(exercise?: Exercise) {
+    static parseExerciseCategories(exercise?: { categories?: (ExerciseCategory | string)[] }) {
         if (exercise?.categories) {
             exercise.categories = exercise.categories
                 .map((category) => {

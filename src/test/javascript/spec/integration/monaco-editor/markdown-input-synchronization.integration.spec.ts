@@ -4,7 +4,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -36,8 +35,8 @@ describe('Markdown input synchronization with real Monaco', () => {
             ],
         })
             .overrideComponent(MarkdownEditorMonacoComponent, {
-                remove: { imports: [PostingButtonComponent, RedirectToIrisButtonComponent] },
-                add: { imports: [MockComponent(PostingButtonComponent), MockComponent(RedirectToIrisButtonComponent)] },
+                remove: { imports: [RedirectToIrisButtonComponent] },
+                add: { imports: [MockComponent(RedirectToIrisButtonComponent)] },
             })
             .compileComponents();
         fixture = TestBed.createComponent(MarkdownEditorMonacoComponent);

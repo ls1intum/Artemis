@@ -6,12 +6,12 @@
         <div jhi-saved-posting-banner class="post-is-saved-message post-content-padding fs-xx-small py-1" [consecutive]="isConsecutive()"></div>
     }
     @if (isConsecutive()) {
-        <span class="post-time fs-small" ngbTooltip="{{ posting()?.creationDate | artemisDate: 'time' }}">
+        <span class="post-time fs-small" [tumAetUiTooltip]="posting()?.creationDate | artemisDate: 'time'" tumAetUiTooltipDescribesHost="false">
             {{ posting()?.creationDate | artemisDate: 'time' }}
         </span>
     }
     @if (!isConsecutive()) {
-        <div class="ps-3">
+        <div class="ps-4!">
             <jhi-posting-header
                 [previewMode]="previewMode()"
                 [readOnlyMode]="readOnlyMode()"
@@ -24,7 +24,7 @@
             />
         </div>
     }
-    <div class="align-items-center">
+    <div>
         <div>
             <div class="post-context-information-wrap post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }">
                 @if (showAnnouncementIcon()) {
@@ -32,7 +32,7 @@
                         [icon]="faBullhorn"
                         iconSize="xs"
                         class="pe-0 ms-1 announcement-icon"
-                        [ngbTooltip]="'artemisApp.communication.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.communication.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
                     />
                 }
                 <!-- in the course all-messages as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
@@ -132,7 +132,7 @@
     @if (!isDeleted) {
         <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- This wrapper only stops pointer events from reaching the post action. -->
         <div
-            class="post-content-padding justify-content-between post-reactions-bar"
+            class="post-content-padding post-reactions-bar"
             [ngClass]="{ 'mb-2': previewMode(), 'is-saved': posting()?.isSaved && isConsecutive() }"
             (click)="$event.stopPropagation()"
         >
@@ -164,7 +164,6 @@
 <jhi-posting-footer
     #postFooter
     [readOnlyMode]="readOnlyMode()"
-    [modalRef]="modalRef()"
     [previewMode]="previewMode() || pageType() === PageType.PLAGIARISM_CASE_STUDENT"
     [posting]="posting()"
     [showAnswers]="showAnswers()"
@@ -180,13 +179,28 @@
 
 <!-- Right-Click Dropdown -->
 @if (showDropdown()) {
-    <div style="position: fixed" [style.top.px]="dropdownPosition().y" [style.left.px]="dropdownPosition().x" class="dropdown-menu show" data-testid="posting-context-menu">
-        <button type="button" class="dropdown-item d-flex" (click)="addReaction($event)" data-testid="posting-menu-react">
+    <div
+        class="fixed z-1000 flex min-w-40 flex-col rounded-md border border-border bg-surface-raised py-2 text-text shadow-md"
+        [style.top.px]="dropdownPosition().y"
+        [style.left.px]="dropdownPosition().x"
+        data-testid="posting-context-menu"
+    >
+        <button
+            type="button"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+            (click)="addReaction($event)"
+            data-testid="posting-menu-react"
+        >
             <fa-icon [icon]="faSmile" class="item-icon" />
             <span jhiTranslate="artemisApp.communication.post.addReaction"></span>
         </button>
         @if (canPin()) {
-            <button type="button" class="dropdown-item d-flex" (click)="togglePin()" data-testid="posting-menu-pin">
+            <button
+                type="button"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+                (click)="togglePin()"
+                data-testid="posting-menu-pin"
+            >
                 <fa-icon [icon]="faThumbtack" class="item-icon" />
                 <span
                     [jhiTranslate]="checkIfPinned() === DisplayPriority.PINNED ? 'artemisApp.communication.post.unpinMessage' : 'artemisApp.communication.post.pinMessage'"
@@ -194,36 +208,61 @@
             </button>
         }
         @if (mayEdit()) {
-            <button type="button" class="dropdown-item d-flex" (click)="editPosting()" data-testid="posting-menu-edit">
+            <button
+                type="button"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+                (click)="editPosting()"
+                data-testid="posting-menu-edit"
+            >
                 <fa-icon [icon]="faPencilAlt" class="item-icon" />
                 <span jhiTranslate="artemisApp.communication.post.editMessage"></span>
             </button>
         }
         @if (mayDelete()) {
-            <button type="button" class="dropdown-item d-flex" (click)="deletePost()" data-testid="posting-menu-delete">
+            <button
+                type="button"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+                (click)="deletePost()"
+                data-testid="posting-menu-delete"
+            >
                 <fa-icon [icon]="faTrash" class="item-icon" />
                 <span jhiTranslate="artemisApp.communication.post.deleteMessage"></span>
             </button>
         }
         <button
             type="button"
-            class="dropdown-item d-flex"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
             (click)="isCommunicationPage() ? openThread.emit() : reactionsBarComponent()?.openAnswerView()"
             data-testid="posting-menu-reply"
         >
             <fa-icon [icon]="faComments" class="item-icon" />
             <span jhiTranslate="artemisApp.communication.post.replyMessage"></span>
         </button>
-        <button type="button" class="dropdown-item d-flex" (click)="toggleSavePost()" data-testid="posting-menu-bookmark">
+        <button
+            type="button"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+            (click)="toggleSavePost()"
+            data-testid="posting-menu-bookmark"
+        >
             <fa-icon [icon]="posting()?.isSaved ? faBookmark : farBookmark" class="item-icon" />
             <span [jhiTranslate]="posting()?.isSaved ? 'artemisApp.communication.post.removeBookmarkPost' : 'artemisApp.communication.post.bookmarkPost'"></span>
         </button>
-        <button type="button" class="dropdown-item d-flex" (click)="forwardMessage()" data-testid="posting-menu-forward">
+        <button
+            type="button"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+            (click)="forwardMessage()"
+            data-testid="posting-menu-forward"
+        >
             <fa-icon [icon]="faShare" class="item-icon" />
             <span jhiTranslate="artemisApp.communication.post.forwardMessage"></span>
         </button>
         @if (canMarkAsUnread()) {
-            <button type="button" class="dropdown-item d-flex" (click)="markMessageAsUnread()" data-testid="posting-menu-mark-unread">
+            <button
+                type="button"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-text hover:bg-surface-hover"
+                (click)="markMessageAsUnread()"
+                data-testid="posting-menu-mark-unread"
+            >
                 <fa-icon [icon]="faEnvelopeOpenText" class="item-icon" />
                 <span jhiTranslate="artemisApp.communication.post.markAsUnread"></span>
             </button>
@@ -231,7 +270,7 @@
     </div>
 }
 
-<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin style="position: fixed" [style.top.px]="clickPosition.y" [style.left.px]="clickPosition.x"></div>
+<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin class="fixed" [style.top.px]="clickPosition.y" [style.left.px]="clickPosition.x"></div>
 
 <ng-template
     cdkConnectedOverlay
