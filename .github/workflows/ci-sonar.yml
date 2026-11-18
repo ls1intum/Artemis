@@ -279,3 +279,18 @@ jobs:
           SONAR_SELECTED_SERVER: ${{ steps.reports.outputs.server_selected }}
           SONAR_REVISION: ${{ steps.source.outputs.sha }}
         run: bash ../.sonar-tools/.github/scripts/run-sonar.sh
+
+      - name: Enforce zero newly duplicated lines
+        if: steps.analysis.outputs.pull_request != '0'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SOURCE_SHA: ${{ steps.analysis.outputs.sha }}
+          PULL_REQUEST: ${{ steps.analysis.outputs.pull_request }}
+          SOURCE_BRANCH: ${{ steps.analysis.outputs.branch }}
+          TARGET_BRANCH: ${{ steps.analysis.outputs.base }}
+        with:
+          script: |
+            await require('./.sonar-tools/.github/scripts/sonar-duplication.js').checkPullRequestDuplication({
+              github, context, sha: process.env.SOURCE_SHA, pullRequest: process.env.PULL_REQUEST,
+              branch: process.env.SOURCE_BRANCH, base: process.env.TARGET_BRANCH, summary: core.summary,
+            });

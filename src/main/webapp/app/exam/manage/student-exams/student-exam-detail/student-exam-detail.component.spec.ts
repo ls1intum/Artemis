@@ -18,6 +18,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -198,7 +199,7 @@ describe('StudentExamDetailComponent', () => {
             workingTime: 4200,
             submissionDate: undefined,
             testRun: false,
-            exam: { id: exam.id!, title: exam.title, testExam: false, workingTime: 4200 },
+            exam: { id: exam.id!, title: exam.title, examMode: ExamMode.REAL, workingTime: 4200 },
         };
         const studentExamSpy = vi.spyOn(studentExamService, 'updateWorkingTime').mockReturnValue(
             of(

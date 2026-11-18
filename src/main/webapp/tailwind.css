@@ -76,6 +76,7 @@
 @source './app/programming/manage/grading/feedback-analysis';
 @source './app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students';
 @source './app/programming/shared/commits-info';
+@source './app/programming/shared/diff-review-banner';
 @source './app/course/overview/setup-passkey-modal';
 @source './app/course/overview/courses';
 @source './app/course/overview/course-registration';

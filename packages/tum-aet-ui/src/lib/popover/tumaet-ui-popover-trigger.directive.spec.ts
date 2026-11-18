@@ -242,9 +242,11 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
         expect(isOpen()).toBe(false);
 
         touch(trigger, 'pointerup', 'pointerleave');
+        trigger.click();
         vi.advanceTimersByTime(1000);
         fixture.detectChanges();
         expect(isOpen()).toBe(true);
+        expect(fixture.componentInstance.clicks).toBe(1);
 
         // Touching the panel and lifting the finger again, and the trigger losing focus, do not close it either.
         touch(panel()!, 'pointerenter', 'pointerleave');
@@ -266,8 +268,24 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
         expect(isOpen()).toBe(false);
     });
 
+    it('does not open when a finger is dragged off the trigger and lifted without a click', () => {
+        touch(trigger, 'pointerenter', 'pointerdown', 'pointerup', 'pointerleave');
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+
+        // A later click that does not belong to that touch, such as Enter on the trigger, does not pin it either.
+        const lateClick = new MouseEvent('click', { bubbles: true });
+        Object.defineProperty(lateClick, 'timeStamp', { value: lateClick.timeStamp + 5000 });
+        touch(trigger, 'pointerenter', 'pointerdown', 'pointerup', 'pointerleave');
+        trigger.dispatchEvent(lateClick);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+    });
+
     it('follows the mouse again after a popover that was opened by a tap has been dismissed', () => {
         touch(trigger, 'pointerenter', 'pointerdown', 'pointerup', 'pointerleave');
+        trigger.click();
         fixture.detectChanges();
         document.body.click();
         fixture.detectChanges();
@@ -284,6 +302,7 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
         const popover = fixture.debugElement.query(By.directive(TumAetUiPopoverComponent)).componentInstance as TumAetUiPopoverComponent;
         const subscription = popover.openChange.subscribe((open) => open && popover.close());
         touch(trigger, 'pointerup');
+        trigger.click();
         subscription.unsubscribe();
         fixture.detectChanges();
         expect(isOpen()).toBe(false);

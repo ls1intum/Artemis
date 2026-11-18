@@ -116,6 +116,7 @@ export default tseslint.config(
             '.idea/',
             '.jhipster/',
             '.venv/',
+            'bin/',
             'build/',
             'coverage/',
             'deployment/docker/',

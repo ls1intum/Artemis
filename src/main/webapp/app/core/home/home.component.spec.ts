@@ -511,22 +511,35 @@ describe('HomeComponent', () => {
             expect(startSpy).toHaveBeenCalledWith(expect.any(Function), expect.any(Function));
         });
 
-        it('should not start conditional mediation when the page is destroyed or the user signed in during the capability check', async () => {
+        it('should not start conditional mediation when the user signed in during the capability check', async () => {
             component.isPasskeyEnabled.set(true);
             const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
-            (window as any).PublicKeyCredential = {
-                isConditionalMediationAvailable: vi.fn().mockResolvedValue(true),
-            };
+            let resolveAvailability!: (available: boolean) => void;
+            const isConditionalMediationAvailable = vi.fn().mockReturnValue(new Promise<boolean>((resolve) => (resolveAvailability = resolve)));
+            (window as any).PublicKeyCredential = { isConditionalMediationAvailable };
 
-            const accountService = TestBed.inject(AccountService);
-            accountService.userIdentity.set({ id: 99, login: 'admin' } as User);
-            await component.prefillPasskeysIfPossible();
-            expect(startSpy).not.toHaveBeenCalled();
-
-            accountService.userIdentity.set(undefined);
             const pending = component.prefillPasskeysIfPossible();
-            fixture.destroy();
+            expect(isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            TestBed.inject(AccountService).userIdentity.set({ id: 99, login: 'admin' } as User);
+            resolveAvailability(true);
             await pending;
+
+            expect(startSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not start conditional mediation when the page was destroyed during the capability check', async () => {
+            component.isPasskeyEnabled.set(true);
+            const startSpy = vi.spyOn(webauthnService, 'startConditionalMediation');
+            let resolveAvailability!: (available: boolean) => void;
+            const isConditionalMediationAvailable = vi.fn().mockReturnValue(new Promise<boolean>((resolve) => (resolveAvailability = resolve)));
+            (window as any).PublicKeyCredential = { isConditionalMediationAvailable };
+
+            const pending = component.prefillPasskeysIfPossible();
+            expect(isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            fixture.destroy();
+            resolveAvailability(true);
+            await pending;
+
             expect(startSpy).not.toHaveBeenCalled();
         });
 
