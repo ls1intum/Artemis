@@ -27,6 +27,9 @@ IMAGE_SOURCES = {
     "ghcr.io/ls1intum/artemis-rust-docker": ImageSource("ls1intum/artemis-rust-docker", "test"),
     "ghcr.io/ls1intum/artemis-javascript-docker": ImageSource("ls1intum/artemis-javascript-docker"),
     "ghcr.io/ls1intum/artemis-swift-swiftlint-docker": ImageSource("ls1intum/artemis-swift-swiftlint-docker", "test"),
+    "ghcr.io/ls1intum/artemis-ruby-docker": ImageSource("ls1intum/artemis-ruby-docker"),
+    "ghcr.io/ls1intum/artemis-dart-docker": ImageSource("ls1intum/artemis-dart-docker"),
+    "ghcr.io/ls1intum/artemis-csharp-docker": ImageSource("ls1intum/artemis-csharp-docker"),
 }
 
 

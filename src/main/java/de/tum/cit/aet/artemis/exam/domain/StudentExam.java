@@ -96,8 +96,8 @@ public class StudentExam extends AbstractAuditingEntity {
     }
 
     @JsonIgnore
-    public boolean isTestExam() {
-        return exam.isTestExam();
+    public ExamMode getExamMode() {
+        return exam.getExamMode();
     }
 
     public void setTestRun(boolean testRun) {
@@ -242,7 +242,7 @@ public class StudentExam extends AbstractAuditingEntity {
         if (Boolean.TRUE.equals(testRun)) {
             return false;
         }
-        if (exam.isTestExam() && !Boolean.TRUE.equals(started) && startedDate == null) {
+        if (!exam.getExamMode().isReal() && !Boolean.TRUE.equals(started) && startedDate == null) {
             return false;
         }
         return ZonedDateTime.now().isAfter(individualEndDate(exam, startedDate, workingTime));
@@ -280,21 +280,24 @@ public class StudentExam extends AbstractAuditingEntity {
      * @return the ZonedDateTime that marks the exam end for this student (excluding grace period), or null for test exams with undefined startedDate
      */
     public static ZonedDateTime individualEndDate(Exam exam, ZonedDateTime startedDate, int workingTime) {
-        return individualEndDate(exam.isTestExam(), exam.getStartDate(), startedDate, workingTime);
+        return individualEndDate(exam.getExamMode(), exam.getExamMode() == ExamMode.TEST_WITH_SUPERVISED_SESSION ? exam.getSupervisedSessionEndDate() : null, exam.getStartDate(),
+                startedDate, workingTime);
     }
 
     /**
      * Scalar form of {@link #individualEndDate(Exam, ZonedDateTime, int)} for callers that read the exam as a
      * projection rather than loading the entity.
      *
-     * @param testExam      whether the exam is a test exam
-     * @param examStartDate the start date of the exam
-     * @param startedDate   the date the student started the exam, only relevant for test exams
-     * @param workingTime   the working time of the student exam in seconds
+     * @param examMode                 the exam mode
+     * @param supervisedSessionEndDate the end of the supervised session
+     * @param examStartDate            the start date of the exam
+     * @param startedDate              the date the student started the exam, only relevant for test exams
+     * @param workingTime              the working time of the student exam in seconds
      * @return the ZonedDateTime that marks the exam end for this student (excluding grace period), or null for test exams with undefined startedDate
      */
-    public static ZonedDateTime individualEndDate(boolean testExam, ZonedDateTime examStartDate, ZonedDateTime startedDate, int workingTime) {
-        if (testExam) {
+    public static ZonedDateTime individualEndDate(ExamMode examMode, ZonedDateTime supervisedSessionEndDate, ZonedDateTime examStartDate, ZonedDateTime startedDate,
+            int workingTime) {
+        if (examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SUPERVISED_SESSION && startedDate != null && !startedDate.isBefore(supervisedSessionEndDate)) {
             if (startedDate == null) {
                 return null;
             }
@@ -323,23 +326,26 @@ public class StudentExam extends AbstractAuditingEntity {
      * @return the ZonedDateTime that marks the exam end for this student including the grace period, or null for test exams with undefined startedDate
      */
     public static ZonedDateTime individualEndDateWithGracePeriod(Exam exam, ZonedDateTime startedDate, int workingTime) {
-        return individualEndDateWithGracePeriod(exam.isTestExam(), exam.getStartDate(), exam.getGracePeriod(), startedDate, workingTime);
+        return individualEndDateWithGracePeriod(exam.getExamMode(), exam.getExamMode() == ExamMode.TEST_WITH_SUPERVISED_SESSION ? exam.getSupervisedSessionEndDate() : null,
+                exam.getStartDate(), exam.getGracePeriod(), startedDate, workingTime);
     }
 
     /**
      * Scalar form of {@link #individualEndDateWithGracePeriod(Exam, ZonedDateTime, int)} for callers that read the exam
      * as a projection rather than loading the entity.
      *
-     * @param testExam      whether the exam is a test exam
-     * @param examStartDate the start date of the exam
-     * @param gracePeriod   the grace period of the exam in seconds, may be null
-     * @param startedDate   the date the student started the exam, only relevant for test exams
-     * @param workingTime   the working time of the student exam in seconds
+     * @param examMode                 the exam mode
+     * @param supervisedSessionEndDate the end of the supervised session
+     * @param examStartDate            the start date of the exam
+     * @param gracePeriod              the grace period of the exam in seconds, may be null
+     * @param startedDate              the date the student started the exam, only relevant for test exams
+     * @param workingTime              the working time of the student exam in seconds
      * @return the ZonedDateTime that marks the exam end for this student including the grace period, or null for test exams with undefined startedDate
      */
-    public static ZonedDateTime individualEndDateWithGracePeriod(boolean testExam, ZonedDateTime examStartDate, Integer gracePeriod, ZonedDateTime startedDate, int workingTime) {
+    public static ZonedDateTime individualEndDateWithGracePeriod(ExamMode examMode, ZonedDateTime supervisedSessionEndDate, ZonedDateTime examStartDate, Integer gracePeriod,
+            ZonedDateTime startedDate, int workingTime) {
         int gracePeriodInSeconds = Objects.requireNonNullElse(gracePeriod, 0);
-        if (testExam) {
+        if (examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SUPERVISED_SESSION && startedDate != null && !startedDate.isBefore(supervisedSessionEndDate)) {
             if (startedDate == null) {
                 return null;
             }
@@ -357,7 +363,7 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public boolean areResultsPublishedYet() {
-        if (this.exam.isTestExam()) {
+        if (!this.exam.getExamMode().isReal()) {
             return (this.submitted != null && this.submitted);
         }
         else {

@@ -59,7 +59,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             SELECT COUNT(se.id)
             FROM StudentExam se
             WHERE se.exam.course.id IN :courseIds
-                AND se.exam.testExam = FALSE
+                AND se.exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND LOWER(se.exam.title) NOT LIKE 'test%'
                 AND LOWER(se.exam.title) NOT LIKE 'mock%'
                 AND se.started = TRUE
@@ -142,6 +142,16 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     List<StudentExamSubmissionGateDTO> findSubmissionGatesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId, @Param("exerciseId") long exerciseId,
             @Param("isTestRun") boolean isTestRun);
+
+    @Query("""
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+            WHERE se.testRun = :isTestRun
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
+            """)
+    List<StudentExam> findAllWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId, @Param("isTestRun") boolean isTestRun);
 
     @Query("""
             SELECT DISTINCT se
@@ -334,6 +344,8 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             WHERE se.testRun = FALSE
             	AND se.exam.id = :examId
             	AND se.user.id = :userId
+            ORDER BY se.createdDate ASC, se.id ASC
+            LIMIT 1
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
@@ -548,6 +560,24 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     boolean existsByExamIdAndUserLogin(@Param("examId") long examId, @Param("login") String login);
 
+    /**
+     * Checks whether an attempt at the exam was started in the half-open interval {@code [from, to)}. Test runs are ignored.
+     *
+     * @param examId the id of the exam
+     * @param from   the inclusive start of the interval
+     * @param to     the exclusive end of the interval
+     * @return true if at least one attempt was started in the interval
+     */
+    @Query("""
+            SELECT COUNT(studentExam) > 0
+            FROM StudentExam studentExam
+            WHERE studentExam.exam.id = :examId
+                AND studentExam.testRun = FALSE
+                AND studentExam.startedDate >= :from
+                AND studentExam.startedDate < :to
+            """)
+    boolean existsAttemptStartedBetween(@Param("examId") long examId, @Param("from") ZonedDateTime from, @Param("to") ZonedDateTime to);
+
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
@@ -616,7 +646,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.course.id = :courseId
-                AND se.exam.testExam = TRUE
+                AND se.exam.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.testRun = FALSE
             """)
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
@@ -626,7 +656,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.testExam = TRUE
+                AND se.exam.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.testRun = FALSE
             """)
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
@@ -888,7 +918,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.testRun = FALSE
-                AND se.exam.testExam = FALSE
+                AND se.exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.exam.course.id IN :courseIds
             """)
     Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(@Param("userId") long userId, @Param("courseIds") Collection<Long> courseIds);

@@ -1,6 +1,7 @@
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';

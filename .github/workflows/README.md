@@ -39,7 +39,7 @@ ci.yml                                                            (single entry 
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
-├── exercise-images ── uses ci-exercise-images.yml (if has_exercise_images; the Java, Kotlin, Rust, JavaScript, TypeScript and Swift templates pin only versions their default image holds, compared without Docker or downloads)
+├── exercise-images ── uses ci-exercise-images.yml (if has_exercise_images; the Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart and C# templates pin only versions their default image holds, compared without Docker or downloads)
 ├── helm            ── uses ci-helm.yml           (if has_helm; deployment/helm/artemis lints, renders in its variants and validates against the Kubernetes schemas, without a cluster)
 ├── docs-checks     ── uses ci-docs-checks.yml    (always; sidebars, paths, class names, properties and labels in the docs exist, review dates, diagrams match their generator; advises which pages a PR may have made wrong)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
@@ -161,6 +161,11 @@ context, so it never needs touching again.
 The umbrella workflow groups runs by PR number and sets `cancel-in-progress` for pull requests.
 A new push cancels the previous revision so its E2E jobs release their self-hosted runners and the
 new revision can start.
+
+The `Cancel Closed PR CI` workflow also cancels active umbrella runs when the PR is closed or
+merged. It looks up the exact `ci-pr-{N}` concurrency group and confirms the PR is still closed
+before requesting cancellation. The closure workflow uses trusted base code and leaves the CI
+run for the resulting `develop` push in its own group.
 
 Before reserving build or self-hosted test capacity, a step in the existing `detect-changes` job
 checks that the PR is open and the run's head is current. It calls `.github/scripts/pr-ready.js`
@@ -292,7 +297,9 @@ relative to the merge base with the actual PR target; missing history falls back
   An audited exact-file client surface can replace its broad module for that file only; for example,
   exam-management UI fixes do not inherit the shared student-course container's exam dependency.
   A mixed change still unions the broader files' consumers.
-  Java/client unit tests and documentation accompanying a bugfix do not force full E2E. Shared runtime,
+  Java/client unit tests and documentation accompanying a bugfix do not force full E2E. Neither do the
+  exact ESLint and Stylelint entrypoints or TUM AET UI stories excluded from the production build.
+  In mixed changes the selector still evaluates the runtime changes and their consumers. Shared runtime,
   configuration, Playwright helpers and unknown dependencies do. The selector resolves exact spec paths
   and computes a disjoint remaining set. Ordinary eligible PRs intentionally omit Phase 2; full callers
   retain it. Missing expected results fail, and non-PR events keep complete validation.
@@ -372,7 +379,7 @@ These workflows are intentionally NOT folded into the umbrella:
 | `publish-hyperion-sandbox-image.yml` | Manual publication of independently versioned Hyperion toolchain images; separate from Artemis application releases. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
-| `nightly-exercise-images.yml` | Scheduled (daily, 05:00 UTC) and manually dispatchable offline build of the Java, Kotlin, Rust, JavaScript, TypeScript and Swift exercise templates in their default images (no network, so a missing dependency fails); opens a tracking issue on failure; not part of PR/push CI. |
+| `nightly-exercise-images.yml` | Scheduled (daily, 05:00 UTC) and manually dispatchable offline build of the Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart and C# exercise templates in their default images (no network, so a missing dependency fails); opens a tracking issue on failure; not part of PR/push CI. |
 | `nightly-iris-e2e.yml`, `nightly-hyperion-e2e.yml` | Scheduled (daily, 02:00 and 04:00 UTC) and manually dispatchable E2E checks of the latest `develop` with a mocked LLM (Iris against the real Pyris service, Hyperion with a local mock); non-blocking monitoring, not part of PR/push CI. |
 | `dependency-submission.yml` | Submits the Gradle dependency graph on `develop` pushes that change a build file, weekly, and on demand (`workflow_dispatch`). Replaces the repository setting "Automatic dependency submission", which ran on every branch and pull request although GitHub discards a snapshot of any non-default branch. Keep that setting off. |
 | `docs-maintenance.yml` | Weekly `schedule:` cron (cannot live in a `workflow_call` child). Keeps one issue open for the pages that were not reviewed for a year and one for external links that no longer work, and closes them when the problem is gone. |
@@ -444,7 +451,7 @@ with `pnpm run test:rules` (or select `supporting_scripts/ci/E2E-tests/setup.spe
 | `release` | `ci-release-{tag}` | no |
 | `push` / `workflow_dispatch` | `ci-{github.ref}-{github.sha}` | no |
 
-Concurrency lives only on the umbrella. Reusables share the umbrella's `run_id`, so the
+Concurrency is configured on the umbrella and its calling jobs. Reusables share the umbrella's `run_id`, so the
 parent's concurrency lock applies transitively. **Never** add a `concurrency:` block to a
 `ci-*.yml` reusable — it creates a second lock that can deadlock the parent
 ([actions/runner#3205](https://github.com/actions/runner/issues/3205)).
@@ -452,7 +459,19 @@ parent's concurrency lock applies transitively. **Never** add a `concurrency:` b
 Distinct push commits run independently so a long E2E phase cannot hold back the next commit's
 WAR or image build. Their mutable publishing aliases can therefore move while an earlier run
 is still active, which is why E2E consumes the exact commit tag and checks its revision.
-GitHub keeps only one pending run per concurrency group; repeated runs for the same ref and
+
+Within the umbrella, E2E calls for `develop` pushes share a separate job concurrency group.
+The running suite finishes. GitHub queues the other calls so out-of-order builds cannot
+displace the tip. When a call starts, a hosted job compares its build SHA with the current
+`develop` tip. Superseded calls finish without using an E2E runner and report their skip
+in CI. A failed tip check fails CI. Release, merge-queue, manual and PR suites keep their
+individual validation. Per-commit builds still produce the WAR and image.
+
+E2E jobs use the `e2e-test` label. A runner with only this custom label supplies dedicated E2E
+capacity. A runner that also has `aet-large-ubuntu` accepts general build/test jobs as well.
+The infrastructure inventory owns these labels so that re-registration preserves the reservation.
+
+The umbrella keeps one pending run per workflow-level concurrency group. Repeated runs for the same ref and
 commit can still replace a pending run. Documentation builds on every `develop` push so any
 replacement run deploys the complete documentation tree. Pull requests use `has_docs`.
 
@@ -549,6 +568,15 @@ PR analysis uses the PR number, exact head SHA, original source branch and actua
 All configured **new-code** conditions apply: reliability, security, maintainability, coverage,
 duplication and reviewed security hotspots. Existing findings are fixed in source; neither the
 quality gate nor the source/exclusion contract with Codacy is weakened.
+
+The existing Sonar job also requires **zero newly duplicated lines** on PRs. It reads the absolute
+`new_duplicated_lines` count from the completed analysis: a rounded **0.0%** does not pass if even
+one newly duplicated line remains. The job summary records new duplicated lines, blocks and total
+new lines. This verification performs only metadata/measure reads; it does not start another scan
+or repeat tests. It applies to scanned PRs and secretless verification of maintainer-published
+fork analyses. Missing or invalid metrics, unavailable APIs, changed analyses and source/target
+mismatches fail verification. Existing default-branch duplication remains visible in Sonar while
+the PR guard prevents additions; analysis scope and duplication detection settings stay unchanged.
 
 ### Scope, coverage and runner cost
 

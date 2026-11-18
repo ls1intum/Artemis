@@ -78,6 +78,7 @@
 @source './app/programming/manage/grading/feedback-analysis';
 @source './app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students';
 @source './app/programming/shared/commits-info';
+@source './app/programming/shared/diff-review-banner';
 @source './app/core/feature-overview';
 @source './app/core/layouts/footer';
 @source './app/course/overview/setup-passkey-modal';
@@ -251,3 +252,7 @@
 @source './app/text';
 @source './app/tutorialgroup';
 @source './app/videosource';
+
+/* Participation build and repository export controls live outside the migrated exercise module. */
+@source './app/programming/shared/actions';
+@source './app/programming/manage/assess/repo-export/export-button';

@@ -9,7 +9,6 @@ import { ParticipationType } from 'app/exercise/shared/entities/participation/pa
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { BuildLogService } from 'app/programming/shared/services/build-log.service';
 import { BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -27,6 +26,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
 

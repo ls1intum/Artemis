@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the exercise templates of Java, Kotlin, Rust, JavaScript, TypeScript and Swift in their default images without network access.
+"""Builds the exercise templates of Java, Kotlin, Rust, JavaScript, TypeScript, Swift, Ruby, Dart and C# in their default images without network access.
 
 Assembles the test and assignment repositories like the server does, runs the build phases of
 ``src/main/resources/templates/phases`` in the image configured in ``application.yml`` and fails when a build needs

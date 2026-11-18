@@ -82,6 +82,12 @@ is not evidence of flakiness; compare logs and execution conditions.
 A latest PR run that is pending with no jobs can be waiting for an obsolete run to release its
 concurrency slot. Follow the cancellation entry in the reference before rerunning or cancelling jobs.
 
+On PR closure, the cancellation workflow uses the exact `ci-pr-{N}` group to stop umbrella CI.
+Check that group's active members if a closed PR is still consuming a runner. When a `develop`
+push's E2E suite is superseded, check the latest `develop` run for multi-node coverage. A superseded
+suite is reported separately from a completed suite. For long queues, check availability of the
+`e2e-test` runners and whether they also accept general `aet-large-ubuntu` jobs.
+
 ## Re-run when justified
 
 - **Server Tests: never use `gh run rerun --failed`.** The suite's sharding and reporting mean a
@@ -124,6 +130,17 @@ branch's **Sonar** workflow with `pull_request_number=<number>`, then rerun only
 verification job. Never automatically execute fork build scripts with the token. See the workflow
 policy for the promotion procedure. Head or target changes invalidate evidence. Metadata-only
 edits neither replace canonical validation nor cancel active coverage reporting.
+
+## Diagnose a Sonar duplication failure
+
+The existing Sonar job requires zero newly duplicated lines in PRs and reports absolute line/block
+counts in its summary. A displayed 0.0% can still contain duplicate lines. Inspect the exact-head
+PR analysis and its duplication blocks; share the repeated behavior without changing scan scope
+or detection thresholds. The guard verifies the current open PR head/target and analysis identity
+before and after reading metrics. Missing metrics, API failures or replaced analyses cannot pass.
+If the analysis was replaced, verify the current head and rerun verification once; no new build or
+scan is needed when a passing exact-head analysis already exists. See the
+[Sonar workflow policy](../../.github/workflows/README.md#the-code-quality-analyses).
 
 ## Investigate Scorecard findings
 
