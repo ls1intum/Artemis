@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import java.net.IDN;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -33,7 +34,7 @@ public record ImageHostPolicy(List<String> allowedHosts, @Nullable String server
      */
     public static ImageHostPolicy of(@Nullable String configuredHosts, @Nullable String serverUrl) {
         List<String> hosts = configuredHosts == null ? List.of()
-                : Arrays.stream(configuredHosts.split(",")).map(host -> host.trim().toLowerCase(Locale.ROOT)).filter(host -> !host.isEmpty()).toList();
+                : Arrays.stream(configuredHosts.split(",")).map(host -> asciiEntry(host.trim().toLowerCase(Locale.ROOT))).filter(host -> !host.isEmpty()).toList();
         return new ImageHostPolicy(hosts, serverUrl == null ? null : hostOf(serverUrl));
     }
 
@@ -98,10 +99,47 @@ public record ImageHostPolicy(List<String> allowedHosts, @Nullable String server
 
     private static @Nullable String hostOf(String url) {
         try {
-            String host = new URI(url.trim()).getHost();
-            return host == null ? null : host.toLowerCase(Locale.ROOT);
+            URI uri = new URI(url.trim());
+            // A host with special characters is no host for the parser of URIs, but part of an authority that it does not take apart
+            String host = uri.getHost() != null ? uri.getHost() : hostOfAuthority(uri.getAuthority());
+            return host == null ? null : asciiForm(host);
         }
         catch (URISyntaxException _) {
+            return null;
+        }
+    }
+
+    /** The host of an authority, which is {@code user info@host:port} without the user info and the port. */
+    private static @Nullable String hostOfAuthority(@Nullable String authority) {
+        if (authority == null) {
+            return null;
+        }
+        String hostAndPort = authority.substring(authority.lastIndexOf('@') + 1);
+        if (hostAndPort.startsWith("[")) {
+            return null;
+        }
+        int colon = hostAndPort.lastIndexOf(':');
+        if (colon >= 0 && hostAndPort.substring(colon + 1).chars().allMatch(Character::isDigit)) {
+            hostAndPort = hostAndPort.substring(0, colon);
+        }
+        return hostAndPort.isEmpty() ? null : hostAndPort;
+    }
+
+    /**
+     * The entry of the list in the form that an address has: the ASCII form of the host name, which a browser spells for a host with special characters. An entry that is
+     * no host name, for example one with a port, stays as written, so it does not match more than it says.
+     */
+    private static String asciiEntry(String entry) {
+        String prefix = entry.startsWith("*.") ? "*." : "";
+        String ascii = asciiForm(entry.substring(prefix.length()));
+        return ascii == null ? entry : prefix + ascii;
+    }
+
+    private static @Nullable String asciiForm(String host) {
+        try {
+            return IDN.toASCII(host).toLowerCase(Locale.ROOT);
+        }
+        catch (IllegalArgumentException _) {
             return null;
         }
     }

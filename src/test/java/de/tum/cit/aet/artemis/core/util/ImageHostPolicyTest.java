@@ -38,6 +38,41 @@ class ImageHostPolicyTest {
         assertThat(policy.allows(src)).isFalse();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "https://xn--bcher-kva.example/a.png", "https://bücher.example/a.png", "https://B\u00DCCHER.example/a.png", "https://bücher.example:8443/a.png",
+            "https://user@bücher.example/a.png", "//bücher.example/a.png", "https://shop.bücher.example/a.png" })
+    void comparesHostsWithSpecialCharactersInTheirAsciiForm(String src) {
+        var policy = ImageHostPolicy.of("bücher.example, *.bücher.example", SERVER_URL);
+
+        assertThat(policy.allows(src)).isTrue();
+    }
+
+    @Test
+    void aConfiguredHostInAsciiFormMatchesTheSpecialCharactersOfAnAddress() {
+        var policy = ImageHostPolicy.of("xn--bcher-kva.example, *.xn--bcher-kva.example", SERVER_URL);
+
+        assertThat(policy.allows("https://bücher.example/a.png")).isTrue();
+        assertThat(policy.allows("https://shop.bücher.example/a.png")).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "https://bücher.example@unlisted.example/a.png", "https://bücher.example.unlisted.example/a.png", "https://büchers.example/a.png",
+            "https://xn--bcher-kva.example.unlisted.example/a.png", "https://[::1]/a.png" })
+    void doesNotTakeAnotherHostForAHostWithSpecialCharacters(String src) {
+        var policy = ImageHostPolicy.of("bücher.example", SERVER_URL);
+
+        assertThat(policy.allows(src)).isFalse();
+    }
+
+    @Test
+    void anEntryThatIsNoPlainHostNameStaysAsItIsWritten() {
+        var policy = ImageHostPolicy.of("images.example.net:8443, images.example.org/path", SERVER_URL);
+
+        assertThat(policy.allowedHosts()).containsExactly("images.example.net:8443", "images.example.org/path");
+        assertThat(policy.allows("https://images.example.net/a.png")).isFalse();
+        assertThat(policy.allows("https://images.example.org/a.png")).isFalse();
+    }
+
     @Test
     void removesOnlyTheImagesOfOtherHosts() {
         var policy = ImageHostPolicy.of("images.example.org", SERVER_URL);
