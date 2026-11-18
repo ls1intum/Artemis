@@ -15,9 +15,9 @@ import { TumAetUiPopoverComponent } from './tumaet-ui-popover.component';
     selector: '[tumAetUiPopoverTrigger]',
     host: {
         '(click)': 'onClick()',
-        '(pointerenter)': 'onEnter()',
+        '(pointerenter)': 'onPointer(true)',
         '(focus)': 'onEnter()',
-        '(pointerleave)': 'onLeave()',
+        '(pointerleave)': 'onPointer(false)',
         '(blur)': 'onLeave()',
         '(keydown.tab)': 'onTab($event)',
         '[attr.aria-haspopup]': "'dialog'",
@@ -31,6 +31,17 @@ export class TumAetUiPopoverTriggerDirective {
     protected onClick(): void {
         if (!this.opensOnHover()) {
             this.popover().toggle(this.elementRef);
+        }
+    }
+
+    protected onPointer(over: boolean): void {
+        if (this.opensOnHover()) {
+            this.popover().setPointerOverTrigger(over);
+            if (over) {
+                this.onEnter();
+            } else {
+                this.onLeave();
+            }
         }
     }
 

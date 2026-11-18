@@ -163,6 +163,7 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
 
     it('stays open while a control of the panel has keyboard focus, although the pointer left', () => {
         hover();
+        trigger.dispatchEvent(new Event('pointerleave'));
         panel()!.dispatchEvent(new Event('pointerenter'));
         inPanel('first').focus();
 
@@ -180,6 +181,7 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
 
     it('stays open when focus leaves the panel while the pointer is still over it', () => {
         hover();
+        trigger.dispatchEvent(new Event('pointerleave'));
         panel()!.dispatchEvent(new Event('pointerenter'));
         inPanel('first').focus();
 
@@ -187,6 +189,49 @@ describe('TumAetUiPopoverTriggerDirective with a hover popover', () => {
         vi.advanceTimersByTime(1000);
         fixture.detectChanges();
         expect(isOpen()).toBe(true);
+    });
+
+    it('stays open while the trigger has keyboard focus, although the pointer left it', () => {
+        // The test environment does not implement `:focus-visible`, which tells keyboard focus from a click.
+        vi.spyOn(trigger, 'matches').mockImplementation((selector: string) => selector === ':focus-visible');
+        trigger.focus();
+        hover();
+
+        trigger.dispatchEvent(new Event('pointerleave'));
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+
+        fixture.nativeElement.querySelector('[data-testid="next"]').focus();
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+    });
+
+    it('stays open when focus leaves the trigger while the pointer is still over it', () => {
+        trigger.focus();
+        hover();
+
+        fixture.nativeElement.querySelector('[data-testid="next"]').focus();
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(true);
+
+        trigger.dispatchEvent(new Event('pointerleave'));
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
+    });
+
+    it('closes after the pointer left a trigger that only holds focus from a click', () => {
+        trigger.focus();
+        hover();
+        vi.spyOn(trigger, 'matches').mockImplementation((selector: string) => selector !== ':focus-visible');
+
+        trigger.dispatchEvent(new Event('pointerleave'));
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+        expect(isOpen()).toBe(false);
     });
 
     it('closes on a click elsewhere, but not on a click inside the panel', () => {

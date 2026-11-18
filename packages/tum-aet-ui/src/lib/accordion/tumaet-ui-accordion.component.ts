@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, effect, input, untracked } from '@angular/core';
 import { AccordionGroup } from '@angular/aria/accordion';
 
 /**
@@ -40,6 +40,20 @@ export class TumAetUiAccordionComponent {
 
     private readonly panels = new Set<TumAetUiAccordionPanel>();
 
+    constructor() {
+        // Leaving the mode with several open panels must not keep them: the first open panel stays, the rest close.
+        effect(() => {
+            if (!this.multiExpandable()) {
+                untracked(() => {
+                    const firstOpen = [...this.panels].find((panel) => panel.expanded());
+                    if (firstOpen) {
+                        this.panelOpened(firstOpen);
+                    }
+                });
+            }
+        });
+    }
+
     /** @internal Adds a panel of this accordion and returns the function that removes it again. */
     register(panel: TumAetUiAccordionPanel): () => void {
         this.panels.add(panel);
@@ -61,5 +75,5 @@ export class TumAetUiAccordionComponent {
 
 /** @internal What the accordion needs from one of its panels. */
 export interface TumAetUiAccordionPanel {
-    readonly expanded: { set(value: boolean): void };
+    readonly expanded: { (): boolean; set(value: boolean): void };
 }

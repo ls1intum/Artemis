@@ -76,6 +76,7 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     private originElement?: HTMLElement;
     private hoverCloseTimer?: ReturnType<typeof setTimeout>;
     private pointerOverPanel = false;
+    private pointerOverTrigger = false;
     /** Set while this popover hands focus back to its trigger, which must not count as focusing it anew. */
     private returningFocus = false;
     /** Whether the open popover blocks the page behind it. Fixed while open, so the panel does not change under the user. */
@@ -135,6 +136,8 @@ export class TumAetUiPopoverComponent implements OnDestroy {
             return;
         }
         this.cancelHoverClose();
+        // Nothing reports a pointer that leaves a trigger which is removed or covered meanwhile, so do not carry it over.
+        this.pointerOverTrigger = false;
         this.positionSub?.unsubscribe();
         this.positionSub = undefined;
         const closing = this.overlayRef;
@@ -190,14 +193,20 @@ export class TumAetUiPopoverComponent implements OnDestroy {
         this.open(origin);
     }
 
-    /** @internal The pointer or the focus left the trigger of a hover popover. */
+    /** @internal The pointer entered or left the trigger of a hover popover. */
+    setPointerOverTrigger(over: boolean): void {
+        this.pointerOverTrigger = over;
+    }
+
+    /**
+     * @internal The pointer or the focus left the trigger or the panel of a hover popover. It closes after a short
+     * delay, unless the pointer or the keyboard focus is on one of the two by then; whichever leaves last asks again.
+     */
     scheduleHoverClose(): void {
         this.cancelHoverClose();
         if (this.isOpen()) {
             this.hoverCloseTimer = setTimeout(() => {
-                // A control of the panel that holds keyboard focus keeps the popover: closing would remove the focused
-                // element. It closes once the focus has left the panel as well.
-                if (!this.panelHoldsFocus()) {
+                if (!this.pointerOverTrigger && !this.pointerOverPanel && !this.triggerHoldsKeyboardFocus() && !this.panelHoldsFocus()) {
                     this.close();
                 }
             }, HOVER_CLOSE_DELAY_MS);
@@ -231,7 +240,7 @@ export class TumAetUiPopoverComponent implements OnDestroy {
     }
 
     protected onPanelFocusOut(): void {
-        if (!this.isModal() && !this.pointerOverPanel) {
+        if (!this.isModal()) {
             this.scheduleHoverClose();
         }
     }
@@ -272,6 +281,23 @@ export class TumAetUiPopoverComponent implements OnDestroy {
         this.returningFocus = true;
         this.originElement?.focus();
         this.returningFocus = false;
+    }
+
+    /**
+     * Whether the trigger is focused from the keyboard. A trigger that was clicked keeps the focus as well, but its
+     * popover must still go once the pointer has left, so only a focus the browser shows a focus ring for counts.
+     */
+    private triggerHoldsKeyboardFocus(): boolean {
+        const active = this.document.activeElement;
+        if (!active || !this.originElement?.contains(active)) {
+            return false;
+        }
+        try {
+            return active.matches(':focus-visible');
+        } catch {
+            // An environment without the selector cannot tell the two apart; keeping the popover is the safe side.
+            return true;
+        }
     }
 
     private panelHoldsFocus(): boolean {
