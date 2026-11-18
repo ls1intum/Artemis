@@ -142,15 +142,16 @@ describe('TumAetUiAccordion', () => {
     it('closes all but the first open panel when multiExpandable is switched off', async () => {
         host.multiple.set(true);
         await settle();
+        headers()[0].click();
+        await settle();
         headers()[1].click();
         await settle();
-        headers()[2].click();
-        await settle();
+        expect(headers().map((header) => header.getAttribute('aria-expanded'))).toEqual(['true', 'true', 'false']);
 
         host.multiple.set(false);
         await settle();
 
-        expect(headers().map((header) => header.getAttribute('aria-expanded'))).toEqual(['false', 'true', 'false']);
+        expect(headers().map((header) => header.getAttribute('aria-expanded'))).toEqual(['true', 'false', 'false']);
     });
 
     it('moves focus between the headers with the arrow keys, Home and End, and toggles with Enter', async () => {
