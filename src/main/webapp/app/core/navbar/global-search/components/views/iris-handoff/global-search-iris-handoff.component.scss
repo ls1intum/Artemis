@@ -9,15 +9,15 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.3rem 0.5rem 0.3rem 0.75rem;
-    border-top: 1px solid color-mix(in srgb, var(--bs-primary) 14%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--primary) 14%, transparent);
     border-radius: 0 0 0.75rem 0.75rem;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     font-size: 0.8rem;
 }
 
 .iris-handoff-icon {
     flex-shrink: 0;
-    color: var(--bs-primary);
+    color: var(--primary);
 }
 
 .iris-handoff-prompt {
@@ -34,7 +34,7 @@
     // A text action with a keycap chip. The blue is mixed towards the body colour so the small label keeps 4.5:1 contrast in
     // both themes (darker in light, lighter in dark). Hover reads like a link coming alive, with no background block: the
     // label underlines, the keycap's outline turns blue. The transparent border shows up in Windows high contrast mode.
-    --iris-handoff-accent: color-mix(in srgb, var(--bs-primary) 70%, var(--bs-body-color));
+    --iris-handoff-accent: color-mix(in srgb, var(--primary) 70%, var(--body-color));
 
     display: inline-flex;
     flex-shrink: 0;
@@ -72,7 +72,7 @@
 
 .iris-handoff-kbd {
     padding: 0 0.35rem;
-    border: 1px solid color-mix(in srgb, var(--bs-primary) 30%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
     border-radius: 0.3rem;
 
     // Transparent, so the keycap takes the card's colour instead of the page background, which is darker in Artemis.

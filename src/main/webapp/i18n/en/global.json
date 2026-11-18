@@ -107,7 +107,7 @@
                     "file-upload": "File Upload Exercise",
                     "exercise": "Exercise",
                     "exam": "Exam",
-                    "test-exam": "Test Exam",
+                    "test-exam": "Practice Exam",
                     "lecture": "Lecture",
                     "lecture-unit": "Lecture Unit",
                     "faq": "FAQ",
@@ -473,6 +473,7 @@
         "quickActions": "Quick Actions",
         "controlCenter": "Control Center",
         "action": {
+            "deleteAll": "Delete All",
             "add": "Add",
             "create": "Create",
             "addblob": "Add blob",

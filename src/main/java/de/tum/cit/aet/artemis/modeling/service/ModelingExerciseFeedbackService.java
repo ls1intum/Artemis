@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATHENA
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +18,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.AthenaFeedbackRequestRepository;
+import de.tum.cit.aet.artemis.assessment.service.AthenaFeedbackScheduler;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
@@ -41,7 +41,7 @@ public class ModelingExerciseFeedbackService {
 
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
-    private final ResultWebsocketService resultWebsocketService;
+    private final AthenaFeedbackScheduler athenaFeedbackScheduler;
 
     private final ParticipationService participationService;
 
@@ -53,7 +53,7 @@ public class ModelingExerciseFeedbackService {
             ResultWebsocketService resultWebsocketService, ParticipationService participationService, UserRepository userRepository) {
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.athenaFeedbackRequestRepository = athenaFeedbackRequestRepository;
-        this.resultWebsocketService = resultWebsocketService;
+        this.athenaFeedbackScheduler = new AthenaFeedbackScheduler(athenaFeedbackRequestRepository, resultWebsocketService);
         this.participationService = participationService;
         this.userRepository = userRepository;
     }
@@ -129,21 +129,7 @@ public class ModelingExerciseFeedbackService {
     }
 
     private void scheduleFeedback(ModelingSubmission submission, StudentParticipation participation, ModelingExercise exercise, User requestingUser) {
-        Result pending = athenaFeedbackRequestRepository.reserveAthenaFeedbackRequest(submission);
-        submission.addResult(pending);
-        participation.getSubmissions().stream().filter(existing -> existing.getId().equals(submission.getId())).forEach(existing -> existing.addResult(pending));
-        notifyResult(participation, pending);
-        CompletableFuture.runAsync(() -> generateAutomaticNonGradedFeedback(submission, participation, exercise, requestingUser, pending));
-    }
-
-    private void notifyResult(StudentParticipation participation, Result result) {
-        try {
-            resultWebsocketService.broadcastNewResult(participation, result);
-        }
-        catch (RuntimeException notificationFailure) {
-            // The durable state is authoritative. A disconnected websocket must not prevent work or invalidate success.
-            log.warn("Could not broadcast Athena feedback state for result {}", result.getId(), notificationFailure);
-        }
+        athenaFeedbackScheduler.schedule(submission, participation, pending -> generateAutomaticNonGradedFeedback(submission, participation, exercise, requestingUser, pending));
     }
 
     /**
@@ -174,7 +160,7 @@ public class ModelingExerciseFeedbackService {
                 automaticResult.setRated(true);
                 automaticResult.setSuccessful(true);
                 automaticResult.setFeedbacks(feedbacks);
-                notifyResult(participation, automaticResult);
+                athenaFeedbackScheduler.notifyResult(participation, automaticResult);
             }
         }
         catch (Exception e) {
@@ -182,7 +168,7 @@ public class ModelingExerciseFeedbackService {
             if (athenaFeedbackRequestRepository.failAthenaFeedbackRequest(automaticResult)) {
                 automaticResult.setSuccessful(false);
                 automaticResult.setCompletionDate(ZonedDateTime.now());
-                notifyResult(participation, automaticResult);
+                athenaFeedbackScheduler.notifyResult(participation, automaticResult);
             }
         }
     }

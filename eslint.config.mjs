@@ -72,6 +72,7 @@ const migratedModules = [
     'atlas',
     'calendar',
     'communication',
+    'core',
     'editor',
     'exam',
     'exercise',
@@ -97,7 +98,7 @@ const migratedModules = [
     'videosource',
 ];
 // Components that are migrated although the rest of their module is not. They get the same locks as a module.
-const migratedComponentFolders = ['core/alert', 'core/navbar/global-search/components/modal'];
+const migratedComponentFolders = [];
 const migratedFolders = (extension) => [...migratedModules, ...migratedComponentFolders].map((folder) => `src/main/webapp/app/${folder}/**/*.${extension}`);
 const legacyUiLibraryImportPattern = {
     group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
@@ -115,6 +116,7 @@ export default tseslint.config(
             '.idea/',
             '.jhipster/',
             '.venv/',
+            'bin/',
             'build/',
             'coverage/',
             'deployment/docker/',
@@ -767,9 +769,6 @@ export default tseslint.config(
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
             'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
-            'src/main/webapp/app/core/about-us/**/*.html',
-            'src/main/webapp/app/core/feature-overview/**/*.html',
-            'src/main/webapp/app/core/layouts/footer/**/*.html',
             'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
             'src/main/webapp/app/shared-ui/profile-picture/**/*.html',
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',

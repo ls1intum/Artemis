@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface PresentationAssessmentRepository extends ArtemisJpaRepository<PresentationAssessment, Long> {
+public interface PresentationAssessmentRepository extends ArtemisJpaRepository<PresentationAssessment, Long>, PresentationAssessmentWriteRepository {
 
     /**
      * Returns presentation definitions ordered by title and id, without fetching instances.
@@ -34,7 +34,7 @@ public interface PresentationAssessmentRepository extends ArtemisJpaRepository<P
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentDTO(
-                assessment.id, assessment.title, assessment.description, assessment.maxPoints,
+                assessment.id, assessment.title, assessment.description, assessment.gradingMethod, assessment.maxPoints,
                 assessment.course.id, exercise.id, exercise.title)
             FROM PresentationAssessment assessment
             LEFT JOIN assessment.exercise exercise
@@ -71,7 +71,7 @@ public interface PresentationAssessmentRepository extends ArtemisJpaRepository<P
                 AND assessment.version = :expectedVersion
             """)
     int updateIfVersionMatches(@Param("assessmentId") long assessmentId, @Param("courseId") long courseId, @Param("expectedVersion") long expectedVersion,
-            @Param("title") String title, @Param("description") String description, @Param("maxPoints") double maxPoints, @Param("exercise") Exercise exercise);
+            @Param("title") String title, @Param("description") String description, @Param("maxPoints") Double maxPoints, @Param("exercise") Exercise exercise);
 
     /**
      * Increments the presentation assessment version if it still matches the expected version.
@@ -91,5 +91,18 @@ public interface PresentationAssessmentRepository extends ArtemisJpaRepository<P
                 AND assessment.version = :expectedVersion
             """)
     int incrementVersionIfMatches(@Param("assessmentId") long assessmentId, @Param("courseId") long courseId, @Param("expectedVersion") long expectedVersion);
+
+    /**
+     * Returns the number of decimal places the course of a presentation assessment rounds scores to.
+     *
+     * @param assessmentId the presentation assessment id
+     * @return the accuracy of scores of the course
+     */
+    @Query("""
+            SELECT assessment.course.accuracyOfScores
+            FROM PresentationAssessment assessment
+            WHERE assessment.id = :assessmentId
+            """)
+    int findAccuracyOfScoresById(@Param("assessmentId") long assessmentId);
 
 }

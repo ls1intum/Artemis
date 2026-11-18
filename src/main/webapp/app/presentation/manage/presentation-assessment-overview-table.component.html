@@ -6,7 +6,7 @@
             <th><span jhiTranslate="artemisApp.presentationAssessment.type"></span></th>
             <th tumAetUiSortableColumn="presentationDate"><span jhiTranslate="artemisApp.presentationAssessment.date"></span></th>
             <th><span jhiTranslate="artemisApp.presentationAssessment.status"></span></th>
-            <th tumAetUiSortableColumn="resultPoints"><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
+            <th><span jhiTranslate="artemisApp.presentationAssessment.assessment"></span></th>
             <th></th>
         </tr>
     </thead>
@@ -45,7 +45,7 @@
                 </td>
                 <td>
                     @if (row.assessed) {
-                        <tumaet-ui-tag severity="success" size="sm" [value]="row.instance.resultPoints + ' / ' + row.presentationAssessment.maxPoints" />
+                        <jhi-presentation-result-tag [instance]="row.instance" [presentationAssessment]="row.presentationAssessment" />
                     } @else {
                         -
                     }
