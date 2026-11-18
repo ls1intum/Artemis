@@ -42,7 +42,7 @@ describe('HeaderExercisePageWithDetails', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ExerciseTypePipe),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(ArtemisServerDateService, { now: () => dayjs() })],
         }).compileComponents();
 
         fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
@@ -55,6 +55,14 @@ describe('HeaderExercisePageWithDetails', () => {
 
         exam = new Exam();
         participation = new StudentParticipation(ParticipationType.PROGRAMMING);
+    });
+
+    it('shows a test-run label only in test-run mode', () => {
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-header-test-run"]')).toBeNull();
+        fixture.componentRef.setInput('isTestRun', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-header-test-run"]')).not.toBeNull();
     });
 
     it('should initialise badges, icons, and categories', () => {

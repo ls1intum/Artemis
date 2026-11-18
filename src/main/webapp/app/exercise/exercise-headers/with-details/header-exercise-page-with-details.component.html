@@ -10,6 +10,13 @@
                         &nbsp;
                         <ng-content select="[pagetitle]" />
                     </div>
+                    @if (isTestRun()) {
+                        <span
+                            class="self-center text-sm font-normal text-text-secondary"
+                            data-testid="exercise-header-test-run"
+                            jhiTranslate="artemisApp.exam.testRun.testRun"
+                        ></span>
+                    }
                     @if ((exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) || exercise().difficulty || exerciseCategories()?.length) {
                         <jhi-exercise-categories [exercise]="exercise()" [showTags]="{ difficulty: true, notReleased: true }" [ngClass]="'badge-row'" />
                     }

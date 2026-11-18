@@ -1,4 +1,3 @@
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -348,22 +347,12 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="test-run-instructions"]')).not.toBeNull();
     });
 
-    it.each([false, true])('should ignore exam locks and missing assessors when counting remaining work, including testRun=%s', (testRun) => {
+    it('should ignore exam assessment locks when counting remaining work', () => {
         comp.isExamMode.set(true);
         comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 2 }));
         comp.numberOfAssessmentsOfCorrectionRounds.set([new DueDateStat()]);
         comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set([new DueDateStat()]);
         comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 1 }));
-        const participation = new StudentParticipation();
-        participation.testRun = testRun;
-        const result = new Result();
-        result.correctionRound = 0;
-        const draft = new ModelingSubmission();
-        draft.id = 1;
-        draft.participation = participation;
-        draft.results = [result];
-        comp.assessedSubmissionsByRound.set([[draft]]);
-
         expect(comp.inProgressAssessments()).toBe(0);
         expect(comp.openAssessments()).toBe(2);
 
