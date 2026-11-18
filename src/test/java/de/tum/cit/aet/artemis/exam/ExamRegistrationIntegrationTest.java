@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
@@ -92,6 +93,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private Exam testExam1;
 
+    private Exam testExamWithSupervisedSession1;
+
     private static final int NUMBER_OF_STUDENTS = 3;
 
     private static final int NUMBER_OF_TUTORS = 1;
@@ -113,7 +116,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exam1 = examUtilService.addExam(course1);
         examUtilService.addExamChannel(exam1, "exam1 channel");
         testExam1 = examUtilService.addTestExam(course1);
+        testExamWithSupervisedSession1 = examUtilService.addTestExamWithSupervisedSession(course1);
         examUtilService.addStudentExamForTestExam(testExam1, student1);
+        examUtilService.addStudentExamForTestExam(testExamWithSupervisedSession1, student1);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
     }
@@ -133,7 +138,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(studentExamService.generateIndividualStudentExam(exam, student1).getId()).isEqualTo(first.getId());
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(1);
 
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         examRepository.save(exam);
         StudentExam attempt = studentExamService.generateIndividualStudentExam(exam, student1);
         assertThat(attempt.getId()).isNotEqualTo(first.getId());
@@ -330,6 +335,23 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddStudentToSupervisedSessionExam() throws Exception {
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students", List.of(student), HttpStatus.OK,
+                null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRemoveStudentFromSupervisedSessionExam() throws Exception {
+        var student = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students", List.of(student), HttpStatus.OK,
+                null);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterUsersInExam() throws Exception {
         var savedExam = examUtilService.addExam(course1);
 
@@ -461,13 +483,47 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
         List<StudentDTO> studentDTOS = List.of(studentDto1);
-        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", studentDTOS, StudentDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", studentDTOS, ExamRegistrationResultDTO.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddStudentsToSupervisedSessionExam() throws Exception {
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
+
+        StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
+        List<StudentDTO> studentDTOS = List.of(studentDto1);
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students", studentDTOS,
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAddStudentsToSupervisedSessionExam_supervisedSessionEnded() throws Exception {
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
+
+        testExamWithSupervisedSession1.setStartDate(ZonedDateTime.now().minusHours(2));
+        testExamWithSupervisedSession1.setEndDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSupervisedSession1.setWorkingTime(3600);
+        examRepository.save(testExamWithSupervisedSession1);
+
+        StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
+        List<StudentDTO> studentDTOS = List.of(studentDto1);
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students", studentDTOS,
+                ExamRegistrationResultDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRemoveAllStudentsFromExam_testExam() throws Exception {
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRemoveAllStudentsFromSupervisedSessionExam() throws Exception {
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/students", HttpStatus.OK);
     }
 
     @Test
@@ -520,6 +576,13 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterCourseStudents_testExam() throws Exception {
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/register-course-students", null, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegisterCourseStudents_supervisedSessionExam() throws Exception {
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSupervisedSession1.getId() + "/register-course-students", null, HttpStatus.OK,
+                null);
     }
 
     @Test

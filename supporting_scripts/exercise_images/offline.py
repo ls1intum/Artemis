@@ -9,7 +9,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from .assembly import ASSIGNMENT_DIRECTORY, Variant, assemble
+from .assembly import ASSIGNMENT_DIRECTORY, TEST_DIRECTORY, Variant, assemble
 from .phases import Phase, load_phases
 
 WORKING_DIRECTORY = "/var/tmp/testing-dir"
@@ -49,7 +49,8 @@ def build_script(phases: list[Phase]) -> str:
     regular = [phase for phase in phases if not phase.force_run]
     lines = ["#!/usr/bin/env bash", "set -e", f"cd {WORKING_DIRECTORY}", "export INITIAL_WORKING_DIRECTORY=${PWD}"]
     for phase in phases:
-        script = phase.script.replace("${studentParentWorkingDirectoryName}", ASSIGNMENT_DIRECTORY)
+        # The checkout directories of a build whose exercise sets none (`BuildScriptProviderService.replacePlaceholders`)
+        script = phase.script.replace("${studentParentWorkingDirectoryName}", ASSIGNMENT_DIRECTORY).replace("${testWorkingDirectory}", TEST_DIRECTORY)
         lines += [f"{phase.name} () {{", f"  echo '⚙️ executing {phase.name}'"]
         lines += [f"  {line}" if line else "" for line in script.splitlines()]
         lines += ["}", ""]

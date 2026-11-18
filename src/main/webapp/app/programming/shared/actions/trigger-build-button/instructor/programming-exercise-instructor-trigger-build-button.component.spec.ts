@@ -10,7 +10,6 @@ import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/pr
 import { ConfirmAutofocusModalComponent } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { Subject, of, throwError } from 'rxjs';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -18,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('ProgrammingExercise Instructor Trigger Build Component', () => {
     const course = { id: 123 } as Course;

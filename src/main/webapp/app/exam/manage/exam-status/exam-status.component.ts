@@ -1,7 +1,8 @@
 import { ExamConductionCountsState } from 'app/exam/manage/exams/exam-checklist-component/exam-conduction-counts-state';
-import { Component, OnDestroy, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isActingAsTestExam, isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
@@ -68,7 +69,8 @@ export class ExamStatusComponent implements OnDestroy {
     readonly examReviewState = signal<ExamReviewState>(undefined!);
     readonly examCorrectionState = signal<ExamReviewState>(undefined!);
 
-    readonly isTestExam = signal<boolean>(false);
+    readonly isActingAsTestExam = computed(() => isActingAsTestExam(this.exam()));
+    readonly isRealExam = computed(() => isRealExam(this.exam()));
     readonly maxPointExercises = signal<number>(0);
 
     readonly examConductionStateEnum = ExamConductionState;
@@ -104,7 +106,6 @@ export class ExamStatusComponent implements OnDestroy {
                 }
                 this.examChecklist.set(examStats);
                 this.conductionCounts.initialize(examStats);
-                this.isTestExam.set(exam.testExam!);
 
                 if (course?.isAtLeastInstructor) {
                     // Step 1:
@@ -114,7 +115,7 @@ export class ExamStatusComponent implements OnDestroy {
                 // Step 2: Exam conduction
                 this.setConductionState();
 
-                if (!this.isTestExam()) {
+                if (this.isRealExam()) {
                     // Step 3: Exam correction
                     this.setReviewState();
                     this.setCorrectionState();
@@ -141,7 +142,7 @@ export class ExamStatusComponent implements OnDestroy {
         const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam());
         const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
         let examPointsReachable;
-        if (this.isTestExam()) {
+        if (!this.isRealExam()) {
             // This method is called here, as it is part of the exercise configuration - although it is a separate entry to highlight the importance
             this.maxPointExercises.set(this.examChecklistService.calculateExercisePoints(maximumPointsEqual, this.exam()));
             examPointsReachable = this.exam().examMaxPoints === this.maxPointExercises();
@@ -156,7 +157,7 @@ export class ExamStatusComponent implements OnDestroy {
      * Auxiliary method indicating whether all steps of Exam preparation are done
      */
     private isExamPreparationFinished(): boolean {
-        if (this.isTestExam()) {
+        if (this.isActingAsTestExam()) {
             // For test exam, only the exerciseConfiguration needs to be performed by the instructor
             return this.configuredExercises();
         } else {
@@ -169,7 +170,7 @@ export class ExamStatusComponent implements OnDestroy {
      * (PrepareExerciseStart is not mandatory, but highly recommended)
      */
     private isMandatoryPreparationFinished(): boolean {
-        if (this.isTestExam()) {
+        if (this.isActingAsTestExam()) {
             return this.configuredExercises();
         } else {
             return this.configuredExercises() && this.registeredStudents() && this.generatedStudentExams();
@@ -233,7 +234,7 @@ export class ExamStatusComponent implements OnDestroy {
         // Step 1.1:
         this.configuredExercises.set(this.areAllExercisesConfigured());
         // For test exam, only the exerciseConfiguration needs to be performed by the instructor
-        if (!this.isTestExam()) {
+        if (!this.isActingAsTestExam()) {
             // Step 1.2
             this.registeredStudents.set(this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam()));
             // Step 1.3:
