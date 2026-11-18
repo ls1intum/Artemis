@@ -3,12 +3,6 @@
         <ng-container pagetitle
             ><span class="font-semibold">{{ exercise().title }}</span></ng-container
         >
-        <ng-container headerSubtitle>
-            <span [jhiTranslate]="isTestRun() ? 'artemisApp.exerciseAssessmentDashboard.testRunSubtitle' : 'artemisApp.assessmentDashboard.title'"></span>
-            @if (exercise().maxPoints || (exercise().assessmentType && exercise().type === ExerciseType.PROGRAMMING)) {
-                <span aria-hidden="true">·</span>
-            }
-        </ng-container>
         <ng-container headerActions>
             @if (!isTestRun()) {
                 @if (canOpenExerciseDetails()) {

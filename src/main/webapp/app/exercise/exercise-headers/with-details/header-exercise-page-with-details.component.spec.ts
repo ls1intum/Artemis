@@ -148,11 +148,12 @@ describe('HeaderExercisePageWithDetails', () => {
     it('should determine correct badge for due date', () => {
         exercise.dueDate = dayjs().add(2, 'days');
         component.ngOnInit();
-        expect(component.dueDateSeverity()).toBe('success');
+        expect(component.dueDateInformation()?.title).toBe('artemisApp.courseOverview.exerciseDetails.submissionDue');
 
         exercise.dueDate = dayjs().subtract(2, 'days');
         component.ngOnInit();
-        expect(component.dueDateSeverity()).toBe('danger');
+        expect(component.dueDateInformation()?.title).toBe('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+        expect(component.dueDateInformation()?.content.type).toBe('dateTime');
     });
 
     it('should set the icon according to the exam end date', () => {

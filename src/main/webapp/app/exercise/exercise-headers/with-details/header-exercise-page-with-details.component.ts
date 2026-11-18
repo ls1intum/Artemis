@@ -1,8 +1,8 @@
+import { getSubmissionDueDateInformation } from '../exercise-headers-information/submission-due-date-information';
 import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { SortService } from 'app/foundation/service/sort.service';
+import { Component, OnInit, computed, input, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -17,7 +17,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { NgClass, NgTemplateOutlet } from '@angular/common';
@@ -47,8 +46,6 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     ],
 })
 export class HeaderExercisePageWithDetailsComponent implements OnInit {
-    private sortService = inject(SortService);
-
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -74,31 +71,21 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     public readonly nextRelevantDate = signal<dayjs.Dayjs | undefined>(undefined);
     public readonly nextRelevantDateLabel = signal<string | undefined>(undefined);
     public readonly nextRelevantDateStatusBadge = signal<string | undefined>(undefined);
-    readonly dueDateInformation = computed<InformationBox>(() => ({
-        title: 'artemisApp.courseOverview.exerciseDetails.submissionDue',
-        content: { type: 'timeAgo', value: this.dueDate() },
+    readonly pointsInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.courseOverview.exerciseDetails.points',
+        content: { type: 'string', value: this.exercise().maxPoints ?? 0 },
+    }));
+    readonly assessmentTypeInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.courseOverview.exerciseDetails.assessmentType',
+        content: { type: 'string', value: this.exercise().assessmentType ?? '' },
         isContentComponent: true,
     }));
-    public readonly dueDateSeverity = signal<'success' | 'danger'>('success');
+    readonly bonusPointsInformation = computed<InformationBox>(() => ({
+        title: 'artemisApp.courseOverview.exerciseDetails.bonus',
+        content: { type: 'string', value: this.exercise().bonusPoints ?? 0 },
+    }));
+    readonly dueDateInformation = computed(() => getSubmissionDueDateInformation(this.dueDate()));
     public readonly canComplainLaterOn = signal<boolean>(undefined!);
-
-    readonly achievedPoints = computed<number | undefined>(() => {
-        const studentParticipation = this.studentParticipation();
-        const exercise = this.exercise();
-        const course = this.effectiveCourse();
-
-        const results = getAllResultsOfAllSubmissions(studentParticipation?.submissions);
-        if (results?.length) {
-            // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
-            this.sortService.sortByProperty(results, 'id', false);
-
-            const latestRatedResult = results.filter((result) => result.rated).first();
-            if (latestRatedResult) {
-                return roundValueSpecifiedByCourseSettings((latestRatedResult.score! * exercise.maxPoints!) / 100, course);
-            }
-        }
-        return undefined;
-    });
 
     readonly numberOfSubmissions = computed<number | undefined>(() => {
         const submissionPolicy = this.submissionPolicy();
@@ -148,11 +135,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
             );
 
             this.determineNextRelevantDateCourseMode();
-        }
-
-        const dueDate = this.dueDate();
-        if (dueDate) {
-            this.dueDateSeverity.set(dayjs().isBefore(dueDate) ? 'success' : 'danger');
         }
     }
 

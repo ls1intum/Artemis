@@ -37,14 +37,6 @@
                 flex-wrap: wrap;
             }
         }
-
-        .submission-row {
-            white-space: nowrap;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.25em;
-            align-items: center;
-        }
     }
 
     @media (max-width: 575px) {
