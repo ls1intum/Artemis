@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -44,6 +44,10 @@ class ProgrammingExerciseReEvaluationServiceTest {
 
     private static final String MAPPED_STATEMENT = "the statement that the update brings";
 
+    private static final ZonedDateTime ORIGINAL_DUE_DATE = ZonedDateTime.parse("2030-01-01T12:00:00Z");
+
+    private static final ZonedDateTime MAPPED_DUE_DATE = ZonedDateTime.parse("2030-01-01T13:00:00Z");
+
     private ProgrammingExerciseUpdateMappingService mappingService;
 
     private ProgrammingExerciseCreationUpdateService creationUpdateService;
@@ -55,6 +59,8 @@ class ProgrammingExerciseReEvaluationServiceTest {
     private SubmissionPolicyRepository submissionPolicyRepository;
 
     private SlideApi slideApi;
+
+    private ExerciseVersionService exerciseVersionService;
 
     private ProgrammingExerciseReEvaluationService service;
 
@@ -68,23 +74,26 @@ class ProgrammingExerciseReEvaluationServiceTest {
         participationRepository = mock(ParticipationTestRepository.class);
         submissionPolicyRepository = mock(SubmissionPolicyRepository.class);
         slideApi = mock(SlideApi.class);
+        exerciseVersionService = mock(ExerciseVersionService.class);
         var buildConfigRepository = mock(ProgrammingExerciseBuildConfigRepository.class);
         var mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
 
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         exercise.setProblemStatement(ORIGINAL_STATEMENT);
+        exercise.setDueDate(ORIGINAL_DUE_DATE);
         when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenReturn(new MutationLease(() -> {
         }, false));
         when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(EXERCISE_ID)).thenReturn(new ProgrammingExerciseBuildConfig());
-        // applying the update changes the problem statement, so that the statement of the request can be told from the one before it
+        // applying the update changes the problem statement and the due date, so that those of the request can be told from the ones before it
         doAnswer(invocation -> {
             exercise.setProblemStatement(MAPPED_STATEMENT);
+            exercise.setDueDate(MAPPED_DUE_DATE);
             return exercise;
         }).when(mappingService).apply(any(), any(), any(), any());
 
         service = new ProgrammingExerciseReEvaluationService(mock(ProgrammingExerciseTestRepository.class), buildConfigRepository, submissionPolicyRepository, mappingService,
-                mutationGuard, creationUpdateService, exerciseService, Optional.empty(), Optional.of(slideApi), participationRepository, mock(ExerciseVersionService.class));
+                mutationGuard, creationUpdateService, exerciseService, Optional.empty(), Optional.of(slideApi), participationRepository, exerciseVersionService);
     }
 
     @Test
@@ -136,24 +145,29 @@ class ProgrammingExerciseReEvaluationServiceTest {
         InOrder order = inOrder(mappingService, creationUpdateService, exerciseService);
         order.verify(mappingService).validateAuxiliaryRepositoriesUnchanged(dto, exercise);
         order.verify(mappingService).apply(any(), any(), any(), any());
-        order.verify(mappingService).validateUpdatedExercise(any(), any(), any(), any(), anyBoolean());
+        // a re-evaluation does not require the stored references of the template and solution, which the ordinary update does
+        order.verify(mappingService).validateUpdatedExercise(any(), any(), any(), any(), eq(false));
         order.verify(creationUpdateService).validateProblemStatementLength(MAPPED_STATEMENT);
         order.verify(creationUpdateService).validateChannelNameOfUpdate(exercise);
         order.verify(exerciseService).reEvaluateExercise(any(), anyBoolean());
     }
 
     @Test
-    void theEffectsOfTheUpdateRunBeforeTheStoredPolicyIsRead() {
+    void theEffectsAndTheVersionOfTheUpdateComeBeforeTheStoredPolicyIsRead() {
+        var user = new User();
         when(creationUpdateService.updateProgrammingExercise(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(exercise);
         when(submissionPolicyRepository.findByProgrammingExerciseId(anyLong())).thenThrow(new IllegalStateException("the database is away"));
 
-        assertThatThrownBy(() -> service.reEvaluateAndUpdate(EXERCISE_ID, exercise, mock(UpdateProgrammingExerciseDTO.class), false, Set.of(), new User()))
+        assertThatThrownBy(() -> service.reEvaluateAndUpdate(EXERCISE_ID, exercise, mock(UpdateProgrammingExerciseDTO.class), false, Set.of(), user))
                 .isInstanceOf(IllegalStateException.class);
 
-        // a retry would take the saved due date for the original one, so these have to have happened
-        InOrder order = inOrder(participationRepository, slideApi, submissionPolicyRepository);
-        order.verify(participationRepository).removeIndividualDueDatesIfBeforeDueDate(eq(exercise), any());
-        order.verify(slideApi).handleDueDateChange(nullable(ZonedDateTime.class), eq(exercise));
+        // a retry would take the saved due date for the original one and would not repeat these, so they have to have happened, and with the due date from before the update:
+        // with the saved one, the cleanup of individual due dates and the slides would see no change
+        assertThat(exercise.getDueDate()).isEqualTo(MAPPED_DUE_DATE);
+        InOrder order = inOrder(participationRepository, slideApi, exerciseVersionService, submissionPolicyRepository);
+        order.verify(participationRepository).removeIndividualDueDatesIfBeforeDueDate(exercise, ORIGINAL_DUE_DATE);
+        order.verify(slideApi).handleDueDateChange(ORIGINAL_DUE_DATE, exercise);
+        order.verify(exerciseVersionService).createExerciseVersion(exercise, user);
         order.verify(submissionPolicyRepository).findByProgrammingExerciseId(EXERCISE_ID);
     }
 }

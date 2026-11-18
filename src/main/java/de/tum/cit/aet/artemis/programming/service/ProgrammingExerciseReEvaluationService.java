@@ -141,15 +141,16 @@ public class ProgrammingExerciseReEvaluationService {
             }
             participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
             slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
-            // The update leaves the lazy policy unchanged; return the stored policy and make it available before versioning runs. It is read after the effects above, so that a
-            // failed read cannot keep them from running: a retry would take the saved due date for the original one and see no change.
-            savedExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(savedExercise.getId()));
             if (lease.coordinated()) {
                 exerciseVersionService.createExerciseVersionSynchronously(savedExercise, user);
             }
             else {
                 exerciseVersionService.createExerciseVersion(savedExercise, user);
             }
+            // The policy is a lazy relation that the update does not load, so the response would show none. The update leaves it as it is, and the response carries the stored one.
+            // It is read last, as in the ordinary update: the version reads the exercise itself, and a failed read cannot keep the effects or the version from happening, which a
+            // retry would not repeat, as it would take the saved due date for the original one.
+            savedExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(savedExercise.getId()));
 
             return ProgrammingExerciseResponseDTO.of(savedExercise, buildConfig);
         }
