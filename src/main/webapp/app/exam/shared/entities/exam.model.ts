@@ -4,11 +4,12 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { BaseEntity } from 'app/foundation/model/base-entity';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
-    public testExam?: boolean;
+    public examMode?: ExamMode;
     public examWithAttendanceCheck?: boolean;
     public visibleDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
@@ -56,7 +57,7 @@ export class Exam implements BaseEntity {
         this.numberOfCorrectionRoundsInExam = 1; // default value
         this.examMaxPoints = 1; // default value
         this.workingTime = 0; // will be updated during creation
-        this.testExam = false; // default value
+        this.examMode = ExamMode.REAL; // default value
         this.examWithAttendanceCheck = false; // default value
 
         // helper attributes (calculated by the server at the time of the last request)
@@ -78,7 +79,7 @@ export class Exam implements BaseEntity {
         const rebuilt = new Exam();
         rebuilt.id = exam.id;
         rebuilt.title = exam.title;
-        rebuilt.testExam = exam.testExam;
+        rebuilt.examMode = exam.examMode;
         rebuilt.examWithAttendanceCheck = exam.examWithAttendanceCheck;
         rebuilt.visibleDate = exam.visibleDate;
         rebuilt.startDate = exam.startDate;

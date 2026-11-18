@@ -7,6 +7,7 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, Data } from '@angular/router';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -89,7 +90,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.exam = exam;
             this.hasExamStarted.set(exam.startDate?.isBefore(this.serverDateService.now()) || false);
             this.scheduleAttendanceDeadline();
-            this.isTestExam.set(this.exam.testExam ?? false);
+            this.isTestExam.set(!isRealExam(this.exam));
         });
         if (!this.hasExamStarted()) {
             // Nothing can be verified before the start, and the page has to say so instead of loading forever.

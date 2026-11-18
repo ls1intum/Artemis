@@ -1,6 +1,7 @@
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from '../constants';
 import { annotateRecovery, dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { awaitDeletion, awaitNoRunningExamDeletion } from '../deletion';
 import { DELETION_COMPLETION_TIMEOUT } from '../timeouts';
@@ -44,7 +45,7 @@ export class ExamAPIRequests {
      * @param options - An object containing the options for creating the exam.
      *   - course: The course to which the exam belongs (optional, default: undefined).
      *   - title: The title of the exam (optional, default: auto-generated).
-     *   - testExam: Set to true to create a test exam (optional, default: false).
+     *   - examMode: Set to a non-REAL type to create a test exam (optional, default: REAL).
      *   - visibleDate: The date when the exam becomes visible (optional, default: current date).
      *   - startDate: The start date of the exam (optional, default: current date + 1 day).
      *   - endDate: The end date of the exam (optional, default: current date + 2 days).
@@ -62,7 +63,7 @@ export class ExamAPIRequests {
     async createExam(options: {
         course?: Course;
         title?: string;
-        testExam?: boolean;
+        examMode?: ExamMode;
         visibleDate?: dayjs.Dayjs;
         startDate?: dayjs.Dayjs;
         endDate?: dayjs.Dayjs;
@@ -83,7 +84,7 @@ export class ExamAPIRequests {
         const {
             course,
             title = tempTitle,
-            testExam = false,
+            examMode = ExamMode.REAL,
             visibleDate = dayjsToString(dayjs().subtract(1, 'day')),
             startDate = dayjsToString(dayjs().add(1, 'day')),
             endDate = dayjsToString(dayjs().add(2, 'day')),
@@ -102,13 +103,13 @@ export class ExamAPIRequests {
         // A real exam's working time is its duration: the server derives every student's working time from the dates and
         // rescales the exam's own working time by the same delta when the end changes, so a stale value (the old fixed
         // one day) would make shortening the exam fail once the change exceeds it. A test exam's working time is per attempt.
-        const workingTime = requestedWorkingTime ?? (testExam ? 86400 : dayjs(endDate as any).diff(dayjs(startDate as any), 'seconds'));
+        const workingTime = requestedWorkingTime ?? (examMode !== ExamMode.REAL ? 86400 : dayjs(endDate as any).diff(dayjs(startDate as any), 'seconds'));
 
         const exam = {
             ...examTemplate,
             course,
             title,
-            testExam,
+            examMode,
             visibleDate,
             startDate,
             endDate,
@@ -125,7 +126,7 @@ export class ExamAPIRequests {
             channelName: titleLowercase(title),
         } as Exam;
 
-        if (testExam) {
+        if (examMode !== ExamMode.REAL) {
             exam.numberOfCorrectionRoundsInExam = 0;
         }
 
@@ -395,7 +396,7 @@ export class ExamAPIRequests {
      */
     async getOwnStudentExamSummary(exam: Exam): Promise<StudentExam> {
         let studentExamId: number;
-        if (exam.testExam) {
+        if (exam.examMode !== ExamMode.REAL) {
             // Asking a test exam for "the" student exam of the student would start a new attempt, so pick the latest attempt that was handed in.
             const attempts = await this.getOwnTestExamAttempts(exam);
             const submitted = attempts.filter((attempt) => attempt.submitted);
@@ -713,7 +714,7 @@ export class ExamAPIRequests {
         const resultDate = end.add(1, 'second');
         const concluded = await this.updateExam(exam, {
             endDate: dayjsToString(end),
-            workingTime: current.testExam ? current.workingTime : end.diff(dayjs(current.startDate as any), 'seconds'),
+            workingTime: current.examMode !== ExamMode.REAL ? current.workingTime : end.diff(dayjs(current.startDate as any), 'seconds'),
             publishResultsDate: publishResults ? dayjsToString(resultDate) : null,
             examStudentReviewStart: publishResults ? dayjsToString(resultDate) : null,
             examStudentReviewEnd: publishResults ? dayjsToString(resultDate.add(5, 'minutes')) : null,
