@@ -120,11 +120,9 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                                                                                // feedback request is in work
         automaticResult = this.resultRepository.save(automaticResult);
 
+        notifyFeedbackStatus(automaticResult, participation);
+
         try {
-
-            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
-            // now the client should be able to see new result
-
             log.debug("Submission id: {}", submission.getId());
 
             AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
@@ -180,8 +178,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             automaticResult.setCompletionDate(ZonedDateTime.now());
 
             this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
-
-            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
@@ -189,7 +185,17 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(ZonedDateTime.now());
             this.resultRepository.save(automaticResult);
-            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
+        }
+
+        notifyFeedbackStatus(automaticResult, participation);
+    }
+
+    private void notifyFeedbackStatus(Result result, ProgrammingExerciseStudentParticipation participation) {
+        try {
+            programmingMessagingService.notifyUserAboutNewResult(result, participation);
+        }
+        catch (RuntimeException e) {
+            log.error("Could not notify the student about Athena result {}", result.getId(), e);
         }
     }
 }

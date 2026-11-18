@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -71,6 +72,6 @@ class ProgrammingMessagingServiceTest {
 
         verify(resultWebsocketService).broadcastNewResult(participation, result);
         verify(ltiApi).onNewResult(participation);
-        verify(pyrisEventApi).trigger(org.mockito.ArgumentMatchers.any());
+        verify(pyrisEventApi).trigger(argThat(event -> event.getEventObject() == result));
     }
 }

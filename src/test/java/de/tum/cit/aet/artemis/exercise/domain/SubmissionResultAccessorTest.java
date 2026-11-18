@@ -97,7 +97,6 @@ class SubmissionResultAccessorTest {
     @Test
     void successfulTextAthenaAssessmentRemainsGradeRelevant() {
         Result athena = result(1L, AssessmentType.AUTOMATIC_ATHENA);
-        athena.setCompletionDate(ZonedDateTime.now());
         Submission submission = new TextSubmission();
         submission.addResult(athena);
         assertThat(submission.getLatestGradingResult()).isNull();
@@ -107,6 +106,9 @@ class SubmissionResultAccessorTest {
         assertThat(submission.getLatestCompletedResult()).isNull();
         athena.setSuccessful(true);
         assertThat(submission.getLatestGradingResult()).isSameAs(athena);
+        assertThat(submission.getLatestCompletedResult()).isNull();
+
+        athena.setCompletionDate(ZonedDateTime.parse("2026-01-01T12:00:00Z"));
         assertThat(submission.getLatestCompletedResult()).isSameAs(athena);
     }
 

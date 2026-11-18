@@ -9,8 +9,8 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 
-import { Component, DestroyRef, Injector, OnInit, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, Injector, OnInit, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { catchError, finalize, map, take } from 'rxjs/operators';
@@ -26,9 +26,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
@@ -131,8 +130,6 @@ export class FeedbackComponent implements OnInit {
     readonly exerciseType = computed<ExerciseType | undefined>(
         () => this.resolvedExercise()?.type ?? (isProgrammingExerciseParticipation(this.participation()) ? ExerciseType.PROGRAMMING : undefined),
     );
-    /** Whether the score chart is currently shown; seeded from the input, hidden at runtime once we know there is no chart data (see updateChart). */
-    readonly scoreChartVisible = linkedSignal(() => this.showScoreChart());
     readonly completedAiScore = computed(() => {
         const result = this.result();
         return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true && Number.isFinite(result.score) ? result.score : undefined;
@@ -154,13 +151,29 @@ export class FeedbackComponent implements OnInit {
 
     readonly commitHash = signal<string | undefined>(undefined);
 
-    readonly chartData = signal<FeedbackChartData>({
-        xScaleMax: 100,
-        colors: [GraphColors.GREEN, GraphColors.RED],
-        results: [],
+    private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
+    readonly chartData = computed<FeedbackChartData>(() => {
+        const aiScore = this.completedAiScore();
+        if (aiScore !== undefined) {
+            this.languageChange();
+            return {
+                xScaleMax: Math.max(100, aiScore),
+                colors: ['var(--tumaet-ui-state-success)'],
+                results: [{ name: 'scores', series: [{ name: this.translateService.instant('artemisApp.result.detail.feedback'), value: aiScore }] }],
+            };
+        }
+        const exercise = this.resolvedExercise();
+        const nodes = this.feedbackItemNodes();
+        if (this.result().assessmentType !== AssessmentType.AUTOMATIC_ATHENA && exercise && nodes?.length) {
+            return this.feedbackChartService.create(nodes, exercise);
+        }
+        return { colors: [], results: [], xScaleMax: 0 };
     });
-    private readonly chartColors = computed(() => this.chartData().colors);
-    readonly scoreChartData = computed(() => stackedBarChart(this.chartData().results, this.chartColors()));
+    readonly scoreChartVisible = computed(() => this.showScoreChart() && this.chartData().results.length > 0);
+    readonly scoreChartData = computed(() => {
+        const { results, colors } = this.chartData();
+        return stackedBarChart(results, colors);
+    });
     readonly scoreChartConfig = computed<TumAetUiBarChartConfig>(() => ({
         horizontal: true,
         stacked: true,
@@ -255,10 +268,8 @@ export class FeedbackComponent implements OnInit {
                             this.expandFeedbackItemGroups();
                         }
                     }
-                    if (this.scoreChartVisible()) {
-                        this.updateChart(this.feedbackItemNodes() ?? []);
-                    }
-                    if (isStudentParticipation(this.participation())) {
+                    const isPreliminaryProgrammingResult = this.exerciseType() === ExerciseType.PROGRAMMING && result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+                    if (isStudentParticipation(this.participation()) && !isPreliminaryProgrammingResult) {
                         this.badge.set(ResultService.evaluateBadge(this.participation(), result));
                     }
                 },
@@ -315,22 +326,31 @@ export class FeedbackComponent implements OnInit {
             .getSelectedParticipationRepositoryFilesAtCommit(exerciseId, participationId, commitHash, referencedFilePaths)
             .pipe(
                 take(1),
+                takeUntilDestroyed(this.destroyRef),
                 catchError(() => EMPTY),
             )
             .subscribe((fileContentByPath) => {
                 if (!fileContentByPath) {
                     return;
                 }
-                feedbackItems.forEach((item) => {
+                const addCodeLines = (item: FeedbackItem) => {
                     const reference = item.codeReference;
                     const fileContent = reference && fileContentByPath.get(reference.filePath);
-                    if (reference && fileContent) {
-                        reference.lines = this.getReferencedLines(fileContent, reference.line, reference.lineEnd ?? reference.line);
+                    if (!reference || !fileContent) {
+                        return item;
                     }
-                });
-                // Refresh the node identities as well: updating only the array leaves the OnPush cards
-                // displaying their empty code placeholder until the user interacts with them.
-                this.feedbackItemNodes.update((nodes) => (nodes ? deepClone(nodes) : nodes));
+                    const lines = this.getReferencedLines(fileContent, reference.line, reference.lineEnd ?? reference.line);
+                    return cloneWith(item, { feedbackReference: item.feedbackReference, codeReference: cloneWith(reference, { lines }) });
+                };
+                this.feedbackItemNodes.update((nodes) =>
+                    nodes?.map((node) => {
+                        if (!isFeedbackGroup(node)) {
+                            return addCodeLines(node as FeedbackItem);
+                        }
+                        const members = node.members.map(addCodeLines);
+                        return members.some((member, index) => member !== node.members[index]) ? cloneWith(node, { members }) : node;
+                    }),
+                );
             });
     }
 
@@ -344,24 +364,8 @@ export class FeedbackComponent implements OnInit {
         });
     }
 
-    private updateChart(feedbackItemNodes: FeedbackNode[]) {
-        const aiScore = this.completedAiScore();
-        if (aiScore !== undefined) {
-            this.chartData.set({
-                xScaleMax: Math.max(100, aiScore),
-                colors: ['var(--tumaet-ui-state-success)'],
-                results: [{ name: 'scores', series: [{ name: this.translateService.instant('artemisApp.result.detail.feedback'), value: aiScore }] }],
-            });
-            return;
-        }
-
-        const exercise = this.resolvedExercise();
-        if (this.result().assessmentType === AssessmentType.AUTOMATIC_ATHENA || !exercise || feedbackItemNodes.length === 0) {
-            this.scoreChartVisible.set(false);
-            return;
-        }
-
-        this.chartData.set(this.feedbackChartService.create(feedbackItemNodes, exercise));
+    feedbackNodeKey(node: FeedbackNode) {
+        return isFeedbackGroup(node) ? node.name : ((node as FeedbackItem).feedbackReference ?? node);
     }
 
     getCommitHash(): string {

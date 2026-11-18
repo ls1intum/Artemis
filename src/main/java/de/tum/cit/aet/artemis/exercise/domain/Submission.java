@@ -160,8 +160,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestGradingResult() {
-        Result latestResult = results.stream().filter(Objects::nonNull)
-                .filter(result -> !result.isAthenaBased() || (!(this instanceof ProgrammingSubmission) && Boolean.TRUE.equals(result.isSuccessful()))).max(BY_ID).orElse(null);
+        Result latestResult = results.stream().filter(Objects::nonNull).filter(this::isGradeRelevantResult).max(BY_ID).orElse(null);
         if (latestResult != null) {
             latestResult.setSubmission(this);
         }
@@ -179,8 +178,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestCompletedResult() {
-        Result latestResult = results.stream().filter(result -> result != null && result.getCompletionDate() != null)
-                .filter(result -> !result.isAthenaBased() || (!(this instanceof ProgrammingSubmission) && Boolean.TRUE.equals(result.isSuccessful())))
+        Result latestResult = results.stream().filter(result -> result != null && result.getCompletionDate() != null).filter(this::isGradeRelevantResult)
                 .max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID)).orElse(null);
 
         if (latestResult != null) {
@@ -188,6 +186,10 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         }
 
         return latestResult;
+    }
+
+    private boolean isGradeRelevantResult(Result result) {
+        return !result.isAthenaBased() || (!(this instanceof ProgrammingSubmission) && Boolean.TRUE.equals(result.isSuccessful()));
     }
 
     /**

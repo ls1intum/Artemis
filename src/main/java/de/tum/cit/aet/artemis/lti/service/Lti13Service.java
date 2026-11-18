@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,6 +33,8 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -332,35 +336,38 @@ public class Lti13Service {
         launches.forEach(launch -> {
             LtiPlatformConfiguration returnPlatform = launch.getLtiPlatformConfiguration();
             ClientRegistration returnClient = onlineCourseConfigurationService.getClientRegistration(returnPlatform);
-            submitScore(launch, returnClient, concatenatedFeedbacks, score);
+            submitScore(launch, returnClient, concatenatedFeedbacks, score, () -> resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())
+                    .filter(latest -> Objects.equals(latest.getId(), result.get().getId()) && Objects.equals(latest.getScore(), score)).isPresent());
         });
     }
 
-    protected void submitScore(LtiResourceLaunch launch, ClientRegistration clientRegistration, String comment, Double score) {
+    private void submitScore(LtiResourceLaunch launch, ClientRegistration clientRegistration, String comment, Double score, BooleanSupplier isCurrentScore) {
         String scoreLineItemUrl = getScoresUrl(launch.getScoreLineItemUrl());
         if (scoreLineItemUrl == null) {
             return;
         }
 
-        String token = tokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
-
-        if (token == null) {
-            log.error("Could not transmit score to {}: missing token", clientRegistration.getClientId());
-            return;
-        }
-
+        var retry = RetryTemplate.builder().maxAttempts(3).fixedBackoff(200).retryOn(List.of(ResourceAccessException.class, HttpServerErrorException.class)).build();
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
-            headers.setBearerAuth(token);
             String body = getScoreBody(launch.getSub(), comment, score);
-            HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
-            restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
-            log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
+            retry.execute(context -> {
+                if (context.getRetryCount() > 0 && !isCurrentScore.getAsBoolean()) {
+                    return null;
+                }
+                String token = tokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
+                if (token == null) {
+                    throw new ResourceAccessException("Missing LTI score token");
+                }
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
+                headers.setBearerAuth(token);
+                restTemplate.postForEntity(scoreLineItemUrl, new HttpEntity<>(body, headers), Object.class);
+                log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
+                return null;
+            });
         }
-        catch (HttpClientErrorException | JacksonException e) {
-            String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + clientRegistration.getClientId() + ": " + e.getMessage();
-            log.error(message);
+        catch (HttpClientErrorException | HttpServerErrorException | ResourceAccessException | JacksonException e) {
+            log.error("Could not submit score for {} to client {}: {}", launch.getUser().getLogin(), clientRegistration.getClientId(), e.getMessage());
         }
     }
 

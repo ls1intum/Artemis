@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -158,6 +157,7 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         assertOfficialGrade(course, exercise, student.getId(), teamExercise);
 
         ai.setScore(60.0);
+        ai.setSuccessful(true);
         resultRepository.save(ai);
         assertOfficialGrade(course, exercise, student.getId(), teamExercise);
 
@@ -190,16 +190,32 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         ai.setCompletionDate(REFERENCE_TIME);
         ai = resultRepository.save(ai);
 
-        var selected = studentParticipationRepository.findAllForPlagiarism(exercise.getId());
-        assertThat(selected).singleElement().satisfies(candidate -> {
-            var selectedSubmission = candidate.findLatestSubmission().orElseThrow();
-            assertThat(selectedSubmission.getLatestResult().getId()).isEqualTo(official.getId());
-            assertThat(PlagiarismService.hasMinimumScore(selectedSubmission, 50)).isTrue();
-        });
+        assertThat(studentParticipationRepository.findAllForPlagiarism(exercise.getId(), 50)).extracting(StudentParticipation::getId).containsExactly(participation.getId());
+        assertThat(studentParticipationRepository.findAllForPlagiarism(exercise.getId(), 90)).isEmpty();
         assertThat(resultRepository.findById(ai.getId())).isPresent();
 
         resultRepository.deleteById(official.getId());
-        assertThat(studentParticipationRepository.findAllForPlagiarism(exercise.getId())).isEmpty();
+        assertThat(studentParticipationRepository.findAllForPlagiarism(exercise.getId(), 50)).isEmpty();
+        assertThat(studentParticipationRepository.findAllForPlagiarism(exercise.getId(), 0)).extracting(StudentParticipation::getId).containsExactly(participation.getId());
+    }
+
+    @Test
+    void assessmentPublicationUsesOfficialScoreWhenAthenaIsNewer() {
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var submission = addSubmissionWithResult(participation, REFERENCE_TIME.minusHours(1), REFERENCE_TIME.minusMinutes(30), 80.0);
+        var official = resultRepository.findDistinctBySubmissionId(submission.getId()).orElseThrow();
+        official.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(official);
+
+        var ai = new Result().submission(submission).assessmentType(AssessmentType.AUTOMATIC_ATHENA).rated(true).score(60.0).completionDate(REFERENCE_TIME);
+        ai.setExerciseId(exercise.getId());
+        ai.setSuccessful(true);
+        resultRepository.save(ai);
+
+        assertThat(studentParticipationRepository.findAssessmentPublicationRecipients(exercise.getId())).singleElement()
+                .satisfies(recipient -> assertThat(recipient.score()).isEqualTo(80.0));
     }
 
     @ParameterizedTest

@@ -1276,7 +1276,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
-        Result invokedResult = resultCaptor.getAllValues().getFirst();
+        Result invokedResult = resultCaptor.getAllValues().getLast();
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isTrue();
@@ -1347,7 +1347,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
-        Result invokedResult = resultCaptor.getAllValues().getFirst();
+        Result invokedResult = resultCaptor.getAllValues().getLast();
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isTrue();
@@ -1520,7 +1520,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
-        Result invokedResult = resultCaptor.getAllValues().getFirst();
+        Result invokedResult = resultCaptor.getAllValues().getLast();
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isTrue();

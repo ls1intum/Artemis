@@ -85,7 +85,7 @@
             }
         </div>
         @if (isGroupExpanded()) {
-            @for (feedbackItem of feedbackItemGroup()!.members; track $index) {
+            @for (feedbackItem of feedbackItemGroup()!.members; track feedbackItem.feedbackReference ?? feedbackItem) {
                 <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course()" [isPrinting]="isPrinting()" />
             }
         }

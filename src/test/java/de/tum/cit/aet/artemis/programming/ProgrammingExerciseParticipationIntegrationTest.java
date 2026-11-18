@@ -754,7 +754,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var build = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1));
         var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(build.getSubmission().getParticipation().getId()).orElseThrow();
         Result athena = participationUtilService.addResultToSubmission(participation, participation.getSubmissions().iterator().next());
-        athena.rated(true).score(60.0).assessmentType(AssessmentType.AUTOMATIC_ATHENA).completionDate(ZonedDateTime.now().plusMinutes(athenaCompleted ? -5 : 5));
+        athena.rated(true).score(60.0).assessmentType(AssessmentType.AUTOMATIC_ATHENA).completionDate(athenaCompleted ? ZonedDateTime.now().minusMinutes(5) : null);
         athena.setSuccessful(athenaCompleted ? Boolean.TRUE : null);
         athena = participationUtilService.addVariousVisibilityFeedbackToResult(athena);
 
@@ -766,6 +766,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(results.get(0).path("score").asDouble()).isEqualTo(100.0);
         assertThat(results.get(0).path("feedbacks")).isNotEmpty();
         assertThat(results.get(1).path("id").asLong()).isEqualTo(athena.getId());
+        assertThat(results.get(1).path("completionDate").isMissingNode()).isEqualTo(!athenaCompleted);
     }
 
     @Test

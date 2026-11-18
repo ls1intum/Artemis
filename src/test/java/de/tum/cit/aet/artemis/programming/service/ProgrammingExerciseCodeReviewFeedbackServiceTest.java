@@ -308,22 +308,26 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
         }
         var legacy = suggestion("src/Main.java", "details", 1, 1, 0);
         assertThat(mapper.readValue(mapper.writeValueAsString(legacy), ProgrammingFeedbackDTO.class).severity()).isNull();
+        String known = mapper.writeValueAsString(new ProgrammingFeedbackDTO(1L, EXERCISE_ID, 50L, "title", "details", 1, null, "src/Main.java", 1, 1, FeedbackSeverity.HIGH));
+        String unknown = known.replace("\"high\"", "\"critical\"");
+        var response = mapper.readValue("[" + unknown + "," + known + "]", ProgrammingFeedbackDTO[].class);
+        assertThat(response).extracting(ProgrammingFeedbackDTO::severity).containsExactly(null, FeedbackSeverity.HIGH);
     }
 
     @Test
     void generatingFeedback_preservesSeverityAndSortsIndependentlyOfCredits() throws Exception {
         var service = serviceWithAthena(Optional.of(athenaFeedbackApi));
         withAnEmptyResultForTheLatestSubmission();
-        var low = new ProgrammingFeedbackDTO(1L, EXERCISE_ID, 50L, "low", "low", -5, null, "src/Main.java", 1, 1, FeedbackSeverity.LOW);
-        var high = new ProgrammingFeedbackDTO(2L, EXERCISE_ID, 50L, "high", "high", 5, null, "src/Main.java", 1, 1, FeedbackSeverity.HIGH);
-        var medium = new ProgrammingFeedbackDTO(3L, EXERCISE_ID, 50L, "medium", "medium", 0, null, "src/Main.java", 1, 1, FeedbackSeverity.MEDIUM);
+        var low = new ProgrammingFeedbackDTO(1L, EXERCISE_ID, 50L, "low", "low", 5, null, "src/Main.java", 1, 1, FeedbackSeverity.LOW);
+        var high = new ProgrammingFeedbackDTO(2L, EXERCISE_ID, 50L, "high", "high", 0, null, "src/Main.java", 1, 1, FeedbackSeverity.HIGH);
+        var medium = new ProgrammingFeedbackDTO(3L, EXERCISE_ID, 50L, "medium", "medium", -5, null, "src/Main.java", 1, 1, FeedbackSeverity.MEDIUM);
         when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
                 .thenReturn(List.of(suggestion("src/Main.java", "unclassified", 1, 1, -10), low, high, medium));
 
         var feedbacks = generatedFeedbacks(service);
 
         assertThat(feedbacks).extracting(Feedback::getSeverity).containsExactly(FeedbackSeverity.HIGH, FeedbackSeverity.MEDIUM, FeedbackSeverity.LOW, null);
-        assertThat(feedbacks).extracting(Feedback::getCredits).containsExactly(5.0, 0.0, -5.0, -10.0);
+        assertThat(feedbacks).extracting(Feedback::getCredits).containsExactly(0.0, -5.0, 5.0, -10.0);
         assertThat(ProgrammingFeedbackDTO.of(EXERCISE_ID, 50L, feedbacks.getFirst()).severity()).isEqualTo(FeedbackSeverity.HIGH);
         assertThat(de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO.of(feedbacks.getFirst()).severity()).isEqualTo(FeedbackSeverity.HIGH);
         assertThat(de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO.FeedbackDTO.of(feedbacks.getFirst()).severity()).isEqualTo(FeedbackSeverity.HIGH);
@@ -374,6 +378,22 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
         assertThat(automaticResult.isSuccessful()).isFalse();
         verify(resultRepository, org.mockito.Mockito.times(2)).save(automaticResult);
         verify(programmingMessagingService, org.mockito.Mockito.times(2)).notifyUserAboutNewResult(automaticResult, participation);
+    }
+
+    @Test
+    void generatingFeedback_whenCompletionNotificationFails_preservesTheStoredScore() throws Exception {
+        var automaticResult = withAnEmptyResultForTheLatestSubmission();
+        when(athenaFeedbackApi.getProgrammingFeedbackSuggestions(eq(exercise), eq(submission), anyBoolean(), eq(requestingUser)))
+                .thenReturn(List.of(suggestion("src/Main.java", "feedback", 1, null, 6.0)));
+        org.mockito.Mockito.doNothing().doThrow(new IllegalStateException("Websocket delivery failed")).when(programmingMessagingService).notifyUserAboutNewResult(automaticResult,
+                participation);
+
+        serviceWithAthena(Optional.of(athenaFeedbackApi)).generateAutomaticNonGradedFeedback(participation, exercise, requestingUser);
+
+        assertThat(automaticResult.getScore()).isEqualTo(60.0);
+        assertThat(automaticResult.isSuccessful()).isTrue();
+        verify(resultRepository).save(automaticResult);
+        verify(resultService).storeFeedbackInResult(eq(automaticResult), any(), eq(true));
     }
 
     @Test

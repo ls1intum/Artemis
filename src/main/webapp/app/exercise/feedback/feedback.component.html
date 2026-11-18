@@ -33,7 +33,7 @@
             <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
         </div>
     }
-    @if (!isLoading() && !loadingFailed() && (feedbackItemNodes()?.length || completedAiScore() !== undefined)) {
+    @if (completedAiScore() !== undefined || (!isLoading() && !loadingFailed() && feedbackItemNodes()?.length)) {
         <div class="result-detail-container">
             @if (!isExamReviewPage()) {
                 <div>
@@ -113,7 +113,7 @@
                 <hr />
             }
 
-            @if (!loadingFailed() && resultIsPreliminary(result(), participation(), resolvedExercise())) {
+            @if (resultIsPreliminary(result(), participation(), resolvedExercise())) {
                 <div>
                     <div class="flex justify-end m-1">
                         <tumaet-ui-tag severity="warn" [value]="'artemisApp.result.preliminary' | artemisTranslate | uppercase" />
@@ -132,7 +132,7 @@
             }
 
             <div class="feedback-list">
-                @for (feedbackItemNode of feedbackItemNodes(); track feedbackItemNode) {
+                @for (feedbackItemNode of feedbackItemNodes(); track feedbackNodeKey(feedbackItemNode)) {
                     <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course()" [isPrinting]="isPrinting()" />
                 }
             </div>

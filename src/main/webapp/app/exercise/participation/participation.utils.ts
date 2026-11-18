@@ -80,11 +80,13 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
  * @param participation
  * @param showUngradedResults
  * @param exerciseType the exercise type, when the participation does not carry its exercise
+ * @param isVisible optional result filter for displays that also show feedback request status
  */
 export function getLatestResultOfStudentParticipation(
     participation: StudentParticipation | undefined,
     showUngradedResults: boolean,
     exerciseType = participation?.exercise?.type,
+    isVisible = (result: Result) => isGradeRelevantResult(result, exerciseType) && (showUngradedResults || result.rated === true),
 ): Result | undefined {
     if (!participation) {
         return undefined;
@@ -98,6 +100,5 @@ export function getLatestResultOfStudentParticipation(
     }
 
     // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-    const latestResult = results?.find((result) => isGradeRelevantResult(result, exerciseType) && (showUngradedResults || result.rated === true));
-    return latestResult ? latestResult : undefined;
+    return results?.find(isVisible);
 }

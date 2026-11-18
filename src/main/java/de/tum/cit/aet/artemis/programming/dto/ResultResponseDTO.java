@@ -69,10 +69,7 @@ public record ResultResponseDTO(Long id, ZonedDateTime completionDate, Boolean s
         if (result.getSubmission() != null && Hibernate.isInitialized(result.getSubmission())) {
             submissionDTO = SubmissionDTO.of(result.getSubmission(), false, null, null);
         }
-        var feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
-        return new ResultResponseDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO,
-                ParticipationDTO.of(result.getSubmission().getParticipation()), feedbackDTOs, result.getAssessmentType(), result.getCorrectionRound(), result.hasComplaint(),
-                result.isExampleResult(), result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
+        return fromResult(result, submissionDTO, ParticipationDTO.of(result.getSubmission().getParticipation()), filteredFeedback);
     }
 
     /**
@@ -105,9 +102,13 @@ public record ResultResponseDTO(Long id, ZonedDateTime completionDate, Boolean s
      * @return the converted DTO
      */
     public static ResultResponseDTO ofNested(Result result, Collection<Feedback> filteredFeedback) {
-        List<FeedbackDTO> feedbackDTOs = filteredFeedback == null ? null : filteredFeedback.stream().map(FeedbackDTO::of).toList();
-        return new ResultResponseDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), null, null, feedbackDTOs,
-                result.getAssessmentType(), result.getCorrectionRound(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(),
+        return fromResult(result, null, null, filteredFeedback);
+    }
+
+    private static ResultResponseDTO fromResult(Result result, SubmissionDTO submission, ParticipationDTO participation, Collection<Feedback> feedbacks) {
+        List<FeedbackDTO> feedbackDTOs = feedbacks == null ? null : feedbacks.stream().map(FeedbackDTO::of).toList();
+        return new ResultResponseDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submission, participation,
+                feedbackDTOs, result.getAssessmentType(), result.getCorrectionRound(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(),
                 result.getPassedTestCaseCount(), result.getCodeIssueCount());
     }
 }

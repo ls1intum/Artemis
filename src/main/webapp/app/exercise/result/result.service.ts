@@ -132,7 +132,9 @@ export class ResultService implements IResultService {
         if (result && isAthenaAIResult(result) && result.successful === false) {
             return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
         }
-        const aiFeedbackMessage = this.getResultStringNonProgrammingExercise(relativeScore, points, short);
+        const aiFeedbackMessage = Number.isFinite(result.score)
+            ? this.getResultStringNonProgrammingExercise(relativeScore, points, short)
+            : this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
         return `${aiFeedbackMessage} (${this.translateService.instant('artemisApp.result.preliminary')})`;
     }
 

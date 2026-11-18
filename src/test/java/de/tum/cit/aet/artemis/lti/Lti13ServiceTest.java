@@ -644,8 +644,8 @@ class Lti13ServiceTest {
 
         lti13Service.onNewResult(participation);
 
-        verify(resultGradeRepository).findLatestGradeRelevantResultWithCompletionDate(participation.getId());
-        verify(tokenRetriever).getToken(clientRegistration, Scopes.AGS_SCORE);
+        verify(resultGradeRepository, org.mockito.Mockito.times(3)).findLatestGradeRelevantResultWithCompletionDate(participation.getId());
+        verify(tokenRetriever, org.mockito.Mockito.times(3)).getToken(clientRegistration, Scopes.AGS_SCORE);
         verifyNoInteractions(restTemplate);
     }
 
@@ -680,7 +680,7 @@ class Lti13ServiceTest {
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
 
         String accessToken = "accessToken";
-        doReturn(accessToken).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
+        doReturn(null, accessToken).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
 
         lti13Service.onNewResult(participation);
 

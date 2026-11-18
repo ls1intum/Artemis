@@ -717,7 +717,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
         // Also exclude a participant who has AI feedback but no official result at all.
         Submission aiOnly = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission().submitted(true).submissionDate(now));
-        participationUtilService.addResultToSubmission(aiOnly, AssessmentType.AUTOMATIC_ATHENA, null, 60.0, true);
+        var aiOnlyResult = participationUtilService.addResultToSubmission(aiOnly, AssessmentType.AUTOMATIC_ATHENA, null, 60.0, true).getLatestResult();
+        aiOnlyResult.setSuccessful(true);
+        resultRepository.save(aiOnlyResult);
 
         for (boolean withSubmissions : List.of(false, true)) {
             List<ResultWithPointsPerGradingCriterionDTO> rows = request.getList(

@@ -52,8 +52,8 @@ class ProgrammingAssessmentFeedbackSeverityTest {
         var result = mapper.readValue(json, ProgrammingManualResultRequestDTO.class).toEntity();
         var update = mapper.readValue(json, ProgrammingAssessmentUpdateDTO.class).toAssessmentUpdate();
 
-        assertThat(result.getFeedbacks()).allSatisfy(feedback -> assertThat(feedback.getSeverity()).isNull());
-        assertThat(update.feedbacks()).allSatisfy(feedback -> assertThat(feedback.getSeverity()).isNull());
+        assertThat(result.getFeedbacks()).singleElement().satisfies(feedback -> assertThat(feedback.getSeverity()).isNull());
+        assertThat(update.feedbacks()).singleElement().satisfies(feedback -> assertThat(feedback.getSeverity()).isNull());
     }
 
     private String requestBody(FeedbackSeverity severity) {

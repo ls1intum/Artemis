@@ -764,11 +764,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                AND (TYPE(p.exercise) <> ProgrammingExercise OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 AND r.id = (
                     SELECT MAX(r2.id)
                     FROM Submission s2 JOIN s2.results r2
                     WHERE s2.participation = p
                       AND r2.completionDate IS NOT NULL
+                      AND (TYPE(p.exercise) <> ProgrammingExercise OR r2.assessmentType IS NULL
+                          OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
                 )
             """)
     Set<AssessmentPublicationRecipientDTO> findAssessmentPublicationRecipients(@Param("exerciseId") long exerciseId);
@@ -1231,26 +1234,31 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * <li>Only participations belonging to the specified exercise are retrieved.</li>
      * <li>Participations marked as a test run are excluded.</li>
      * <li>Only the latest submission for each participation is considered.</li>
-     * <li>Only the latest rated result, excluding programming Athena feedback, for each submission is considered.</li>
+     * <li>A positive minimum score is checked against the latest rated result other than Athena feedback.</li>
      * </ul>
      *
-     * @param exerciseId the ID of the exercise for which to retrieve participations.
+     * @param exerciseId   the ID of the exercise for which to retrieve participations.
+     * @param minimumScore the minimum official score, or zero to include submissions without a score
      * @return a list of distinct `StudentParticipation` entities matching the criteria.
      */
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
+                JOIN p.submissions s
                 LEFT JOIN FETCH p.student
                 LEFT JOIN FETCH p.team
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.id = (SELECT MAX(s2.id) FROM p.submissions s2)
-                AND r.id = (SELECT MAX(r2.id) FROM s.results r2 WHERE r2.rated = TRUE
-                    AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR TYPE(r2.submission.participation.exercise) <> ProgrammingExercise))
+                AND (:minimumScore = 0 OR EXISTS (
+                    SELECT r.id FROM Result r
+                    WHERE r.submission = s AND r.score >= :minimumScore
+                        AND r.id = (SELECT MAX(r2.id) FROM Result r2
+                            WHERE r2.submission = s AND r2.rated = TRUE
+                                AND (r2.assessmentType IS NULL OR r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA))
+                ))
             """)
-    List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
+    List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId, @Param("minimumScore") int minimumScore);
 
     @Query("""
             SELECT DISTINCT p

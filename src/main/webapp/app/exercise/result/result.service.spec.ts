@@ -352,15 +352,17 @@ describe('ResultService', () => {
             });
         });
 
-        it.each([undefined, null, NaN, Infinity, -Infinity])('should treat the Athena score %s as unavailable', (score) => {
-            programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
+        describe.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('%s unavailable AI score', (type) => {
+            it.each([undefined, null, NaN, Infinity, -Infinity])('treats %s as unavailable', (score) => {
+                const exercise = { ...programmingExercise, type, assessmentDueDate: dayjs().subtract(5, 'minutes') };
+                const result: Result = { ...result6 };
+                Object.assign(result, { score });
 
-            const result: Result = { ...result6 };
-            Object.assign(result, { score });
-            expect(resultService.getResultString(result, programmingExercise, participation1)).toBe(
-                'artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)',
-            );
-            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+                expect(resultService.getResultString(result, exercise, participation1)).toBe(
+                    'artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)',
+                );
+                expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+            });
         });
 
         it('should return correct string for Athena non graded unsuccessful feedback', () => {

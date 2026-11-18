@@ -244,10 +244,13 @@ public class CourseOverviewExerciseService {
         ParticipationOverviewRowDTO firstRow = participationRows.getFirst();
         // The projection also includes the latest automatic fallback submission. A newer manual assessment may not
         // be released yet, so choose the latest visible submission rather than discarding the fallback first.
-        Set<SubmissionOverviewDTO> submissions = participationRows.stream().filter(row -> row.submissionId() != null)
+        List<SubmissionOverviewDTO> visibleSubmissions = participationRows.stream().filter(row -> row.submissionId() != null)
                 .collect(Collectors.groupingBy(ParticipationOverviewRowDTO::submissionId)).values().stream()
                 .sorted((first, second) -> compareSubmissions(second.getFirst(), first.getFirst())).map(rows -> visibleSubmission(rows.getFirst(), rows, exercise, calculationTime))
-                .flatMap(Optional::stream).findFirst().map(Set::of).orElse(Set.of());
+                .flatMap(Optional::stream).toList();
+        // A newer submission awaiting its first official result should not hide the rated CI fallback.
+        Set<SubmissionOverviewDTO> submissions = visibleSubmissions.stream().filter(submission -> !submission.results().isEmpty()).findFirst()
+                .or(() -> visibleSubmissions.stream().findFirst()).map(Set::of).orElse(Set.of());
 
         boolean hasSubmitted = participationRows.stream().anyMatch(row -> row.submissionId() != null && (Boolean.TRUE.equals(row.submitted())
                 || exercise.type() == ExerciseType.PROGRAMMING && row.submissionDate() != null || row.resultId() != null && Boolean.TRUE.equals(row.resultRated())));

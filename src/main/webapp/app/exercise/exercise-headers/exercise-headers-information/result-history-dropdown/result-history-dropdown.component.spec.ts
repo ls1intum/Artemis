@@ -408,7 +408,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.detectChanges();
 
             const row = document.querySelector<HTMLElement>('[data-testid="result-history-row"]');
-            expect(row?.textContent).toContain(`${score}%`);
+            expect(row?.textContent).toMatch(new RegExp(`(?<![\\d.-])${score}%`));
             expect(row?.querySelector('[data-testid="ai-feedback-indicator"]')).toBeTruthy();
         });
     });

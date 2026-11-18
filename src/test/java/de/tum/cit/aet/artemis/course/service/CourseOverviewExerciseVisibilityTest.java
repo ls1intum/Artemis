@@ -151,6 +151,19 @@ class CourseOverviewExerciseVisibilityTest {
     }
 
     @Test
+    void retainsEarlierCiResultWhileNewerSubmissionHasNoOfficialResult() {
+        prepare(exercise(ExerciseType.PROGRAMMING, null, null),
+                List.of(row(10L, PAST.minusHours(1), true, null, 19L, true, PAST, AssessmentType.AUTOMATIC), row(11L, PAST, true, null, null, null, null, null)));
+
+        var response = service.getCourseExercisesForOverview(course, student);
+
+        assertThat(response.exercises().iterator().next().studentParticipations().iterator().next().submissions()).singleElement().satisfies(submission -> {
+            assertThat(submission.id()).isEqualTo(10L);
+            assertThat(submission.results()).singleElement().satisfies(result -> assertThat(result.id()).isEqualTo(19L));
+        });
+    }
+
+    @Test
     void tutorLockDoesNotHideAutomaticResultOnTheSameSubmission() {
         prepare(exercise(ExerciseType.PROGRAMMING, PAST, FUTURE),
                 List.of(row(10L, PAST, true, null, 19L, true, PAST, AssessmentType.AUTOMATIC), row(10L, PAST, true, null, 21L, false, null, AssessmentType.SEMI_AUTOMATIC)));

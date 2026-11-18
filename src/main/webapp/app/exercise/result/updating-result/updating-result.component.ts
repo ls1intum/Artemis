@@ -15,7 +15,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
-import { MissingResultInformation, isGradeRelevantResult } from 'app/exercise/result/result.utils';
+import { MissingResultInformation, isAthenaAIResult, isGradeRelevantResult } from 'app/exercise/result/result.utils';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ResultComponent } from '../result.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -99,7 +99,7 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
                     this.tearDownSubmissionSubscription();
                     return;
                 }
-                this.result.set(getLatestResultOfStudentParticipation(participation, this.showUngradedResults(), this.exercise()?.type));
+                this.result.set(getLatestResultOfStudentParticipation(participation, this.showUngradedResults(), this.exercise()?.type, (result) => this.isVisibleResult(result)));
                 this.missingResultInfo.set(MissingResultInformation.NONE);
 
                 this.subscribeForNewResults();
@@ -153,6 +153,14 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
         }
     }
 
+    private isVisibleResult(result: Result): boolean {
+        const exerciseType = this.exercise()?.type ?? this.participation()?.exercise?.type;
+        if ((exerciseType === ExerciseType.TEXT || exerciseType === ExerciseType.MODELING) && isAthenaAIResult(result)) {
+            return true;
+        }
+        return isGradeRelevantResult(result, exerciseType) && (this.showUngradedResults() || result.rated === true);
+    }
+
     /**
      * Subscribes to new results for the current participation.
      */
@@ -167,7 +175,7 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
                 // Ignore initial null result of subscription
                 filter((result) => !!result),
                 // Programming AI feedback has its own status in the feedback request and result history.
-                filter((result: Result) => isGradeRelevantResult(result, exercise?.type) && (this.showUngradedResults() || result.rated === true)),
+                filter((result: Result) => this.isVisibleResult(result)),
                 map((result): Result => cloneWith(result, { completionDate: convertDateFromServer(result.completionDate) }) satisfies Result),
                 tap((result) => {
                     this.result.set(result);
