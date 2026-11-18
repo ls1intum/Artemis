@@ -162,6 +162,11 @@ The umbrella workflow groups runs by PR number and sets `cancel-in-progress` for
 A new push cancels the previous revision so its E2E jobs release their self-hosted runners and the
 new revision can start.
 
+The `Cancel Closed PR CI` workflow also cancels active umbrella runs when the PR is closed or
+merged. It looks up the exact `ci-pr-{N}` concurrency group and confirms the PR is still closed
+before requesting cancellation. The closure workflow uses trusted base code and leaves the CI
+run for the resulting `develop` push in its own group.
+
 Before reserving build or self-hosted test capacity, a step in the existing `detect-changes` job
 checks that the PR is open and the run's head is current. It calls `.github/scripts/pr-ready.js`
 immediately, reusing that job's runner and checkout. There is no deliberate delay or separate
@@ -292,7 +297,9 @@ relative to the merge base with the actual PR target; missing history falls back
   An audited exact-file client surface can replace its broad module for that file only; for example,
   exam-management UI fixes do not inherit the shared student-course container's exam dependency.
   A mixed change still unions the broader files' consumers.
-  Java/client unit tests and documentation accompanying a bugfix do not force full E2E. Shared runtime,
+  Java/client unit tests and documentation accompanying a bugfix do not force full E2E. Neither do the
+  exact ESLint and Stylelint entrypoints or TUM AET UI stories excluded from the production build.
+  In mixed changes the selector still evaluates the runtime changes and their consumers. Shared runtime,
   configuration, Playwright helpers and unknown dependencies do. The selector resolves exact spec paths
   and computes a disjoint remaining set. Ordinary eligible PRs intentionally omit Phase 2; full callers
   retain it. Missing expected results fail, and non-PR events keep complete validation.
@@ -444,7 +451,7 @@ with `pnpm run test:rules` (or select `supporting_scripts/ci/E2E-tests/setup.spe
 | `release` | `ci-release-{tag}` | no |
 | `push` / `workflow_dispatch` | `ci-{github.ref}-{github.sha}` | no |
 
-Concurrency lives only on the umbrella. Reusables share the umbrella's `run_id`, so the
+Concurrency is configured on the umbrella and its calling jobs. Reusables share the umbrella's `run_id`, so the
 parent's concurrency lock applies transitively. **Never** add a `concurrency:` block to a
 `ci-*.yml` reusable — it creates a second lock that can deadlock the parent
 ([actions/runner#3205](https://github.com/actions/runner/issues/3205)).
@@ -452,7 +459,19 @@ parent's concurrency lock applies transitively. **Never** add a `concurrency:` b
 Distinct push commits run independently so a long E2E phase cannot hold back the next commit's
 WAR or image build. Their mutable publishing aliases can therefore move while an earlier run
 is still active, which is why E2E consumes the exact commit tag and checks its revision.
-GitHub keeps only one pending run per concurrency group; repeated runs for the same ref and
+
+Within the umbrella, E2E calls for `develop` pushes share a separate job concurrency group.
+The running suite finishes. GitHub queues the other calls so out-of-order builds cannot
+displace the tip. When a call starts, a hosted job compares its build SHA with the current
+`develop` tip. Superseded calls finish without using an E2E runner and report their skip
+in CI. A failed tip check fails CI. Release, merge-queue, manual and PR suites keep their
+individual validation. Per-commit builds still produce the WAR and image.
+
+E2E jobs use the `e2e-test` label. A runner with only this custom label supplies dedicated E2E
+capacity. A runner that also has `aet-large-ubuntu` accepts general build/test jobs as well.
+The infrastructure inventory owns these labels so that re-registration preserves the reservation.
+
+The umbrella keeps one pending run per workflow-level concurrency group. Repeated runs for the same ref and
 commit can still replace a pending run. Documentation builds on every `develop` push so any
 replacement run deploys the complete documentation tree. Pull requests use `has_docs`.
 

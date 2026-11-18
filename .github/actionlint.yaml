@@ -7,3 +7,10 @@ self-hosted-runner:
     - artemis-test-deployment
     - artemis-prod-deployment
     - ase-large-android-sdk-34
+
+paths:
+  .github/workflows/ci.yml:
+    ignore:
+      # GitHub Actions supports concurrency.queue; actionlint 1.7.12 does not (rhysd/actionlint#746).
+      # ci-policy.test.cjs checks the literal queue value and cancellation setting.
+      - '^unexpected key "queue" for "concurrency" section\.'
