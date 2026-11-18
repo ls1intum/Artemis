@@ -309,6 +309,64 @@ class StageChecksTest {
         verifyNoInteractions(verifier);
     }
 
+    @Test
+    void structuredTablesKeepTheirSectionBoundariesAndCellNormalization() {
+        String spec = """
+                ## Design
+                | Type | Description | Status |
+                | :--- | --- | ---: |
+                | `Owner` | unused | **student‑creates**
+                ## Testing Strategy
+                | Seam | Owner | Responsibility | Extra | Weight | Hidden |
+                | --- | --- | --- | --- | --- | --- |
+                | **S1** | `Owner` | **observable work** | ignored | `3` | **YES**
+                ## Contract Risk Inventory
+                | Seam | Rules | Partitions |
+                | --- | --- | --- |
+                | `S1` | **R1** | S1.P1: ordinary values
+                | S2 |
+                ## Other
+                | ignored | ignored | ignored |
+                """;
+
+        assertThat(StageChecks.designTableRows(spec)).containsExactly(new StageChecks.DesignRow("Owner", "student-creates"));
+        assertThat(StageChecks.testingStrategyRows(spec)).containsExactly(new StageChecks.TestingStrategyRow("S1", "Owner", "observable work", "3", "yes"));
+        assertThat(StageChecks.riskInventoryRows(spec)).containsExactly(new StageChecks.RiskInventoryRow("S1", "R1", "S1.P1: ordinary values"),
+                new StageChecks.RiskInventoryRow("S2", "", ""));
+    }
+
+    @Test
+    void structuredTablesIgnoreRowsUntilTheHeaderSeparator() {
+        String spec = """
+                ## Design
+                | Type | Status |
+                | Owner | given |
+                ## Testing Strategy
+                | Seam | Owner | Responsibility | Weight | Hidden |
+                | S1 | Owner | work | 3 | yes |
+                ## Contract Risk Inventory
+                | Seam | Rules | Partitions |
+                | S1 | R1 | S1.P1: ordinary values |
+                """;
+
+        assertThat(StageChecks.designTableRows(spec)).isEmpty();
+        assertThat(StageChecks.testingStrategyRows(spec)).isEmpty();
+        assertThat(StageChecks.riskInventoryRows(spec)).isEmpty();
+        assertThat(StageChecks.designTableRows("## Other\n| --- |\n| Owner | given |")).isEmpty();
+    }
+
+    @Test
+    void testingStrategyDoesNotInferWeightFromAnotherColumn() {
+        String spec = """
+                ## Testing Strategy
+                | Seam | Owner | Responsibility | Hidden |
+                | --- | --- | --- | --- |
+                | S1 | Owner | 3 | yes |
+                """;
+
+        assertThat(StageChecks.testingStrategyRows(spec)).containsExactly(new StageChecks.TestingStrategyRow("S1", "Owner", "3", "", "yes"));
+    }
+
     @Nested
     class Tests {
 
