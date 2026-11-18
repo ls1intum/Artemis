@@ -4,10 +4,12 @@
             <div class="grow">
                 <label [for]="'field_container_name_' + containerIndex()">{{ 'artemisApp.programmingExercise.buildContainersEditor.containerName' | artemisTranslate }}</label>
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.containerNameHelp" />
+                <!-- tumAetUiInput keeps only a static id, so tumAetUiInputId hands it the bound one; the plain id shows the label association in the template -->
                 <input
                     type="text"
                     tumAetUiInput
                     class="w-full"
+                    id="field_container_name_{{ containerIndex() }}"
                     [tumAetUiInputId]="'field_container_name_' + containerIndex()"
                     data-testid="container-name-input"
                     [tumAetUiInputInvalid]="!!nameValidationMessageKey()"
@@ -24,6 +26,7 @@
                 type="text"
                 tumAetUiInput
                 class="w-full"
+                id="field_container_image_{{ containerIndex() }}"
                 [tumAetUiInputId]="'field_container_image_' + containerIndex()"
                 data-testid="container-image-input"
                 [ngModel]="container().dockerImage ?? ''"
