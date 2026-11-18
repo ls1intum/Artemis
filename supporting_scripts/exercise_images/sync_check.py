@@ -375,7 +375,8 @@ def go_mod_versions(text: str) -> Versions:
     """
     versions: Versions = {}
     for line in text.splitlines():
-        match = re.fullmatch(r"\s*go\s+(\S+)\s*(?://.*)?", line)
+        # The version ends at whitespace or at a comment, which may follow it directly (``go 1.23.2//pinned``)
+        match = re.fullmatch(r"\s*go\s+([^\s/]+)\s*(?://.*)?", line)
         if match:
             versions.setdefault(GO_TOOLCHAIN, set()).add(match.group(1))
     return versions
@@ -385,6 +386,23 @@ def stack_resolver(text: str) -> Versions:
     """The Stackage snapshot (``resolver``, or its alias ``snapshot``) of a ``stack.yaml``, with or without quotes."""
     match = re.search(r"^(?:resolver|snapshot):\s*[\"']?([^\s\"'#]+)", text, re.MULTILINE)
     return {"resolver": {match.group(1)}} if match else {}
+
+
+def _top_level_commas(text: str) -> list[str]:
+    """``text`` split at the commas outside of braces: ``pkg:{lib1,lib2}`` names several libraries of one package."""
+    parts: list[str] = []
+    depth = 0
+    start = 0
+    for index, character in enumerate(text):
+        if character == "{":
+            depth += 1
+        elif character == "}":
+            depth = max(depth - 1, 0)
+        elif character == "," and depth == 0:
+            parts.append(text[start:index])
+            start = index + 1
+    parts.append(text[start:])
+    return parts
 
 
 def cabal_packages(text: str) -> Versions:
@@ -408,7 +426,7 @@ def cabal_packages(text: str) -> Versions:
             if following.strip() and len(following) - len(following.lstrip()) <= len(field.group(1)):
                 break
             entries.append(following)
-        for entry in ",".join(entries).split(","):
+        for entry in _top_level_commas(" ".join(entries)):
             match = re.match(r"\s*([A-Za-z][\w-]*)", entry)
             if match:
                 packages.add(match.group(1))
@@ -427,8 +445,14 @@ def dockerfile_versions(text: str) -> Versions:
         # `golang:1.24` is a rolling tag, which holds the latest patch release of its minor version at the time of the build. The tag cannot
         # tell which one, so it names no version.
         versions[GO_TOOLCHAIN] = {tag if GO_VERSION.fullmatch(tag) and (tag.count(".") == 2 or "rc" in tag or "beta" in tag) else f"{tag} (rolling tag)"}
-    for match in re.finditer(r"--package\s+([A-Za-z][\w-]*)", "\n".join(lines)):
-        versions[f"package {match.group(1)}"] = {"cached"}
+    # Only the arguments of a `stack` command of a RUN instruction build the cache, not the same text in an `echo` or another command
+    for instruction in re.sub(r"\\\s*\n", " ", "\n".join(lines)).splitlines():
+        if not re.match(r"\s*RUN\s", instruction, re.IGNORECASE):
+            continue
+        for command in re.split(r"&&|\|\||[;|]", instruction):
+            if re.match(r"\s*(?:RUN\s+)?(?:\w+=\S*\s+)*stack\s", command, re.IGNORECASE):
+                for match in re.finditer(r"--package\s+([A-Za-z][\w-]*)", command):
+                    versions[f"package {match.group(1)}"] = {"cached"}
     return versions
 
 

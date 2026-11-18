@@ -278,9 +278,29 @@ class TestReportTest(unittest.TestCase):
         for file in sorted((TEMPLATES_DIR / "phases").glob("*/*.yaml")):
             with self.subTest(file=file.relative_to(TEMPLATES_DIR).as_posix()):
                 text = file.read_text(encoding="utf-8")
-                declared = sum(len(block.strip().splitlines()) for block in re.findall(r"^  resultPaths:\n((?:    - .*\n?)+)", text, re.MULTILINE))
-                self.assertEqual(declared, sum(len(phase.result_paths) for phase in phases.load_phases(TEMPLATES_DIR, file.parent.name, file.name)))
-                self.assertEqual(text.count("resultPaths:"), len(re.findall(r"^  resultPaths:\n    - ", text, re.MULTILINE)), "a result path list in a form the check does not read")
+                self.assertEqual(self.declared_result_paths(text), sum(len(phase.result_paths) for phase in phases.load_phases(TEMPLATES_DIR, file.parent.name, file.name)))
+
+    @staticmethod
+    def declared_result_paths(text: str) -> int:
+        """The number of result paths a phase file declares, counted from the text and independent of the parser: the entries of an inline list,
+        or the ``- `` lines up to the next key of the phase, wherever a comment or a blank line sits between them."""
+        total = 0
+        for key in re.finditer(r"^  resultPaths:[ \t]*(.*)$", text, re.MULTILINE):
+            inline = key.group(1)
+            if inline.startswith("["):
+                total += len([item for item in inline[1 : inline.rfind("]")].split(",") if item.strip()])
+            else:
+                block = re.split(r"^(?:  \w+:|- )", text[key.end() :], maxsplit=1, flags=re.MULTILINE)[0]
+                total += len(re.findall(r"^\s*- ", block, re.MULTILINE))
+        return total
+
+    def test_the_count_of_declared_result_paths_does_not_depend_on_the_layout(self):
+        text = (
+            "- name: a\n  resultPaths: ['x/*.xml', 'y.xml']\n  script: x\n"
+            "- name: b\n  resultPaths:\n    - 'x/*.xml'\n    # comment between the entries\n\n    - y.xml\n  script: |\n    - not a path\n"
+        )
+        self.assertEqual(self.declared_result_paths(text), 4)
+        self.assertEqual([len(phase.result_paths) for phase in phases.parse_phases(text)], [2, 2])
 
     def test_a_truncated_or_malformed_report_does_not_count_but_another_valid_one_does(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -891,6 +911,13 @@ class GoAndHaskellTest(unittest.TestCase):
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.20\n"), sync_check.versions_of("Dockerfile", "FROM golang:1.20rc1\n")), [f"{self.GO} 1.20 is newer than the image (1.20rc1)"])
         self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.24beta1\n"), rc_image), [])
 
+    def test_a_comment_right_behind_the_go_version_is_no_part_of_it(self):
+        image = sync_check.versions_of("Dockerfile", GO_DOCKERFILE)
+        for line in ("go 1.23.2//pinned", "go 1.23.2 //pinned", "go 1.23.2 // pinned", "go 1.23.2"):
+            self.assertEqual(sync_check.versions_of("go.mod", f"{line}\n"), {self.GO: {"1.23.2"}})
+            self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", f"{line}\n"), image), [])
+        self.assertEqual(sync_check.compare(sync_check.versions_of("go.mod", "go 1.23.4//pinned\n"), image), [f"{self.GO} 1.23.4 is newer than the image (1.23.3)"])
+
     def test_a_toolchain_line_is_ignored_because_the_image_does_not_switch_toolchains(self):
         image = sync_check.versions_of("Dockerfile", GO_DOCKERFILE)
         for line in ("toolchain go1.24.0", "toolchain default", "toolchain go1.23.3"):
@@ -955,12 +982,25 @@ class GoAndHaskellTest(unittest.TestCase):
         cabal = "name: test\nexecutable aeson\n  build-depends: aeson >= 2.1, solution\nlibrary solution\n  build-depends: base\n"
         self.assertEqual(sync_check.versions_of("test.cabal", cabal), {"package aeson": {"cached"}})
 
+    def test_the_sublibraries_of_a_package_are_one_dependency(self):
+        cabal = "name: test\ntest-suite t\n  build-depends:\n    base,\n    pkg:{lib1,lib2} >= 1.0,\n    other:sub\n"
+        self.assertEqual(sorted(sync_check.versions_of("test.cabal", cabal)), ["package other", "package pkg"])
+
     def test_a_package_the_image_did_not_build_ahead_is_reported(self):
         image = sync_check.versions_of("Dockerfile", HASKELL_DOCKERFILE)
         self.assertEqual(sorted(image), ["package QuickCheck", "package tasty", "package tasty-hunit"])
         self.assertEqual(sync_check.compare(sync_check.versions_of("test.cabal", TEST_CABAL), image), [])
         raised = TEST_CABAL.replace("tasty-hunit == 0.*", "tasty-hunit == 0.*, containers-extra == 1.*")
         self.assertEqual(sync_check.compare(sync_check.versions_of("test.cabal", raised), image), ["package containers-extra is not in the image"])
+
+    def test_only_the_stack_commands_build_the_cache(self):
+        other = HASKELL_DOCKERFILE.replace("            --package tasty-hunit \\\n", "") + 'RUN echo "Previously used --package tasty-hunit" \\\n    && echo --package other-package\n'
+        self.assertNotIn("package tasty-hunit", sync_check.versions_of("Dockerfile", other))
+        self.assertNotIn("package other-package", sync_check.versions_of("Dockerfile", other))
+        self.assertIn("package tasty", sync_check.versions_of("Dockerfile", other))
+        self.assertEqual(sync_check.compare(sync_check.versions_of("test.cabal", TEST_CABAL), sync_check.versions_of("Dockerfile", other)), ["package tasty-hunit is not in the image"])
+        # the continuation lines of the command count, and so does a command of its own RUN instruction
+        self.assertEqual(sorted(sync_check.versions_of("Dockerfile", HASKELL_DOCKERFILE + "RUN stack build --package extra\n")), ["package QuickCheck", "package extra", "package tasty", "package tasty-hunit"])
 
     def test_a_package_in_a_dockerfile_comment_is_not_cached(self):
         commented = HASKELL_DOCKERFILE.replace("            --package tasty-hunit \\\n", "            # --package tasty-hunit \\\n")

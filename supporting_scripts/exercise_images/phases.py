@@ -102,8 +102,10 @@ def parse_phases(text: str) -> list[Phase]:
                 result_paths.extend(_flow_list(value))
             elif value and not value.startswith("#"):
                 raise ValueError(f"The result paths of the phase {name} are written as {value}, only a list is supported")
-            while index < len(lines) and re.match(r"^\s+- ", lines[index]):
-                result_paths.append(_scalar(lines[index].strip()[2:]))
+            # A comment or a blank line between the entries does not end the list
+            while index < len(lines) and (re.match(r"^\s+- ", lines[index]) or not lines[index].strip() or lines[index].lstrip().startswith("#")):
+                if lines[index].strip() and not lines[index].lstrip().startswith("#"):
+                    result_paths.append(_scalar(lines[index].strip()[2:]))
                 index += 1
         elif key_name == "script":
             if value.startswith(_BLOCK_SCALAR_START):
