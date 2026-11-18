@@ -1,8 +1,3 @@
-@import '../../../../../content/scss/artemis-variables';
-@import '../../../../../../../../node_modules/bootstrap/scss/functions';
-@import '../../../../../../../../node_modules/bootstrap/scss/variables';
-@import '../../../../../../../../node_modules/bootstrap/scss/mixins';
-
 :host {
     display: block;
     height: 100%;
@@ -39,26 +34,26 @@
         display: block;
     }
 
-    .card {
+    .thread-card {
+        display: flex;
+        flex-direction: column;
         width: inherit;
+        min-width: 0;
         min-height: 0;
+        border: 1px solid var(--tumaet-ui-border-color);
+        border-radius: var(--tumaet-ui-radius-sm);
+        background-color: var(--tumaet-ui-content-background);
 
-        .card-header {
+        .thread-card-header {
+            display: flex;
             flex-shrink: 0;
             justify-content: space-between;
             align-items: center;
-            cursor: pointer;
-            display: flex;
-
-            .card-title {
-                display: flex;
-            }
-
-            .row > .col-auto:last-child {
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-            }
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--tumaet-ui-border-color);
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+            background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 3%, transparent);
         }
     }
 }
@@ -101,11 +96,11 @@
     }
 }
 
-@include media-breakpoint-down(sm) {
+@media (max-width: 575.98px) {
     .expanded-thread {
         width: 100%;
 
-        & .card {
+        & .thread-card {
             min-width: 100%;
         }
     }

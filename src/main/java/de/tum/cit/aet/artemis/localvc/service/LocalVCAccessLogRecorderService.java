@@ -1,17 +1,20 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
-import static de.tum.cit.aet.artemis.localvc.service.LocalVCBuildAgentAuthenticationService.BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.extractUsernameAndPassword;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.secretMatches;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 
+import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
+import org.eclipse.jgit.http.server.ServletUtils;
 import org.eclipse.jgit.lib.Repository;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -22,22 +25,30 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.UsernameAndPassword;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
- * Writes the VCS access log entries of git requests that are served, over HTTPS and over SSH, and works out how a request authenticated.
+ * Writes the VCS access log entries of git operations that are served, over HTTPS and over SSH, and works out how a request authenticated.
  * <p>
- * An entry is written in up to three steps: a preliminary entry when the request is authorized, which the clone, pull or push then completes with what only it knows,
- * and a failed entry when authorization or authentication is rejected.
+ * An operation is written once, as one entry, when it is over and everything about it is known. Git over HTTPS is several requests that nothing links, so no step looks for
+ * the entry of another one, and no entry is ever changed. The hooks of the request or command fill a {@link GitOperationAudit} while it runs, and the filter of the request or
+ * the SSH command hands it over afterwards:
+ * <ul>
+ * <li>A fetch that sent data is a clone if the client offered nothing and a pull otherwise.</li>
+ * <li>A push that brought commands is a push with the pushed commit if the repository accepted it, and a failed push with the commit the repository had before if it did not.</li>
+ * <li>Over SSH a command that moves no data, a fetch that is up to date or a push with nothing new, is an access of its own and is written as a read or a write.</li>
+ * <li>Over HTTPS the request that advertises the references is written as a read or a write, because it is all there is of an operation that is up to date. When data follows,
+ * the operation is a clone, pull or push, and the log shows that instead: the advertisement and the transfer cannot be linked here, so they are joined when the log is read, by
+ * {@code VcsAccessLogOperations}. A request that only negotiates, or the check before a large push, leaves no entry.</li>
+ * <li>An attempt that was rejected is a failed clone or push, whether the credentials or the authorization did not hold.</li>
+ * </ul>
  */
 @Lazy
 @Service
@@ -46,10 +57,14 @@ public class LocalVCAccessLogRecorderService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCAccessLogRecorderService.class);
 
+    /** The {@link AccessLogSubject} the authorization stored on an HTTPS request, absent if the repository has no participation. */
+    private static final String SUBJECT_ATTRIBUTE = LocalVCAccessLogRecorderService.class.getName() + ".subject";
+
+    /** The {@link GitOperationAudit} of an HTTPS request. */
+    private static final String AUDIT_ATTRIBUTE = LocalVCAccessLogRecorderService.class.getName() + ".audit";
+
     // Optional until LocalVC is the only supported version control, like the same field of LocalVCServletService
     private final Optional<VcsAccessLogService> vcsAccessLogService;
-
-    private final LocalVCRepositoryResolverService repositoryResolver;
 
     private final UserRepository userRepository;
 
@@ -63,17 +78,14 @@ public class LocalVCAccessLogRecorderService {
      * Creates the recorder.
      *
      * @param vcsAccessLogService                     writes the entries, absent on an installation without LocalVC
-     * @param repositoryResolver                      reads the latest commit of a repository and parses repository URIs
      * @param userRepository                          finds the user of a rejected request
      * @param userVcsAccessTokenService               tells whether a credential is the personal access token of a user
      * @param repositoryVCSAccessTokenRepository      tells whether a credential is the token of a user for one repository
-     * @param programmingExerciseParticipationService finds the participation an entry is written for
+     * @param programmingExerciseParticipationService finds the participation a rejected attempt is written for
      */
-    public LocalVCAccessLogRecorderService(Optional<VcsAccessLogService> vcsAccessLogService, LocalVCRepositoryResolverService repositoryResolver, UserRepository userRepository,
-            UserVcsAccessTokenService userVcsAccessTokenService, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+    public LocalVCAccessLogRecorderService(Optional<VcsAccessLogService> vcsAccessLogService, UserRepository userRepository, UserVcsAccessTokenService userVcsAccessTokenService,
+            RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.vcsAccessLogService = vcsAccessLogService;
-        this.repositoryResolver = repositoryResolver;
         this.userRepository = userRepository;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.repositoryVCSAccessTokenRepository = repositoryVCSAccessTokenRepository;
@@ -81,25 +93,175 @@ public class LocalVCAccessLogRecorderService {
     }
 
     /**
-     * Determines whether a given request to access a local VC repository (either via fetch of push) is authenticated and authorized.
+     * Remembers who an authorized HTTPS request is for, so that the entry of its operation can be written when the operation is over. Nothing is written yet.
      *
-     * @param request                 The object containing all information about the incoming request.
-     * @param localVCRepositoryUri    The uri of the requested repository
-     * @param user                    The user
-     * @param repositoryAction        Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
-     * @param optionalParticipation   The participation for which the access log should be stored. If an empty Optional is provided, the method does nothing
-     * @param authenticationMechanism The credential the request authenticated with, as reported by the authentication itself
-     * @throws LocalVCAuthException If the user authentication fails or the user is not authorized to access a certain repository.
+     * @param request                 the authorized request
+     * @param user                    the authenticated user
+     * @param optionalParticipation   the participation that owns the repository, if any
+     * @param authenticationMechanism the credential used by this request
      */
-    public void savePreliminaryVcsAccessLogForHTTPs(HttpServletRequest request, LocalVCRepositoryUri localVCRepositoryUri, User user, RepositoryActionType repositoryAction,
-            Optional<ProgrammingExerciseParticipation> optionalParticipation, AuthenticationMechanism authenticationMechanism) throws LocalVCAuthException {
-        if (optionalParticipation.isPresent()) {
-            ProgrammingExerciseParticipation participation = optionalParticipation.get();
-            var ipAddress = request.getRemoteAddr();
+    public void rememberSubjectHTTPS(HttpServletRequest request, User user, Optional<ProgrammingExerciseParticipation> optionalParticipation,
+            AuthenticationMechanism authenticationMechanism) {
+        request.removeAttribute(SUBJECT_ATTRIBUTE);
+        optionalParticipation.ifPresent(
+                participation -> request.setAttribute(SUBJECT_ATTRIBUTE, new AccessLogSubject(user, participation.getId(), authenticationMechanism, request.getRemoteAddr())));
+    }
 
-            String finalCommitHash = repositoryResolver.getCommitHash(localVCRepositoryUri);
-            RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, finalRepositoryAction, authenticationMechanism, finalCommitHash, ipAddress));
+    /**
+     * Gives the audit of an HTTPS request, which the hooks fill and the filter reads afterwards. It is created on first use.
+     *
+     * @param request the request
+     * @return the audit of this request
+     */
+    public GitOperationAudit auditOf(HttpServletRequest request) {
+        if (request.getAttribute(AUDIT_ATTRIBUTE) instanceof GitOperationAudit audit) {
+            return audit;
+        }
+        var audit = new GitOperationAudit();
+        request.setAttribute(AUDIT_ATTRIBUTE, audit);
+        return audit;
+    }
+
+    /**
+     * Writes the entry of the fetch that an HTTPS request was, if it was one. Called when the request is over.
+     *
+     * @param request the request
+     */
+    public void recordFetchHTTPS(HttpServletRequest request) {
+        var subject = subjectOf(request);
+        var audit = auditOf(request);
+        if (subject != null && !audit.isPackSent() && audit.isAccessed()) {
+            write(subject, RepositoryActionType.READ, audit.getCommitHashWhenAccessed(), audit.getAccessedAt());
+            return;
+        }
+        recordFetch(subject, audit);
+    }
+
+    /**
+     * Writes the entry of the push that an HTTPS request was, if it was one. Called when the request is over.
+     *
+     * @param request the request
+     */
+    public void recordPushHTTPS(HttpServletRequest request) {
+        var subject = subjectOf(request);
+        var audit = auditOf(request);
+        if (subject != null && !audit.isPushReceived() && audit.isAccessed()) {
+            write(subject, RepositoryActionType.WRITE, audit.getCommitHashWhenAccessed(), audit.getAccessedAt());
+            return;
+        }
+        recordPush(subject, audit);
+    }
+
+    /**
+     * Gives the newest commit of the repository that an HTTPS request is for.
+     *
+     * @param request a request that the git servlet has resolved a repository for
+     * @return the hash of the newest commit, null if there is none or the repository is not known
+     */
+    static @Nullable String headCommitOf(HttpServletRequest request) {
+        try {
+            return LocalVCFetchPreUploadHook.headCommitOf(ServletUtils.getRepository(request));
+        }
+        catch (RuntimeException e) {
+            log.debug("Could not read the newest commit of the repository of {}", request.getRequestURI(), e);
+            return null;
+        }
+    }
+
+    private static @Nullable AccessLogSubject subjectOf(HttpServletRequest request) {
+        return request.getAttribute(SUBJECT_ATTRIBUTE) instanceof AccessLogSubject subject ? subject : null;
+    }
+
+    /**
+     * Writes the entry of a fetch that sent data: a clone if the client offered nothing, otherwise a pull. A fetch that sent nothing is not an operation.
+     *
+     * @param subject who fetched from which repository, null if that is unknown, for example for a build agent, which has entries of its own
+     * @param audit   what the hooks learned about the fetch
+     */
+    public void recordFetch(@Nullable AccessLogSubject subject, GitOperationAudit audit) {
+        if (subject == null || !audit.isPackSent()) {
+            return;
+        }
+        var action = audit.getObjectsOffered() == 0 ? RepositoryActionType.CLONE : RepositoryActionType.PULL;
+        write(subject, action, audit.getCommitHashWhenSent());
+    }
+
+    /**
+     * Writes the entry of a push that brought commands: a push with the pushed commit if the repository accepted it, a failed push with the commit from before otherwise.
+     * A push without commands is not an operation.
+     *
+     * @param subject who pushed to which repository, null if that is unknown
+     * @param audit   what the hooks learned about the push
+     */
+    public void recordPush(@Nullable AccessLogSubject subject, GitOperationAudit audit) {
+        if (subject == null || !audit.isPushReceived()) {
+            return;
+        }
+        var pushedCommitHash = audit.getPushedCommitHash();
+        if (pushedCommitHash != null) {
+            write(subject, RepositoryActionType.PUSH, pushedCommitHash);
+        }
+        else {
+            write(subject, RepositoryActionType.PUSH_FAIL, audit.getCommitHashBeforePush());
+        }
+    }
+
+    /**
+     * Writes the entry of an SSH command that fetched: a clone or pull if data was sent, otherwise a read. Over SSH one command is one operation, so a fetch that moves no
+     * data, because the client is up to date, or that only lists the references, is still an access and is written.
+     *
+     * @param subject    who fetched from which repository, null if that is unknown
+     * @param audit      what the hooks learned about the fetch
+     * @param repository the repository of the command, which says what the newest commit was
+     */
+    public void recordFetchSSH(@Nullable AccessLogSubject subject, GitOperationAudit audit, Repository repository) {
+        if (subject != null && !audit.isPackSent()) {
+            write(subject, RepositoryActionType.READ, LocalVCFetchPreUploadHook.headCommitOf(repository));
+            return;
+        }
+        recordFetch(subject, audit);
+    }
+
+    /**
+     * Writes the entry of an SSH command that pushed: a push or failed push if it brought commands, otherwise a write. A push that has nothing new is still an access.
+     *
+     * @param subject    who pushed to which repository, null if that is unknown
+     * @param audit      what the hooks learned about the push
+     * @param repository the repository of the command, which says what the newest commit is
+     */
+    public void recordPushSSH(@Nullable AccessLogSubject subject, GitOperationAudit audit, Repository repository) {
+        if (subject != null && !audit.isPushReceived()) {
+            write(subject, RepositoryActionType.WRITE, LocalVCFetchPreUploadHook.headCommitOf(repository));
+            return;
+        }
+        recordPush(subject, audit);
+    }
+
+    private void write(AccessLogSubject subject, RepositoryActionType action, @Nullable String commitHash) {
+        write(subject, action, commitHash, null);
+    }
+
+    /**
+     * Writes an entry. The entry of an advertisement carries the time of its request: it is written after the response was sent, and the next request of the same operation can be
+     * written before it, which the log reads by the times of the entries.
+     */
+    private void write(AccessLogSubject subject, RepositoryActionType action, @Nullable String commitHash, @Nullable ZonedDateTime accessedAt) {
+        if (vcsAccessLogService.isEmpty()) {
+            return;
+        }
+        try {
+            if (accessedAt == null) {
+                vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
+                        subject.ipAddress());
+            }
+            else {
+                vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
+                        subject.ipAddress(), accessedAt);
+            }
+        }
+        catch (RuntimeException e) {
+            // The operation has happened and its response must not change for it, so a failure to describe it is only reported.
+            log.warn("Could not write the VCS access log entry ({}) of user {} to participation {}", action, subject.user().getLogin(), subject.participationId(), e);
         }
     }
 
@@ -167,158 +329,65 @@ public class LocalVCAccessLogRecorderService {
     }
 
     /**
-     * When cloning/pushing with SSH we can keep data loaded inside the SSH session, to avoid unnecessary database queries.
+     * Remembers who an SSH command is for, so that the entry of its operation can be written when the operation is over. Nothing is written yet.
      * <p>
      * The state of the command that ran before is dropped first. A connection can carry several commands one after another, and a command whose repository has no participation
-     * (an auxiliary repository, say) would otherwise be handled with the participation and the access log of the previous one.
+     * (an auxiliary repository, say) would otherwise be handled with the participation of the previous one. The command itself reads the subject from the session when it
+     * starts, before the next command can replace it.
      *
      * @param user                    the user accessing the repository
      * @param optionalParticipation   the participation associated with the repository
-     * @param repositoryActionType    the action performed on the repository (READ or WRITE)
-     * @param authenticationMechanism the mechanism used for authentication (e.g., token, basic auth)
+     * @param authenticationMechanism the mechanism used for authentication
      * @param ipAddress               the IP address of the user accessing the repository
-     * @param localVCRepositoryUri    the URI of the localVC repository
      * @param serverSession           the SSH serverSession, where the data gets stored
      */
-    public void cacheAttributesInSshSession(User user, Optional<ProgrammingExerciseParticipation> optionalParticipation, RepositoryActionType repositoryActionType,
-            AuthenticationMechanism authenticationMechanism, String ipAddress, LocalVCRepositoryUri localVCRepositoryUri, ServerSession serverSession) {
-        serverSession.removeAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+    public void cacheAttributesInSshSession(User user, Optional<ProgrammingExerciseParticipation> optionalParticipation, AuthenticationMechanism authenticationMechanism,
+            String ipAddress, ServerSession serverSession) {
+        serverSession.removeAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
         serverSession.removeAttribute(SshConstants.PARTICIPATION_KEY);
-        if (optionalParticipation.isPresent()) {
-            ProgrammingExerciseParticipation participation = optionalParticipation.get();
-            try {
-                String commitHash;
-                String relativeRepositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
-                try (Repository repository = repositoryResolver.resolveRepository(relativeRepositoryPath)) {
-                    commitHash = repositoryResolver.getLatestCommitHash(repository);
-                }
-
-                var finalRepositoryActionType = repositoryActionType == RepositoryActionType.READ ? RepositoryActionType.PULL : RepositoryActionType.PUSH;
-                var preliminaryAccessLog = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), finalRepositoryActionType,
-                        authenticationMechanism, commitHash, ipAddress);
-
-                serverSession.setAttribute(SshConstants.VCS_ACCESS_LOG_KEY, preliminaryAccessLog);
-                serverSession.setAttribute(SshConstants.PARTICIPATION_KEY, participation);
-            }
-            catch (Exception e) {
-                log.warn("Failed to obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath(), e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Updates the VCS (Version Control System) access log for clone and pull actions using HTTPS.
-     * <p>
-     * This method logs the access information based on the incoming HTTP request. It checks if the request is a build agent clone and, if not, records the repository
-     * action (clone or pull). The action type is determined based on the number of offers (`clientOffered`).
-     *
-     * @param request       the request from the user
-     * @param clientOffered the number of objects offered by the client in the operation, used to determine
-     *                          if the action is a clone (if 0) or a pull (if greater than 0).
-     */
-    public void updateAndStoreVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, int clientOffered) {
-        if (!request.getMethod().equals("POST")) {
+        if (optionalParticipation.isEmpty()) {
             return;
         }
-        // A build agent clone has its own audit entry already, and this method updates whichever entry is newest for
-        // the repository, so running it here would relabel a student's entry as the agent's clone. Keyed on the
-        // attribute the authorization set, which both build agent mechanisms (the build job token and the shared
-        // credential) set, and not on a user name that an ordinary user could carry as well.
-        if (request.getAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE) != null) {
-            return;
-        }
-        try {
-            LocalVCRepositoryUri localVCRepositoryUri = repositoryResolver.parseRepositoryUri(request);
-            RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
-
-            vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(localVCRepositoryUri, repositoryActionType));
-        }
-        catch (Exception e) {
-            log.debug("Could not update VCS access log for HTTPS clone/pull: {}", e.getMessage());
-        }
+        ProgrammingExerciseParticipation participation = optionalParticipation.get();
+        serverSession.setAttribute(SshConstants.PARTICIPATION_KEY, participation);
+        serverSession.setAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY, new AccessLogSubject(user, participation.getId(), authenticationMechanism, ipAddress));
     }
 
     /**
-     * Updates the VCS access log for clone and pull actions performed over SSH.
+     * Adds a failed HTTPS attempt, whose credentials did not hold, to the log as a failed clone or push.
      * <p>
-     * This method logs access information based on the SSH session and the root directory of the repository.
-     * It determines the repository action (clone or pull) based on the number of offers (`clientOffered`) and
-     * fetches participation details from the local VC repository URI.
-     *
-     * @param session       the {@link ServerSession} representing the SSH session.
-     * @param clientOffered the number of objects offered by the client in the operation, used to determine
-     *                          if the action is a clone (if 0) or a pull (if greater than 0).
-     */
-    public void updateAndStoreVCSAccessLogForCloneAndPullSSH(ServerSession session, int clientOffered) {
-        try {
-            // Both attributes are absent on a session that never got that far, which is a normal case rather than a
-            // failure. They used to be dereferenced straight away, so the absence arrived as a NullPointerException
-            // caught below and logged at debug, indistinguishable from an actual problem with the access log.
-            var user = session.getAttribute(SshConstants.USER_KEY);
-            // A build agent session carries no user and gets an audit entry of its own, so a missing user is all there is to exclude.
-            if (user == null) {
-                return;
-            }
-            var accessLog = session.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
-            if (accessLog == null) {
-                return;
-            }
-            RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
-            accessLog.setRepositoryActionType(repositoryActionType);
-            vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(accessLog));
-        }
-        catch (Exception e) {
-            log.debug("Could not update VCS access log for SSH clone/pull: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * Adds a failed VCS access attempt to the log.
+     * The attempt can only be attributed if the credentials name an existing user and the repository belongs to a participation. The first request of every operation carries no
+     * credentials at all, because git waits to be asked, so that case is not an attempt and is not passed here. The write never fails the request that is being rejected.
      * <p>
-     * This method logs a failed clone attempt, associating it with the user and participation retrieved
-     * from the incoming HTTP request.
+     * The entry carries no commit, because the repository was not reached. That is what tells a failed push written here from one that the repository refused after its references
+     * were advertised: {@code VcsAccessLogOperations} joins only the latter to the advertisement.
      *
-     * @param servletRequest the {@link HttpServletRequest} containing the HTTP request data.
+     * @param request              the request, which carries the credentials
+     * @param localVCRepositoryUri the repository the request was for
+     * @param repositoryAction     WRITE for a push, READ for a fetch
      */
-    public void createVCSAccessLogForFailedAuthenticationAttempt(HttpServletRequest servletRequest) {
+    public void recordFailedAuthenticationHTTPS(HttpServletRequest request, LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryAction) {
         try {
-            String authorizationHeader = servletRequest.getHeader(HttpHeaders.AUTHORIZATION);
+            String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
-            AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
-            LocalVCRepositoryUri localVCRepositoryUri = repositoryResolver.parseRepositoryUri(servletRequest);
-            // One id, no entity. The log stores the participation as a foreign key and reads nothing from it, so
-            // nothing more is loaded: the previous call fetched the participation with its submissions, and reached
-            // them through an exercise that was passed as null, which is what threw the NullPointerException.
+            AuthenticationMechanism mechanism = resolveHTTPSAuthenticationMechanism(authorizationHeader, user, localVCRepositoryUri);
+            // One id, no entity: the entry only references the participation.
             var participation = programmingExerciseParticipationService.getParticipationReferenceForRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
                     localVCRepositoryUri.toString(), localVCRepositoryUri.getProjectKey());
             if (participation.isEmpty()) {
                 return;
             }
-            var ipAddress = servletRequest.getRemoteAddr();
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation.get(), RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
+            long participationId = participation.get().getId();
+            var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
+            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participationId, action, mechanism, "", request.getRemoteAddr()));
         }
         catch (LocalVCAuthException | EntityNotFoundException _) {
-            // Caught when: 1) no user, or 2) no exercise or participation was found. In none of these cases does it make sense to write a log
+            // Caught when: 1) no user, or 2) no exercise or participation was found. In none of these cases is there anybody to attribute an entry to
         }
         catch (RuntimeException e) {
-            // This runs while a failed authentication is being answered, so nothing that happens here may replace the
-            // 401 the caller is about to send. Writing the access log is best effort by nature: it describes an attempt
-            // that was already rejected.
-            log.warn("Could not write the VCS access log for a failed authentication on {}", servletRequest.getRequestURI(), e);
+            // This runs while a failed authentication is being answered, so nothing that happens here may replace the response the caller is about to send.
+            log.warn("Could not write the VCS access log for a failed authentication on {}", request.getRequestURI(), e);
         }
-    }
-
-    /**
-     * Determines the repository action type for read operations (clone or pull).
-     * <p>
-     * This method returns a {@link RepositoryActionType} based on the number of objects offered.
-     * If no objects are offered (0), it is considered a clone; otherwise, it is a pull action.
-     *
-     * @param clientOffered the number of objects offered to the client in the operation.
-     * @return the {@link RepositoryActionType} based on the number of objects offered (clone if 0, pull if greater than 0).
-     */
-    private RepositoryActionType getRepositoryActionReadType(int clientOffered) {
-        return clientOffered == 0 ? RepositoryActionType.CLONE : RepositoryActionType.PULL;
     }
 }

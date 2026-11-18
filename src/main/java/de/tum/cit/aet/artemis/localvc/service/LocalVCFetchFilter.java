@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -74,21 +75,30 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
             return;
         }
         catch (AuthenticationException e) {
-            // intercept failed authentication to log it in the VCS access log
+            // the failed attempt itself was written to the VCS access log where the credentials were checked
             log.warn("LocalVC fetch authentication failed for {} ({}: {})", servletRequest.getRequestURI(), e.getClass().getSimpleName(), e.getMessage());
-            accessLogRecorder.createVCSAccessLogForFailedAuthenticationAttempt(servletRequest);
             throw e;
         }
 
         long startNanos = System.nanoTime();
+        // The request that advertises the references is the first of every fetch, and all there is of one that is up to date.
+        boolean advertisement = "GET".equals(servletRequest.getMethod());
+        String commitHashBefore = advertisement ? LocalVCAccessLogRecorderService.headCommitOf(servletRequest) : null;
+        // The entry of the advertisement is written after its response was sent, so it carries the time of the request, not the time of the write
+        ZonedDateTime requestStarted = ZonedDateTime.now();
         // stays true if doFilter throws, so a fetch that blew up is not counted as a success
         boolean failed = true;
         try {
             filterChain.doFilter(servletRequest, servletResponse);
             failed = servletResponse.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
+            if (advertisement && !failed) {
+                accessLogRecorder.auditOf(servletRequest).onAccessed(commitHashBefore, requestStarted);
+            }
         }
         finally {
             usageTrackingService.recordFetch(servletRequest, (System.nanoTime() - startNanos) / 1_000_000, failed);
+            // the request is over, so everything about it is known: it is written if it sent data, or if it advertised the references
+            accessLogRecorder.recordFetchHTTPS(servletRequest);
         }
     }
 }

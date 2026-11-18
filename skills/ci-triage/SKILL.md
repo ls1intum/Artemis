@@ -82,6 +82,12 @@ is not evidence of flakiness; compare logs and execution conditions.
 A latest PR run that is pending with no jobs can be waiting for an obsolete run to release its
 concurrency slot. Follow the cancellation entry in the reference before rerunning or cancelling jobs.
 
+On PR closure, the cancellation workflow uses the exact `ci-pr-{N}` group to stop umbrella CI.
+Check that group's active members if a closed PR is still consuming a runner. When a `develop`
+push's E2E suite is superseded, check the latest `develop` run for multi-node coverage. A superseded
+suite is reported separately from a completed suite. For long queues, check availability of the
+`e2e-test` runners and whether they also accept general `aet-large-ubuntu` jobs.
+
 ## Re-run when justified
 
 - **Server Tests: never use `gh run rerun --failed`.** The suite's sharding and reporting mean a

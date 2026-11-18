@@ -1,5 +1,6 @@
 {
     "error": {
+        "branchRegexNotSupported": "The branch regex uses syntax that is not supported. Use literal characters, classes such as [a-z0-9-], groups with alternatives, the anchors ^ and $, and the quantifiers * + ? and counted repetitions with counts up to 1000. A repeated group may not contain alternatives, quantifiers or anchors. Every alternative inside a group must require at least one character.",
         "stagedContentNotAllowed": {
             "unreadable": "The staged repository content could not be checked. Try again.",
             "tooManyEntries": "The repository exceeds the limit of {{ limit }} files and directories. Remove entries and commit again.",
@@ -60,7 +61,7 @@
         "quizAlreadyVisible": "The quiz is already visible.",
         "quizAlreadyStarted": "The quiz has already been started.",
         "quizNotEndedYet": "The quiz has not ended yet.",
-        "quizOfTestExam": "Quizzes of test exams are evaluated when an attempt is handed in.",
+        "quizOfTestExam": "Quizzes of practice exams are evaluated when an attempt is handed in.",
         "quizAlreadyOpenForPractice": "The quiz is already open for practice.",
         "unknownAction": "This action cannot be performed.",
         "groupNotFound": "The group you entered was not found.",
@@ -334,9 +335,12 @@
         "noCourse": "An exam must belong to a course.",
         "wrongCourseId": "The course ID does not match the course connected to the exam.",
         "examTimes": "Invalid exam times: Please check that visible date is before start date, start date is before end date, and example solution publication date (if set) is after end date.",
+        "supervisedSessionStarted": "The start date of a supervised session cannot be changed once students can enter it.",
+        "supervisedSessionEnded": "The start date and the working time cannot be changed after the supervised session has ended, because this would change which attempts count as supervised.",
+        "supervisedSessionAttemptStarted": "The supervised session cannot end before an attempt that was already started.",
         "negativePoints": "The maximum points for an exam must be greater than 0.",
-        "correctionRoundViolation": "Invalid number of correction rounds: Test exams must have 0 correction rounds, real exams must have 1 or 2 correction rounds.",
-        "attendanceCheckViolation": "Test exams cannot have attendance check enabled.",
+        "correctionRoundViolation": "Invalid number of correction rounds: Practice exams must have 0 correction rounds, real exams must have 1 or 2 correction rounds.",
+        "attendanceCheckViolation": "Practice exams cannot have attendance check enabled.",
         "examWorkingTimeTooHigh": "The working time is too long. The maximum is 43200 minutes (30 days). Please adjust the start and/or end of working time.",
         "examGracePeriodTooHigh": "The grace period is too long. Please enter a value between 0 and 3600 seconds.",
         "examMaxPointsTooHigh": "The maximum points value is too high. Please enter a value between 1 and 9999.",

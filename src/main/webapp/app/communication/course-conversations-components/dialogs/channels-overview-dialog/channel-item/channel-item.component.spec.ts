@@ -77,6 +77,22 @@ describe('ChannelItemComponent', () => {
         expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeFalsy();
     });
 
+    it('should show the joined badge only for a channel the user is a member of', () => {
+        expect(fixture.nativeElement.querySelector('[data-testid="channel-joined-badge"]')).toBeTruthy();
+
+        fixture.componentRef.setInput('channel', generateExampleChannelDTO({ id: 2, isMember: false } as ChannelDTO));
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="channel-joined-badge"]')).toBeFalsy();
+    });
+
+    it('should show the tutorial group of a tutorial group channel', () => {
+        expect(fixture.nativeElement.querySelector('tumaet-ui-tag [jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"]')).toBeFalsy();
+
+        fixture.componentRef.setInput('channel', generateExampleChannelDTO({ id: 3, tutorialGroupId: 5, tutorialGroupTitle: 'Group A' } as ChannelDTO));
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('tumaet-ui-tag [jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"]')).toBeTruthy();
+    });
+
     it('should emit channel action when the user clicks on the interaction buttons', () => {
         const emitAction = vi.spyOn(component.channelAction, 'emit');
         fixture.nativeElement.querySelector('#view' + channel.id).click();

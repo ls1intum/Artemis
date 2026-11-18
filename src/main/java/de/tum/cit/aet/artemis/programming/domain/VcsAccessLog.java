@@ -26,6 +26,11 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class VcsAccessLog extends DomainObject {
 
+    /**
+     * How the name of an access by a build agent starts. The agent authenticates as a build job, not as a person, so the entry has no user and the name identifies the accessor.
+     */
+    public static final String BUILD_AGENT_ACCESSOR_PREFIX = "Build agent ";
+
     @ManyToOne
     private User user;
 
@@ -59,6 +64,15 @@ public class VcsAccessLog extends DomainObject {
 
     public VcsAccessLog(User user, Participation participation, String name, String email, RepositoryActionType repositoryActionType,
             AuthenticationMechanism authenticationMechanism, String commitHash, String ipAddress) {
+        this(user, participation, name, email, repositoryActionType, authenticationMechanism, commitHash, ipAddress, ZonedDateTime.now());
+    }
+
+    /**
+     * Creates an entry for an access that happened at the given time, which is earlier than the time at which the entry is created if it is written after the response of the
+     * request was sent.
+     */
+    public VcsAccessLog(User user, Participation participation, String name, String email, RepositoryActionType repositoryActionType,
+            AuthenticationMechanism authenticationMechanism, String commitHash, String ipAddress, ZonedDateTime timestamp) {
         this.user = user;
         this.participation = participation;
         this.name = name;
@@ -67,7 +81,7 @@ public class VcsAccessLog extends DomainObject {
         this.authenticationMechanism = authenticationMechanism;
         this.commitHash = commitHash;
         this.ipAddress = ipAddress;
-        this.timestamp = ZonedDateTime.now();
+        this.timestamp = timestamp;
     }
 
     public VcsAccessLog() {
@@ -107,6 +121,10 @@ public class VcsAccessLog extends DomainObject {
 
     public RepositoryActionType getRepositoryActionType() {
         return repositoryActionType;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
     }
 
     public Participation getParticipation() {

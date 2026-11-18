@@ -342,7 +342,7 @@
                     role="option"
                     [id]="listId + '-' + index"
                     [attr.aria-selected]="index === activeIndex()"
-                    class="message-suggestion flex cursor-pointer items-center justify-between gap-4 rounded-sm px-2 py-1"
+                    class="message-suggestion flex cursor-pointer items-center justify-between gap-6! rounded-sm px-2 py-1"
                     (mousedown)="$event.preventDefault()"
                     (click)="accept(suggestion)"
                     (keydown.enter)="accept(suggestion); $event.preventDefault(); $event.stopPropagation()"

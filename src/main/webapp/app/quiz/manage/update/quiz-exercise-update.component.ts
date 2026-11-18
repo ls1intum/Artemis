@@ -1024,7 +1024,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             answerOption.isCorrect = generatedOption.correct;
             answerOption.hint = generatedOption.hint;
             answerOption.explanation = generatedOption.explanation;
-            answerOption.question = question;
             return answerOption;
         });
         question.hasCorrectOption = question.answerOptions.some((answerOption) => !!answerOption.isCorrect);
