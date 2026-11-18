@@ -401,16 +401,11 @@ public class TeamResource {
         Long teamOwnerId = authCheckService.isAtLeastInstructorForExercise(exercise, user) ? null : user.getId();
         var participations = studentParticipationRepository.findTeamAssessmentQueueParticipations(exerciseId, teamOwnerId, correctionRound);
         Map<Long, AssessmentQueueSubmissionDTO> submissions = new HashMap<>();
-        boolean canStartAssessment = true;
-        try {
-            submissionService.checkIfExerciseDueDateIsReached(exercise);
-        }
-        catch (AccessForbiddenException _) {
-            // Existing assessments remain visible while new assessments are blocked by their due date.
-            canStartAssessment = false;
-        }
-        if (canStartAssessment && (!(exercise instanceof ProgrammingExercise programmingExercise) || programmingExercise.areManualResultsAllowed())) {
-            var candidates = studentParticipationRepository.findCourseTeamQueueCandidates(exerciseId, ZonedDateTime.now(ZoneOffset.UTC), teamOwnerId);
+        var now = ZonedDateTime.now(ZoneOffset.UTC);
+        if (!(exercise instanceof ProgrammingExercise programmingExercise)
+                || programmingExercise.areManualResultsAllowed() && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null
+                        || !programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(now))) {
+            var candidates = studentParticipationRepository.findCourseTeamQueueCandidates(exerciseId, now, teamOwnerId);
             candidates.forEach(submission -> submissions.put(submission.participationId(), submission));
         }
         var existingIds = participations.stream().map(entry -> entry.submissionId()).filter(Objects::nonNull).toList();

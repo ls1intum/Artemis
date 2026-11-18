@@ -791,7 +791,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Finds the highest visible result ID: automatic/Athena results, or completed manual results released by the assessment deadline.
+     * Finds the highest visible result ID: automatic/Athena results, or completed manual results strictly after the assessment deadline..
+     * With no deadline, manual results are eligible upon completion. These completion and deadline rules also apply to results with no assessment type.
      * The caller applies exam hiding; only the ID is selected to avoid loading result history.
      *
      * @param participationId the participation to load the latest visible result id for
@@ -799,7 +800,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return the latest visible result id, or empty if none is visible
      */
     @Query("""
-            SELECT r.id FROM Result r WHERE r.id = (
+            SELECT r.id FROM Result r WHERE r.id =
                 SELECT MAX(r2.id) FROM Result r2
                     JOIN r2.submission s2 JOIN s2.participation p2 LEFT JOIN p2.exercise e2
                 WHERE p2.id = :participationId AND (

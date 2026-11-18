@@ -441,9 +441,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.exerciseService.getForTutors(this.exerciseId()).subscribe({
             next: (res: HttpResponse<Exercise>) => {
                 const exercise = res.body!;
+                if (exercise.teamMode && this.exercise()?.id !== exercise.id) {
+                    this.assessmentQueueTeams.set(new Map());
+                    this.teamUnassessedSubmissionsByRound.set([]);
+                    this.assessedSubmissionsByRound.set([]);
+                }
                 this.exercise.set(exercise);
-                this.assessmentQueueTeams.set(new Map());
-                this.teamUnassessedSubmissionsByRound.set([]);
                 this.secondCorrectionEnabled.set(exercise.secondCorrectionEnabled);
                 this.formattedGradingInstructions.set(this.artemisMarkdown.safeHtmlForMarkdown(exercise.gradingInstructions));
                 this.formattedProblemStatement.set(this.artemisMarkdown.safeHtmlForMarkdown(exercise.problemStatement));
@@ -751,10 +754,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     private reconnectEntities = (submissions: Submission[]) => {
         return submissions.map((submission: Submission) => {
+            submission.results?.forEach((result) => {
+                result.submission = submission;
+            });
             const latestResult = getLatestSubmissionResult(submission);
             if (latestResult) {
-                // reconnect some associations
-                latestResult.submission = submission;
                 setLatestSubmissionResult(submission, latestResult);
             }
             return submission;
@@ -846,7 +850,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (teams) => {
-                    this.assessmentQueueTeams.update((knownTeams) => new Map([...knownTeams, ...teams.map((team) => [team.participationId, team] as const)]));
+                    this.assessmentQueueTeams.set(new Map(teams.map((team) => [team.participationId, team])));
                     const submissions = this.reconnectEntities(teams.map((team) => team.submission));
                     submissions.forEach((submission) => {
                         submission.participation!.submissions = [submission];

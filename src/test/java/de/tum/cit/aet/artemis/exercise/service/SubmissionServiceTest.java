@@ -430,6 +430,41 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
                 regular.getId());
     }
 
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "TEXT", "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamQueueExtensionDoesNotHideOtherTeams(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var regular = teamSubmission(exercise, tutor1, "own");
+        var extended = teamSubmission(exercise, tutor1, "anotherown");
+        var participation = (StudentParticipation) extended.getParticipation();
+        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+        studentParticipationRepository.save(participation);
+
+        assertThat(request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams", HttpStatus.OK, AssessmentQueueTeamDTO.class))
+                .extracting(entry -> entry.submission().id()).containsExactly(regular.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingTeamQueueRespectsBuildDateWithoutHidingExistingAssessments() throws Exception {
+        var exercise = (ProgrammingExercise) teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams";
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).isEmpty();
+
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        exerciseRepository.save(exercise);
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(submission.getId());
+        request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId()), HttpStatus.OK, String.class);
+
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        assertThat(request.getList(url, HttpStatus.OK, AssessmentQueueTeamDTO.class)).extracting(entry -> entry.submission().id()).containsExactly(submission.getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void automaticProgrammingTeamQueueHasNoNewCandidates() throws Exception {

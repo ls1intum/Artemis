@@ -382,12 +382,19 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         submission = existingAssessment
                 ? textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1")
                 : textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        var originalResultId = existingAssessment ? submission.getLatestResult().getId() : null;
         exerciseUtilService.updateExerciseDueDate(textExercise.getId(), deadlinePassed ? now().minusDays(1) : now().plusDays(1));
         var expectedStatus = deadlinePassed || existingAssessment ? HttpStatus.OK : HttpStatus.FORBIDDEN;
 
         request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", expectedStatus, TextParticipationDTO.class);
 
-        assertThat(resultRepository.existsBySubmissionId(submission.getId())).isEqualTo(deadlinePassed || existingAssessment);
+        var results = submissionRepository.findByIdWithResultsElseThrow(submission.getId()).getResults();
+        if (existingAssessment) {
+            assertThat(results).extracting(Result::getId).containsExactly(originalResultId);
+        }
+        else {
+            assertThat(results).hasSize(deadlinePassed ? 1 : 0);
+        }
     }
 
     @Test

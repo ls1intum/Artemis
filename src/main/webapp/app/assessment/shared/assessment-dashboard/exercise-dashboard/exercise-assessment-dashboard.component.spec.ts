@@ -4,7 +4,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
@@ -31,7 +31,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Language } from 'app/course/shared/entities/course.model';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getSubmissionResultByCorrectionRound } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -73,7 +73,7 @@ import dayjs from 'dayjs/esm';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-import { TeamService } from 'app/exercise/team/team.service';
+import { AssessmentQueueTeam, TeamService } from 'app/exercise/team/team.service';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -390,6 +390,54 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).not.toHaveBeenCalled();
     });
 
+    it.each(['failure', 'empty', 'replacement'])('keeps the team queue snapshot during refresh: %s', (outcome) => {
+        const exercise = deepClone(modelingExercise);
+        exercise.exerciseGroup = undefined;
+        exercise.teamMode = true;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const teams: AssessmentQueueTeam[] = [
+            { participationId: 42, id: 32, shortName: 'team-a', submission: { id: 43, participation: { id: 42 } } },
+            {
+                participationId: 44,
+                id: 33,
+                shortName: 'team-b',
+                submission: { id: 45, participation: { id: 44 }, results: [{ id: 46, correctionRound: 0, assessmentType: AssessmentType.MANUAL }] },
+            },
+        ];
+        const queueSpy = vi.mocked(teamService.findAssessmentQueueTeams).mockReturnValue(of(teams));
+        comp.loadAll();
+        const knownTeams = comp.assessmentQueueTeams();
+        const assessed = comp.assessedSubmissionsByRound();
+        const unassessed = comp.teamUnassessedSubmissionsByRound();
+        expect(assessed[0].map((submission) => submission.id)).toEqual([45]);
+        expect(unassessed[0].map((submission) => submission.id)).toEqual([43]);
+
+        const refresh = new Subject<AssessmentQueueTeam[]>();
+        queueSpy.mockReturnValue(refresh);
+        comp.loadAll();
+        expect(comp.assessmentQueueTeams()).toBe(knownTeams);
+        expect(comp.assessedSubmissionsByRound()).toBe(assessed);
+        expect(comp.teamUnassessedSubmissionsByRound()).toBe(unassessed);
+
+        if (outcome === 'failure') {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            refresh.error(new HttpErrorResponse({ status: 500, error: { detail: 'Queue refresh failed' } }));
+            expect(alertSpy).toHaveBeenCalled();
+            expect(comp.assessmentQueueTeams()).toBe(knownTeams);
+            expect(comp.assessedSubmissionsByRound()).toBe(assessed);
+            expect(comp.teamUnassessedSubmissionsByRound()).toBe(unassessed);
+            queueSpy.mockReturnValue(of([]));
+            comp.loadAll();
+        } else {
+            refresh.next(outcome === 'empty' ? [] : [teams[1]]);
+            refresh.complete();
+        }
+
+        expect([...comp.assessmentQueueTeams().keys()]).toEqual(outcome === 'replacement' ? [44] : []);
+        expect(comp.assessedSubmissionsByRound()[0].map((submission) => submission.id)).toEqual(outcome === 'replacement' ? [45] : []);
+        expect(comp.teamUnassessedSubmissionsByRound()[0]).toEqual([]);
+    });
+
     it.each([
         [false, 12, false, 0],
         [false, 10, false, 1],
@@ -632,6 +680,21 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.assessedSubmissionsByRound()[1]![0]).toEqual(modelingSubmissionAssessed);
         expect(comp.assessedSubmissionsByRound()[1]![0]?.participation!.submissions![0]).toEqual(comp.assessedSubmissionsByRound()[1]![0]);
         expect(comp.assessedSubmissionsByRound()[1]![0]?.latestResult).toEqual(result2);
+    });
+
+    it('reconnects an older manual result when a newer automatic result exists', () => {
+        const manualResult = { id: 10, assessmentType: AssessmentType.MANUAL, correctionRound: 0 } as Result;
+        const automaticResult = { id: 11, assessmentType: AssessmentType.AUTOMATIC } as Result;
+        const submission = { id: 42, commitHash: 'abc123', results: [automaticResult, manualResult] } as ProgrammingSubmission;
+
+        comp['reconnectEntities']([submission]);
+
+        expect(submission.latestResult).toBe(automaticResult);
+        expect(automaticResult.submission).toBe(submission);
+        const roundResult = getSubmissionResultByCorrectionRound(submission, 0);
+        expect(roundResult).toBe(manualResult);
+        expect(roundResult?.submission).toBe(submission);
+        expect((roundResult?.submission as ProgrammingSubmission).commitHash).toBe('abc123');
     });
 
     it('should set exam and stats properties', () => {
