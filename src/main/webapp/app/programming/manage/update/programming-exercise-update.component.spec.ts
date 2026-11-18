@@ -349,6 +349,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(reload).toHaveBeenCalledOnce();
         });
 
+        it('does not reload after a remote generation while the security policies have unsaved changes', () => {
+            const activity = protectedSettings();
+            comp.securityComponent = (() => ({ unsavedPolicyChanges: () => 1 })) as unknown as typeof comp.securityComponent;
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Changed remotely')));
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+
+            activity.generationCompleted.next({ jobId: 'remote', liveExerciseChanged: true });
+
+            expect(reload).not.toHaveBeenCalled();
+            expect(comp.generationRefreshRequired()).toBe(true);
+        });
+
         it('keeps the persisted generation scope after a local language change', () => {
             const activity = protectedSettings();
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.PYTHON;

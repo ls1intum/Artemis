@@ -1097,7 +1097,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             !this.backupExercise ||
             this.editableSettingsDiffer(this.programmingExercise, this.backupExercise) ||
             !!this.settingsForm()?.dirty ||
-            !!this.exerciseProblemComponent()?.editableInstructions()?.unsavedChangesValue()
+            !!this.exerciseProblemComponent()?.editableInstructions()?.unsavedChangesValue() ||
+            // Unsaved changes of the security policies are committed separately, but a reload drops them just the same.
+            (this.securityComponent()?.unsavedPolicyChanges() ?? 0) > 0
         );
     }
 
