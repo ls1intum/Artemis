@@ -19,133 +19,135 @@
         </tumaet-ui-tab-list>
         <tumaet-ui-tab-panels class="mt-2">
             <tumaet-ui-tab-panel [value]="1">
-                <dt>
-                    <span jhiTranslate="artemisApp.lti.userPrefix"></span>
-                </dt>
-                <dd>
-                    <span>{{ onlineCourseConfiguration()?.userPrefix }}</span>
-                </dd>
-                <dt>
-                    <span jhiTranslate="artemisApp.lti.requireExistingUser"></span>
-                </dt>
-                <dd>
-                    <span jhiTranslate="{{ onlineCourseConfiguration()?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no' }}"></span>
-                </dd>
-                <div class="mb-4!">
+                <dl class="mb-0">
                     <dt>
-                        <span>{{ 'LTI Version' }}</span>
+                        <span jhiTranslate="artemisApp.lti.userPrefix"></span>
                     </dt>
                     <dd>
-                        <span jhiTranslate="artemisApp.lti.version13"></span>
-                    </dd>
-                </div>
-                <div>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti13.externalToolSettings"></span>
-                        @if (missingLti13ConfigurationField()) {
-                            <fa-icon
-                                [icon]="faExclamationTriangle"
-                                class="text-state-warning"
-                                [tumAetUiTooltip]="'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate"
-                            />
-                        }
-                        <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip" />
-                    </dt>
-                    <dd></dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti.customName"></span>
-                    </dt>
-                    <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.customName }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.customName ?? ''" />
+                        <span>{{ onlineCourseConfiguration()?.userPrefix }}</span>
                     </dd>
                     <dt>
-                        <span jhiTranslate="artemisApp.lti.registrationId"></span>
+                        <span jhiTranslate="artemisApp.lti.requireExistingUser"></span>
                     </dt>
                     <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.registrationId }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.registrationId ?? ''" />
+                        <span jhiTranslate="{{ onlineCourseConfiguration()?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                     </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti.clientId"></span>
-                    </dt>
-                    <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.clientId }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.clientId ?? ''" />
-                    </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
-                    </dt>
-                    <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.authorizationUri }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.authorizationUri ?? ''" />
-                    </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti.tokenUri"></span>
-                    </dt>
-                    <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.tokenUri }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.tokenUri ?? ''" />
-                    </dd>
-                    <dt>
-                        <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
-                    </dt>
-                    <dd>
-                        <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.jwkSetUri }}</span>
-                        <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.jwkSetUri ?? ''" />
-                    </dd>
-                </div>
-                <div>
-                    <dd>
-                        <a
-                            (click)="toggleAdvancedSettings()"
-                            [attr.aria-expanded]="showAdvancedSettings()"
-                            #keyboardAction92
-                            role="button"
-                            tabindex="0"
-                            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction92.click() : undefined"
-                            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction92.click() : undefined"
-                        >
-                            @if (!showAdvancedSettings()) {
-                                <span jhiTranslate="artemisApp.lti.viewAdvancedSettings"></span>
-                            }
-                            @if (showAdvancedSettings()) {
-                                <span jhiTranslate="artemisApp.lti.closeAdvancedSettings"></span>
-                            }
-                        </a>
-                    </dd>
-                </div>
-                @if (showAdvancedSettings()) {
-                    <div>
+                    <div class="mb-4!">
                         <dt>
-                            <span jhiTranslate="artemisApp.lti.ltiLaunchTarget"></span>
-                            <jhi-help-icon text="artemisApp.lti.launchTargetTooltip" />
+                            <span>{{ 'LTI Version' }}</span>
                         </dt>
                         <dd>
-                            <span>New Window</span>
-                        </dd>
-                        <dt>
-                            <span jhiTranslate="artemisApp.lti.scored"></span>
-                        </dt>
-                        <dd>
-                            <span>True</span>
-                        </dd>
-                        <dt>
-                            <span jhiTranslate="artemisApp.lti.requestUsername"></span>
-                        </dt>
-                        <dd>
-                            <span>True</span>
-                        </dd>
-                        <dt>
-                            <span jhiTranslate="artemisApp.lti.requestEmail"></span>
-                            <jhi-help-icon text="artemisApp.lti.requestUserEmailTooltip" />
-                        </dt>
-                        <dd>
-                            <span>True</span>
+                            <span jhiTranslate="artemisApp.lti.version13"></span>
                         </dd>
                     </div>
-                }
+                    <div>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti13.externalToolSettings"></span>
+                            @if (missingLti13ConfigurationField()) {
+                                <fa-icon
+                                    [icon]="faExclamationTriangle"
+                                    class="text-state-warning"
+                                    [tumAetUiTooltip]="'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate"
+                                />
+                            }
+                            <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip" />
+                        </dt>
+                        <dd></dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.customName"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.customName }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.customName ?? ''" />
+                        </dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.registrationId"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.registrationId }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.registrationId ?? ''" />
+                        </dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.clientId"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.clientId }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.clientId ?? ''" />
+                        </dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.authorizationUri"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.authorizationUri }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.authorizationUri ?? ''" />
+                        </dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.tokenUri"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.tokenUri }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.tokenUri ?? ''" />
+                        </dd>
+                        <dt>
+                            <span jhiTranslate="artemisApp.lti.jwkSetUri"></span>
+                        </dt>
+                        <dd>
+                            <span>{{ onlineCourseConfiguration()?.ltiPlatformConfiguration?.jwkSetUri }}</span>
+                            <jhi-copy-to-clipboard-button [copyText]="onlineCourseConfiguration()?.ltiPlatformConfiguration?.jwkSetUri ?? ''" />
+                        </dd>
+                    </div>
+                    <div>
+                        <dd>
+                            <a
+                                (click)="toggleAdvancedSettings()"
+                                [attr.aria-expanded]="showAdvancedSettings()"
+                                #keyboardAction92
+                                role="button"
+                                tabindex="0"
+                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction92.click() : undefined"
+                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction92.click() : undefined"
+                            >
+                                @if (!showAdvancedSettings()) {
+                                    <span jhiTranslate="artemisApp.lti.viewAdvancedSettings"></span>
+                                }
+                                @if (showAdvancedSettings()) {
+                                    <span jhiTranslate="artemisApp.lti.closeAdvancedSettings"></span>
+                                }
+                            </a>
+                        </dd>
+                    </div>
+                    @if (showAdvancedSettings()) {
+                        <div>
+                            <dt>
+                                <span jhiTranslate="artemisApp.lti.ltiLaunchTarget"></span>
+                                <jhi-help-icon text="artemisApp.lti.launchTargetTooltip" />
+                            </dt>
+                            <dd>
+                                <span>New Window</span>
+                            </dd>
+                            <dt>
+                                <span jhiTranslate="artemisApp.lti.scored"></span>
+                            </dt>
+                            <dd>
+                                <span>True</span>
+                            </dd>
+                            <dt>
+                                <span jhiTranslate="artemisApp.lti.requestUsername"></span>
+                            </dt>
+                            <dd>
+                                <span>True</span>
+                            </dd>
+                            <dt>
+                                <span jhiTranslate="artemisApp.lti.requestEmail"></span>
+                                <jhi-help-icon text="artemisApp.lti.requestUserEmailTooltip" />
+                            </dt>
+                            <dd>
+                                <span>True</span>
+                            </dd>
+                        </div>
+                    }
+                </dl>
             </tumaet-ui-tab-panel>
             <tumaet-ui-tab-panel [value]="2">
                 <div>

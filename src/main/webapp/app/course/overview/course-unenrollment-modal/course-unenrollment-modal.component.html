@@ -19,7 +19,16 @@
             controlId="field_confirmation_input"
             [label]="'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.confirmationInput' | artemisTranslate"
         >
-            <input tumAetUiInput class="w-full" type="text" name="confirmationInput" id="field_confirmation_input" formControlName="confirmationInput" required />
+            <input
+                [attr.aria-label]="'artemisApp.courseOverview.exerciseList.details.unenrollmentModal.confirmationInput' | artemisTranslate"
+                tumAetUiInput
+                class="w-full"
+                type="text"
+                name="confirmationInput"
+                id="field_confirmation_input"
+                formControlName="confirmationInput"
+                required
+            />
         </tumaet-ui-form-field>
     </form>
     <ng-template #footer>
