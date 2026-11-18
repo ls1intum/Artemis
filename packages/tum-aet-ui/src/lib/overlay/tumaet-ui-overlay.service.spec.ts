@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { DomPortal } from '@angular/cdk/portal';
 import { Directionality } from '@angular/cdk/bidi';
 import { vi } from 'vitest';
 import { TumAetUiOverlayPlacement, TumAetUiOverlayService } from './tumaet-ui-overlay.service';
@@ -42,7 +43,7 @@ describe('TumAetUiOverlayService', () => {
         overlayRef.dispose();
     });
 
-    it('tracks origin width and disconnects its resize observer when disposed', () => {
+    it.each(['width', 'minWidth'] as const)('tracks origin %s across attachments and cleans up on detach and disposal', (dimension) => {
         let resize!: () => void;
         const observe = vi.fn();
         const disconnect = vi.fn();
@@ -58,20 +59,37 @@ describe('TumAetUiOverlayService', () => {
         vi.stubGlobal('ResizeObserver', MockResizeObserver);
         let width = 288;
         vi.spyOn(origin, 'getBoundingClientRect').mockImplementation(() => ({ width }) as DOMRect);
-
-        const overlayRef = service.createConnectedOverlay(origin, 'bottom', { matchOriginWidth: true });
+        const content = document.createElement('div');
+        document.body.appendChild(content);
+        const portal = new DomPortal(content);
+        const overlayRef = service.createConnectedOverlay(origin, 'bottom', {
+            matchOriginWidth: dimension === 'width',
+            minWidthFromOrigin: dimension === 'minWidth',
+            minWidth: 192,
+        });
         try {
+            overlayRef.attach(portal);
             expect(observe).toHaveBeenCalledWith(origin);
-            expect(overlayRef.getConfig().width).toBe(288);
+            expect(overlayRef.getConfig()[dimension]).toBe(288);
 
             width = 320;
             resize();
-            expect(overlayRef.getConfig().width).toBe(320);
+            expect(overlayRef.getConfig()[dimension]).toBe(320);
+            width = 120;
+            resize();
+            expect(overlayRef.getConfig()[dimension]).toBe(dimension === 'minWidth' ? 192 : 120);
+
+            overlayRef.detach();
+            expect(disconnect).toHaveBeenCalledOnce();
+            overlayRef.attach(portal);
+            expect(observe).toHaveBeenCalledTimes(2);
+            overlayRef.dispose();
+            expect(disconnect).toHaveBeenCalledTimes(3);
         } finally {
             overlayRef.dispose();
+            content.remove();
             vi.unstubAllGlobals();
         }
-        expect(disconnect).toHaveBeenCalledOnce();
     });
 
     it('propagates right-to-left direction while preserving physical horizontal placements', () => {

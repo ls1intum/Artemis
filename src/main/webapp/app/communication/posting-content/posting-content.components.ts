@@ -10,6 +10,7 @@ import { User } from 'app/account/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingMarkdownComponent, postingReferencePlaceholder } from 'app/communication/posting-content/posting-markdown/posting-markdown.component';
 import { postingReferenceMatches } from './posting-reference.util';
@@ -20,7 +21,7 @@ import { LinkPreviewContainerComponent } from 'app/communication/link-preview/co
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FaIconComponent, PostingMarkdownComponent, LinkPreviewContainerComponent],
+    imports: [TranslateDirective, FaIconComponent, PostingMarkdownComponent, LinkPreviewContainerComponent, TumAetUiButtonDirective],
 })
 export class PostingContentComponent implements OnInit, OnDestroy {
     private communicationService = inject(CommunicationService);

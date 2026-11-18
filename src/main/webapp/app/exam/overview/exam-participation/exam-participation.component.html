@@ -125,13 +125,13 @@
                                         }
                                     }
                                 }
-                                @if ((generateParticipationStatus | async) === 'generating') {
+                                @let generateParticipationStatus = participationGenerationStatus();
+                                @if (generateParticipationStatus === 'generating') {
                                     <div class="flex items-center justify-center">
                                         <p class="mb-0!" jhiTranslate="artemisApp.examParticipation.preparingParticipation"></p>
                                         <tumaet-ui-progress-spinner class="ml-2" [ariaLabel]="'loading' | artemisTranslate" />
                                     </div>
-                                }
-                                @if ((generateParticipationStatus | async) === 'failed') {
+                                } @else if (generateParticipationStatus === 'failed') {
                                     <div class="flex items-center justify-center">
                                         <p class="mb-0!" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
                                         <button
@@ -150,16 +150,7 @@
 
                         <!-- connection status bar, as tall as the foot of the sidebar next to it -->
                         <div class="exam-status-bar" [class.disconnected]="!connected()" data-testid="exam-status-bar">
-                            <p
-                                class="mb-0!"
-                                [jhiTranslate]="
-                                    !connected()
-                                        ? 'artemisApp.examParticipation.disconnected'
-                                        : isProgrammingExercise()
-                                          ? 'artemisApp.examParticipation.ideConnected'
-                                          : 'artemisApp.examParticipation.connected'
-                                "
-                            ></p>
+                            <p class="mb-0!" [jhiTranslate]="connectionStatusTranslationKey()"></p>
                             <jhi-connection-status [isExamMode]="true" class="connection-status-exam-participation" />
                         </div>
                     </div>
@@ -283,7 +274,7 @@
             </tumaet-ui-message>
         } @else {
             <tumaet-ui-message severity="error" class="w-full">
-                <h6 class="mb-0!" [jhiTranslate]="'artemisApp.examParticipation.' + (testExam() ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
+                <h6 class="mb-0!" [jhiTranslate]="noStudentExamMessageKey()"></h6>
             </tumaet-ui-message>
         }
     </div>

@@ -176,6 +176,12 @@ public final class Constants {
 
     public static final int MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH = 255; // Keep in sync with MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH in input.constants.ts
 
+    /**
+     * Maximum length of the explanation of a quiz question and of an answer option. Must match the quiz_question.explanation column and
+     * MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD in input.constants.ts.
+     */
+    public static final int MAX_QUIZ_EXPLANATION_LENGTH = 2000;
+
     // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts
     public static final int EXAM_TEXT_MAX_LENGTH = 10_000; // Applies to the exam start/end and confirmation start/end texts
 

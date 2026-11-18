@@ -28,13 +28,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import {
-    Submission,
-    SubmissionExerciseType,
-    getLatestSubmissionResult,
-    getSubmissionResultByCorrectionRound,
-    setLatestSubmissionResult,
-} from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { filter, finalize, map } from 'rxjs/operators';
@@ -85,6 +79,7 @@ import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { AssessmentUploadDialogComponent } from 'app/assessment/manage/assessment-upload/assessment-upload-dialog.component';
@@ -1061,9 +1056,27 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Link to the respective exercise details page. Computed rather than a method, because
-     * `[routerLink]="exerciseDetailsLink()"` is evaluated on every change-detection pass and a fresh array each pass
-     * makes RouterLink re-process the link every time.
+     * Link to the respective exercise details page. An exam exercise has to be opened below its exam, because the course level
+     * page loads the exercise as a course exercise and the server refuses an exam exercise there.
+     * Computed rather than a method, because `[routerLink]="exerciseDetailsLink()"` is evaluated on every change-detection pass
+     * and a fresh array each pass makes RouterLink re-process the link every time.
      */
-    readonly exerciseDetailsLink = computed(() => ['/course-management', this.courseId(), this.exercise().type! + '-exercises', this.exercise().id!]);
+    readonly exerciseDetailsLink = computed(() => {
+        const exercise = this.exercise();
+        const exerciseTypePath = exercise.type! + '-exercises';
+        const group = exercise.exerciseGroup;
+        if (group) {
+            return ['/course-management', this.courseId(), 'exams', group.exam!.id!, 'exercise-groups', group.id!, exerciseTypePath, exercise.id!];
+        }
+        return ['/course-management', this.courseId(), exerciseTypePath, exercise.id!];
+    });
+
+    /**
+     * Whether the user can open the details page of the exercise. The server gives the details of an exam exercise only to editors and above,
+     * except for a modeling exercise, so a tutor would only get a permission error from the button.
+     */
+    readonly canOpenExerciseDetails = computed(() => {
+        const exercise = this.exercise();
+        return !exercise.exerciseGroup || exercise.type === ExerciseType.MODELING || this.accountService.isAtLeastEditorInCourseWithId(this.courseId());
+    });
 }
