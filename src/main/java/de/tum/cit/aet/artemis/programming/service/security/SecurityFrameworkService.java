@@ -762,7 +762,7 @@ public class SecurityFrameworkService {
     private void processPushToTestRepository(ProgrammingExercise exercise, LocalVCRepositoryUri testRepositoryUri, String branch, String commitHash, User user) {
         localVCPushProcessingService.ifPresent(pushProcessingService -> {
             try (Repository serverRepository = bareGitRepositoryService.getBareRepository(testRepositoryUri, branch, false)) {
-                pushProcessingService.processNewPush(commitHash, serverRepository, user, Optional.empty(), Optional.empty(), Optional.empty());
+                pushProcessingService.processNewPush(commitHash, serverRepository, user, Optional.empty(), Optional.empty());
                 // Only now is the processing complete: the submission is saved, the results are marked as outdated and the builds are triggered.
                 pendingProcessing().remove(pendingProcessingKey(exercise, commitHash));
             }
