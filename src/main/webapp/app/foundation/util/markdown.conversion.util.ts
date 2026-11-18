@@ -228,6 +228,46 @@ export function restrictRenderedAttributes(node: Element, keepStyle = false): vo
 
 const SVG_URL_ATTRIBUTES = ['mask', 'filter', 'fill', 'stroke', 'clip-path', 'cursor', 'marker-start', 'marker-mid', 'marker-end'];
 
+const URL_FUNCTION_START = /url\s*\(\s*/gi;
+const QUOTED_ADDRESS = /(?:"([^"]*)"|'([^']*)')\s*\)/y;
+const UNQUOTED_ADDRESS = /([^)\s][^)]*)?\)/y;
+
+/** Matches the pattern at the position and nowhere else. */
+function matchAt(pattern: RegExp, text: string, position: number): RegExpExecArray | null {
+    pattern.lastIndex = position;
+    return pattern.exec(text);
+}
+
+/**
+ * The addresses of all `url(...)` functions in a value, each one without the white space around it. A quoted address ends at its closing quote, an unquoted one at the first
+ * closing parenthesis.
+ * @param value the value of an attribute
+ * @returns the addresses, or undefined if a `url(` has no closing parenthesis or is inside the address of an earlier one, so that its address cannot be told
+ */
+function addressesOfUrlFunctions(value: string): string[] | undefined {
+    const starts = [...value.matchAll(URL_FUNCTION_START)];
+    // A `url(` that is not closed is read to the end of the value. Deciding this first keeps the reading of the others from being repeated for every start.
+    const last = starts.at(-1);
+    if (last && value.lastIndexOf(')') < last.index) {
+        return undefined;
+    }
+    const addresses: string[] = [];
+    let readUntil = 0;
+    for (const start of starts) {
+        if (start.index < readUntil) {
+            return undefined;
+        }
+        const from = start.index + start[0].length;
+        const match = matchAt(QUOTED_ADDRESS, value, from) ?? matchAt(UNQUOTED_ADDRESS, value, from);
+        if (!match) {
+            return undefined;
+        }
+        addresses.push((match[1] ?? match[2] ?? match[3] ?? '').trim());
+        readUntil = from + match[0].length;
+    }
+    return addresses;
+}
+
 /**
  * Whether every `url(...)` in the value of an attribute is a reference to the same document or an address that may be shown.
  * A value with another function that loads an image (`image-set`, `src` ...) or an escape is not allowed.
@@ -240,23 +280,8 @@ function areFunctionAddressesAllowed(value: string | null): boolean {
     if (/\\|\/\*|(?:image-set|image|element|cross-fade|paint|src)\s*\(/i.test(value)) {
         return false;
     }
-    // A `url(` without a closing parenthesis behind it is read to the end of the value, so it must not pass unchecked. This is decided before the matcher below runs, so that
-    // the matcher is never asked to fail on a long value.
-    const openings = [...value.matchAll(/url\s*\(/gi)];
-    const lastOpening = openings.at(-1);
-    if (lastOpening && !value.includes(')', lastOpening.index)) {
-        return false;
-    }
-    // The parts of the matcher do not overlap: white space is skipped before the address, which an unquoted address does not start with, and after a quoted one.
-    const matches = [...value.matchAll(/url\s*\(\s*(?:"([^"]*)"\s*|'([^']*)'\s*|([^)\s][^)]*)?)\)/gi)];
-    // a `url(` inside the address of an earlier one is not matched of its own, so it must not pass unchecked either
-    if (matches.length !== openings.length) {
-        return false;
-    }
-    return matches.every((match) => {
-        const address = (match[1] ?? match[2] ?? match[3] ?? '').trim();
-        return address.startsWith('#') || isImageSourceAllowed(address);
-    });
+    const addresses = addressesOfUrlFunctions(value);
+    return addresses !== undefined && addresses.every((address) => address.startsWith('#') || isImageSourceAllowed(address));
 }
 
 /**

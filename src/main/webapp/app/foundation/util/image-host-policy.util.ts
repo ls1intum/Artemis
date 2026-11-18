@@ -19,15 +19,17 @@ export function setAllowedImageHosts(configuredHosts: string | undefined): void 
  * @param host the configured host, in lower case, which may start with `*.`
  */
 function normalizeHost(host: string): string {
-    const wildcard = host.startsWith('*.');
-    const name = wildcard ? host.substring(2) : host;
+    const prefix = host.startsWith('*.') ? '*.' : '';
     try {
-        const url = new URL(`https://${name}`);
+        const url = new URL(`https://${host.substring(prefix.length)}`);
         const isPlainHost = url.host === url.hostname && url.pathname === '/' && !url.search && !url.hash && !url.username && !url.password;
-        return isPlainHost && url.hostname ? (wildcard ? '*.' : '') + url.hostname : host;
+        if (isPlainHost && url.hostname) {
+            return prefix + url.hostname;
+        }
     } catch {
-        return host;
+        // an entry that cannot be read as a host name stays as it is written
     }
+    return host;
 }
 
 /**

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.extractU
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.secretMatches;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -254,7 +255,7 @@ public class LocalVCAccessLogRecorderService {
         // arrives while the entry is written, the entry is written once more.
         boolean interrupted = Thread.interrupted();
         // The time of the access stays the same if the entry is written once more, as the entries of an operation are joined by their times
-        ZonedDateTime firstAttemptAt = ZonedDateTime.now();
+        ZonedDateTime firstAttemptAt = ZonedDateTime.now(ZoneId.systemDefault());
         try {
             for (int attempt = 1; attempt <= 2; attempt++) {
                 try {
