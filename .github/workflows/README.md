@@ -261,8 +261,6 @@ artifact. Coverage reporters show the validation scope and only publish tables f
   API, which stops at 3000, so the filters may not have seen all of them. That covers the server
   suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`). Draft test/E2E
   deferral still applies; the image remains available and promotion enables normal test execution.
-- Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
-  the server suite uploads none.
 
 ### Selecting tests within a pull request
 
@@ -541,7 +539,7 @@ The version comes from the highest stable numeric Artemis release returned by Gi
 releases API, accepting tags such as `10.3` and `v10.3.1`. Drafts, prereleases, scoped `@tumaet/*`
 package releases and development version files are excluded. A late maintenance release therefore
 cannot make the badge move backwards. The license is the repository's static MIT license. Source
-or publishing failures preserve the previous SVGs and are advisory. Codacy, Sonar and OpenSSF
+or publishing failures preserve the previous SVGs and are advisory. Sonar and OpenSSF
 badges continue to come directly from their authoritative services.
 
 The trusted tooling is checked out from the default branch even for a release event referencing
@@ -561,22 +559,24 @@ then dispatch the workflow. For local rendering and tests, see
 
 **SonarQube Cloud is a required pre-merge quality gate** for relevant ready PRs. The scanner waits
 for the server verdict; scanner, upload, timeout and quality-gate failures fail **All required CI
-Passed**. No additional branch-protection check or repository permission is needed. Codacy remains
-a separate external service.
+Passed**. The Codacy integration is disabled for Artemis.
 
 PR analysis uses the PR number, exact head SHA, original source branch and actual target branch.
 All configured **new-code** conditions apply: reliability, security, maintainability, coverage,
-duplication and reviewed security hotspots. Existing findings are fixed in source; neither the
-quality gate nor the source/exclusion contract with Codacy is weakened.
+duplication and reviewed security hotspots. Fix existing findings in source and preserve the quality
+gate and scan scope.
 
 The existing Sonar job also requires **zero newly duplicated lines** on PRs. It reads the absolute
 `new_duplicated_lines` count from the completed analysis: a rounded **0.0%** does not pass if even
 one newly duplicated line remains. The job summary records new duplicated lines, blocks and total
 new lines. This verification performs only metadata/measure reads; it does not start another scan
 or repeat tests. It applies to scanned PRs and secretless verification of maintainer-published
-fork analyses. Missing or invalid metrics, unavailable APIs, changed analyses and source/target
-mismatches fail verification. Existing default-branch duplication remains visible in Sonar while
-the PR guard prevents additions; analysis scope and duplication detection settings stay unchanged.
+fork analyses. A valid Sonar response with `component.measures: []` can pass for a PR with fewer
+than 3,000 changed files when GitHub confirms that the complete diff is outside Sonar's source
+roots. The comparison must still match after the final Sonar request. Missing or invalid response
+bodies, partial metrics, unavailable APIs, changed analyses, and source or target mismatches fail
+verification. Sonar tracks the existing default-branch duplication while the PR guard checks
+additions within the configured analysis scope.
 
 ### Scope, coverage and runner cost
 
@@ -595,10 +595,10 @@ upload existing execution data as **Sonar Server Coverage**. A trusted XML-only 
 task generates the selected Java report on the Sonar runner after compilation, without rerunning
 tests or generating the full module/HTML/coverage-verification graph.
 
-Only reports with successful matching test producers are imported. Selected reports remain partial:
-they are never used for full-project badges or Codacy coverage, and unexecuted changed lines count
-as uncovered. The configured Sonar coverage conditions still apply. There are no old-revision
-substitutions, PR coverage exclusions or forced complete suites solely for Sonar.
+Sonar imports reports with successful matching test producers. Full-project badges use full-suite
+reports. In Sonar's selected reports, unexecuted changed lines count as uncovered. The configured
+Sonar coverage conditions still apply. There are no old-revision substitutions, PR coverage
+exclusions or forced complete suites solely for Sonar.
 
 ### Fork and token-restricted PRs
 
