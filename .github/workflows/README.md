@@ -539,7 +539,7 @@ The version comes from the highest stable numeric Artemis release returned by Gi
 releases API, accepting tags such as `10.3` and `v10.3.1`. Drafts, prereleases, scoped `@tumaet/*`
 package releases and development version files are excluded. A late maintenance release therefore
 cannot make the badge move backwards. The license is the repository's static MIT license. Source
-or publishing failures preserve the previous SVGs and are advisory. Codacy, Sonar and OpenSSF
+or publishing failures preserve the previous SVGs and are advisory. Sonar and OpenSSF
 badges continue to come directly from their authoritative services.
 
 The trusted tooling is checked out from the default branch even for a release event referencing
@@ -563,8 +563,8 @@ Passed**. The Codacy integration is disabled for Artemis.
 
 PR analysis uses the PR number, exact head SHA, original source branch and actual target branch.
 All configured **new-code** conditions apply: reliability, security, maintainability, coverage,
-duplication and reviewed security hotspots. Existing findings are fixed in source; neither the
-quality gate nor the source/exclusion contract with Codacy is weakened.
+duplication and reviewed security hotspots. Fix existing findings in source and preserve the quality
+gate and scan scope.
 
 ### Scope, coverage and runner cost
 
