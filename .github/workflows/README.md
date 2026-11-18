@@ -571,9 +571,10 @@ The existing Sonar job also requires **zero newly duplicated lines** on PRs. It 
 one newly duplicated line remains. The job summary records new duplicated lines, blocks and total
 new lines. This verification performs only metadata/measure reads; it does not start another scan
 or repeat tests. It applies to scanned PRs and secretless verification of maintainer-published
-fork analyses. Missing or invalid metrics, unavailable APIs, changed analyses and source/target
-mismatches fail verification. Existing default-branch duplication remains visible in Sonar while
-the PR guard prevents additions; analysis scope and duplication detection settings stay unchanged.
+fork analyses. For an empty metrics response, GitHub must confirm that the complete PR diff is
+outside Sonar's source roots. Partial or invalid metrics, unavailable APIs, changed analyses, and
+source or target mismatches fail verification. Sonar tracks the existing default-branch duplication
+while the PR guard checks additions within the configured analysis scope.
 
 ### Scope, coverage and runner cost
 
