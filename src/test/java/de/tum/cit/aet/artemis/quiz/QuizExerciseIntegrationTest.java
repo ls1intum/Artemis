@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_EXPLANATION_LENGTH;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertQuizExerciseExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -2260,7 +2261,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testMultipleChoiceQuizExplanationLength_Valid() throws Exception {
-        int validityThreshold = 500;
+        int validityThreshold = MAX_QUIZ_EXPLANATION_LENGTH;
         QuizExercise quizExercise = createMultipleChoiceQuizExercise();
 
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
@@ -2275,7 +2276,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testMultipleChoiceQuizExplanationLength_Invalid() throws Exception {
-        int validityThreshold = 500;
+        int validityThreshold = MAX_QUIZ_EXPLANATION_LENGTH;
         QuizExercise quizExercise = createMultipleChoiceQuizExercise();
 
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
@@ -2290,7 +2291,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testMultipleChoiceQuizOptionExplanationLength_Valid() throws Exception {
-        int validityThreshold = 500;
+        int validityThreshold = MAX_QUIZ_EXPLANATION_LENGTH;
         QuizExercise quizExercise = createMultipleChoiceQuizExercise();
 
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
@@ -2305,7 +2306,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testMultipleChoiceQuizOptionExplanationLength_Invalid() throws Exception {
-        int validityThreshold = 500;
+        int validityThreshold = MAX_QUIZ_EXPLANATION_LENGTH;
         QuizExercise quizExercise = createMultipleChoiceQuizExercise();
 
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();

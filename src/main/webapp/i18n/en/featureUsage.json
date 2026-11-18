@@ -394,7 +394,7 @@
                         "description": "Starting an exam, working on it and handing it in."
                     },
                     "EXAM_TEST_EXAMS": {
-                        "name": "Test exams",
+                        "name": "Practice exams",
                         "description": "Practice exams with several attempts."
                     },
                     "EXAM_RESULTS": {

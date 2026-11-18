@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { test } from '../../../support/fixtures';
 import { admin, studentOne } from '../../../support/users';
 import { SEED_COURSES } from '../../../support/seedData';
-import { ExerciseType } from '../../../support/constants';
+import { ExamMode, ExerciseType } from '../../../support/constants';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { expectStoredAnswers } from '../../../support/examAnswerAssertions';
 import { asAdmin } from '../../../support/utils';
@@ -34,7 +34,7 @@ test.describe('Test exam attempts', { tag: '@slow' }, () => {
         await login(admin);
         exam = await examAPIRequests.createExam({
             course,
-            testExam: true,
+            examMode: ExamMode.TEST,
             startDate: dayjs().subtract(1, 'day'),
             visibleDate: dayjs().subtract(2, 'days'),
             examMaxPoints: 10,
@@ -70,7 +70,7 @@ test.describe('Test exam attempts', { tag: '@slow' }, () => {
         // The course sidebar includes attempts from other exams running in parallel. Check this exam's two links, not its global count.
         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
         const attemptsHeader = page.locator('#test-accordion-item-header-attempt');
-        await expect(attemptsHeader).toContainText('Test Exam Attempts');
+        await expect(attemptsHeader).toContainText('Practice Exam Attempts');
         if ((await attemptsHeader.getAttribute('aria-expanded')) !== 'true') {
             await attemptsHeader.click();
         }
@@ -92,7 +92,7 @@ test.describe('Test exam attempts', { tag: '@slow' }, () => {
         await login(admin);
         exam = await examAPIRequests.createExam({
             course,
-            testExam: true,
+            examMode: ExamMode.TEST,
             startDate: dayjs().subtract(1, 'day'),
             visibleDate: dayjs().subtract(2, 'days'),
             examMaxPoints: 10,
@@ -119,7 +119,7 @@ test.describe('Test exam attempts', { tag: '@slow' }, () => {
         await login(admin);
         exam = await examAPIRequests.createExam({
             course,
-            testExam: true,
+            examMode: ExamMode.TEST,
             startDate: dayjs().subtract(2, 'days'),
             visibleDate: dayjs().subtract(3, 'days'),
             endDate: dayjs().subtract(1, 'hour'),
@@ -131,7 +131,7 @@ test.describe('Test exam attempts', { tag: '@slow' }, () => {
 
         await login(studentOne);
         const attempt = await page.request.get(`api/exam/courses/${course.id}/exams/${exam.id}/own-student-exam`);
-        expect(attempt.status()).toBe(400);
+        expect(attempt.status()).toBe(403);
         expect((await attempt.json()).errorKey).toBe('examHasAlreadyEnded');
         expect(await examAPIRequests.getOwnTestExamAttempts(exam), 'no attempt was created').toHaveLength(0);
 

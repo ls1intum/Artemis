@@ -1,9 +1,9 @@
-<div class="d-flex flex-wrap gap-2 fs-xx-small align-items-center" [style.width]="getPostingType() === 'post' ? 'max-content' : ''">
+<div class="fs-xx-small flex flex-wrap items-center gap-2" [style.width]="getPostingType() === 'post' ? 'max-content' : ''">
     @if (getPostingType() === 'post') {
         @if (hoverBar() && sortedAnswerPosts()?.length === 0) {
             <div>
                 <button type="button" class="reaction-button clickable reply-btn" (click)="isCommunicationPage() ? openThread.emit() : openAnswerView()">
-                    <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
+                    <fa-icon class="fa-xs self-center" [icon]="faArrowRight" />
                     <span jhiTranslate="artemisApp.conversationsLayout.threadSideBar.reply" class="emoji-count px-2"></span>
                 </button>
             </div>
@@ -19,7 +19,7 @@
             } @else {
                 <div>
                     <button type="button" class="reaction-button clickable expand-answers-btn" (click)="openAnswerView()">
-                        <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
+                        <fa-icon class="fa-xs self-center" [icon]="faArrowRight" />
                         <span class="emoji-count">{{
                             sortedAnswerPosts()?.length === 1
                                 ? ('artemisApp.communication.showSingleAnswer' | artemisTranslate)
@@ -44,7 +44,7 @@
 
     @if (showSearchResultInAnswersHint()) {
         <div class="search-result-in-answers-info">
-            <fa-icon class="fa-xs align-self-center" [icon]="faInfoCircle" />
+            <fa-icon class="fa-xs self-center" [icon]="faInfoCircle" />
             <span class="emoji-count px-2" jhiTranslate="artemisApp.communication.overview.searchResultInAnswersHint"></span>
         </div>
     }
@@ -57,9 +57,8 @@
                     [disabled]="isReadOnlyMode()"
                     class="reaction-button clickable"
                     [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
-                    (click)="reactingUsersTooltip.close(false); updateReaction(reactionMetaData.key)"
-                    [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"
-                    #reactingUsersTooltip="ngbTooltip"
+                    (click)="updateReaction(reactionMetaData.key)"
+                    [tumAetUiTooltip]="(reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async) ?? undefined"
                 >
                     <div class="emoji-container">
                         <jhi-emoji [emoji]="reactionMetaData.key" />
@@ -118,7 +117,7 @@
                 type="button"
                 data-testid="posting-reaction-edit"
                 (click)="editPosting()"
-                [ngbTooltip]="'artemisApp.communication.editPosting' | artemisTranslate"
+                [tumAetUiTooltip]="'artemisApp.communication.editPosting' | artemisTranslate"
             >
                 <fa-icon [icon]="faPencilAlt" />
             </button>
@@ -151,7 +150,7 @@
                         <fa-icon
                             class="resolved"
                             [icon]="faCheck"
-                            [ngbTooltip]="
+                            [tumAetUiTooltip]="
                                 isAtLeastTutorInCourse() || isAuthorOfOriginalPost()
                                     ? ('artemisApp.communication.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
                                     : ('artemisApp.communication.resolvingAnswerTooltip' | artemisTranslate)
@@ -159,7 +158,7 @@
                         />
                     } @else {
                         @if (isAtLeastTutorInCourse() || isAuthorOfOriginalPost()) {
-                            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.communication.markAsResolvingAnswerTooltip' | artemisTranslate" />
+                            <fa-icon class="icon notResolved" [icon]="faCheck" [tumAetUiTooltip]="'artemisApp.communication.markAsResolvingAnswerTooltip' | artemisTranslate" />
                         }
                     }
                 </button>
@@ -176,7 +175,7 @@
                 [disabled]="!canPin() || isReadOnlyMode()"
                 (click)="canPin() && togglePin()"
             >
-                <jhi-emoji class="fs-x-small" [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip() | artemisTranslate" />
+                <jhi-emoji class="fs-x-small" [emoji]="pinEmojiId" [tumAetUiTooltip]="pinTooltip() | artemisTranslate" />
             </button>
         }
 
@@ -186,7 +185,7 @@
                 type="button"
                 class="reaction-button clickable px-2 fs-small bookmark"
                 (click)="bookmarkPosting()"
-                [ngbTooltip]="(getSaved() ? 'artemisApp.communication.post.removeBookmarkPost' : 'artemisApp.communication.post.bookmarkPost') | artemisTranslate"
+                [tumAetUiTooltip]="(getSaved() ? 'artemisApp.communication.post.removeBookmarkPost' : 'artemisApp.communication.post.bookmarkPost') | artemisTranslate"
             >
                 <fa-icon [icon]="getSaved() ? faBookmark : farBookmark" />
             </button>
@@ -197,7 +196,7 @@
                 data-testid="posting-reaction-forward"
                 [disabled]="isReadOnlyMode()"
                 (click)="forwardMessage()"
-                [ngbTooltip]="'artemisApp.communication.post.forwardMessage' | artemisTranslate"
+                [tumAetUiTooltip]="'artemisApp.communication.post.forwardMessage' | artemisTranslate"
             >
                 <fa-icon [icon]="faShare" cdkOverlayOrigin />
             </button>
@@ -209,7 +208,7 @@
                 class="reaction-button clickable px-2 fs-small"
                 [disabled]="isReadOnlyMode()"
                 (click)="markMessageAsUnread()"
-                [ngbTooltip]="'artemisApp.communication.post.markAsUnread' | artemisTranslate"
+                [tumAetUiTooltip]="'artemisApp.communication.post.markAsUnread' | artemisTranslate"
             >
                 <fa-icon [icon]="faEnvelopeOpenText" cdkOverlayOrigin />
             </button>
@@ -218,6 +217,6 @@
 
     <!-- New message badge -->
     @if (getPostingType() === 'post' && isEmojiCount() && getShowNewMessageIcon()) {
-        <div jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></div>
+        <tumaet-ui-tag size="sm" class="hideAfter5Seconds"><span jhiTranslate="global.generic.new"></span></tumaet-ui-tag>
     }
 </div>

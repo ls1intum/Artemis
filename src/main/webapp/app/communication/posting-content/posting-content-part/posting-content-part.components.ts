@@ -16,8 +16,8 @@ import {
     faQuestion,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { DialogData, EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
+import { TumAetUiCardComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -30,12 +30,11 @@ import { FileService } from 'app/foundation/service/file.service';
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['../../communication.component.scss'],
-    imports: [RouterLink, FaIconComponent, TranslateDirective],
-    providers: [DialogService],
+    imports: [RouterLink, FaIconComponent, TranslateDirective, TumAetUiCardComponent],
 })
 export class PostingContentPartComponent {
     private fileService = inject(FileService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
 
@@ -75,17 +74,15 @@ export class PostingContentPartComponent {
      * @param imageAlt {string} optional description of the image used as its alt text (falls back to a localized label)
      */
     enlargeImage(slideToReference: string, imageAlt?: string) {
-        this.dialogService.open(EnlargeSlideImageComponent, {
-            // A translated header gives the dialog an accessible name and renders PrimeNG's themed close button, so the preview can always be dismissed.
+        this.dialogService.open<EnlargeSlideImageComponent, unknown, DialogData>(EnlargeSlideImageComponent, {
+            // A translated header gives the dialog an accessible name and a close button, so the preview can always be dismissed.
             header: this.translateService.instant('artemisApp.communication.imagePreviewTitle'),
             // Prefer the image's own description (markdown alt text) so assistive technologies can announce the preview; fall back to a generic localized label.
             data: { slideToReference, imageAlt: imageAlt || this.translateService.instant('artemisApp.communication.imagePreviewAlt') },
-            modal: true,
-            // Without closable the DynamicDialog header renders no close button (PrimeNG defaults it to undefined), which left the preview stuck open.
+            size: 'large',
             closable: true,
             dismissableMask: true,
             closeOnEscape: true,
-            style: { 'max-width': '95vw' },
         });
     }
 

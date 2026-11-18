@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -61,7 +62,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
  *
  * @param id                             the id of the exam
  * @param title                          the title of the exam
- * @param testExam                       whether this is a test exam
+ * @param examMode                       the mode of the exam
  * @param examWithAttendanceCheck        whether an attendance check is enabled
  * @param visibleDate                    the date the exam becomes visible
  * @param startDate                      the exam start date
@@ -91,7 +92,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
  * @param exerciseGroups                 the exercise groups with their exercises
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean testExam, boolean examWithAttendanceCheck, @Nullable ZonedDateTime visibleDate,
+public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, ExamMode examMode, boolean examWithAttendanceCheck, @Nullable ZonedDateTime visibleDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
         @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
         @Nullable String confirmationStartText, @Nullable String confirmationEndText, int examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
@@ -180,7 +181,7 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
                 : null;
         // isStarted() dereferences startDate, so guard the null case: a not-yet-scheduled exam reads as not started.
         boolean started = exam.getStartDate() != null && exam.isStarted();
-        return new ExamWithExerciseGroupsDTO(core.id(), core.title(), core.testExam(), core.examWithAttendanceCheck(), core.visibleDate(), core.startDate(), core.endDate(),
+        return new ExamWithExerciseGroupsDTO(core.id(), core.title(), core.examMode(), core.examWithAttendanceCheck(), core.visibleDate(), core.startDate(), core.endDate(),
                 core.publishResultsDate(), core.examStudentReviewStart(), core.examStudentReviewEnd(), core.gracePeriod(), core.workingTime(), core.startText(), core.endText(),
                 core.confirmationStartText(), core.confirmationEndText(), core.examMaxPoints(), core.randomizeExerciseOrder(), core.numberOfExercisesInExam(),
                 core.numberOfCorrectionRoundsInExam(), core.examiner(), core.moduleNumber(), core.courseName(), core.exampleSolutionPublicationDate(),

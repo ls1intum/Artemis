@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.localvc.service.ssh;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,14 +28,19 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.localvc.service.AccessLogSubject;
+import de.tum.cit.aet.artemis.localvc.service.GitOperationAudit;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCAccessLogRecorderService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPushProcessingService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
 import de.tum.cit.aet.artemis.localvc.service.PasswordAuthenticationNoticeService;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 
 class SshGitCommandTest {
@@ -81,6 +88,47 @@ class SshGitCommandTest {
     }
 
     @Test
+    void receivePackCapturesItsCommandContextBeforeWaitingForTheMutationLease() throws Exception {
+        Path repositoryPath = tempPath.resolve("context.git");
+        try (Repository repository = FileRepositoryBuilder.create(repositoryPath.toFile())) {
+            repository.create(true);
+        }
+        var pushProcessingService = mock(LocalVCPushProcessingService.class);
+        var exercise = new ProgrammingExercise();
+        var session = mock(ServerSession.class);
+        var entryCaptured = new AtomicBoolean();
+        var participationCaptured = new AtomicBoolean();
+        var capturedBeforeLease = new AtomicBoolean();
+        when(session.getAttribute(SshConstants.USER_KEY)).thenReturn(new User());
+        when(session.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY)).thenReturn(exercise);
+        when(session.getAttribute(SshConstants.PARTICIPATION_KEY)).thenAnswer(_ -> {
+            participationCaptured.set(true);
+            return new ProgrammingExerciseStudentParticipation();
+        });
+        when(session.getAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY)).thenAnswer(_ -> {
+            entryCaptured.set(true);
+            return new AccessLogSubject(new User(), 1L, AuthenticationMechanism.SSH, "127.0.0.1");
+        });
+        when(pushProcessingService.claimProgrammingExerciseMutation(any(Repository.class), same(exercise))).thenAnswer(_ -> {
+            // A later command may replace session state while this call waits for the exercise's mutation lease.
+            capturedBeforeLease.set(entryCaptured.get() && participationCaptured.get());
+            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
+            });
+        });
+        var command = new SshGitCommand((_, _, _, _) -> repositoryPath, "git-receive-pack 'context.git'", null, mock(LocalVCServletService.class),
+                mock(LocalVCAccessLogRecorderService.class), pushProcessingService, mock(PasswordAuthenticationNoticeService.class));
+        command.setSession(session);
+        command.setInputStream(InputStream.nullInputStream());
+        command.setOutputStream(new ByteArrayOutputStream());
+        command.setErrorStream(new ByteArrayOutputStream());
+        command.setExitCallback(mock(ExitCallback.class));
+
+        command.run();
+
+        assertThat(capturedBeforeLease).isTrue();
+    }
+
+    @Test
     void receivePackReportsRetryableMutationConflict() throws Exception {
         Path repositoryPath = tempPath.resolve("conflict.git");
         try (Repository repository = FileRepositoryBuilder.create(repositoryPath.toFile())) {
@@ -92,8 +140,9 @@ class SshGitCommandTest {
         ServerSession session = mock(ServerSession.class);
         ExitCallback exitCallback = mock(ExitCallback.class);
         ByteArrayOutputStream error = new ByteArrayOutputStream();
-        SshGitCommand command = new SshGitCommand((_, _, _, _) -> repositoryPath, "git-receive-pack 'conflict.git'", null, mock(LocalVCServletService.class),
-                mock(LocalVCAccessLogRecorderService.class), pushProcessingService, mock(PasswordAuthenticationNoticeService.class));
+        LocalVCAccessLogRecorderService accessLogRecorder = mock(LocalVCAccessLogRecorderService.class);
+        SshGitCommand command = new SshGitCommand((_, _, _, _) -> repositoryPath, "git-receive-pack 'conflict.git'", null, mock(LocalVCServletService.class), accessLogRecorder,
+                pushProcessingService, mock(PasswordAuthenticationNoticeService.class));
         when(session.getAttribute(SshConstants.USER_KEY)).thenReturn(user);
         when(session.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY)).thenReturn(exercise);
         when(pushProcessingService.claimProgrammingExerciseMutation(org.mockito.ArgumentMatchers.any(Repository.class), org.mockito.ArgumentMatchers.same(exercise)))
@@ -109,6 +158,10 @@ class SshGitCommandTest {
         String message = "Push rejected: Exercise generation is running Please retry the push later.";
         assertThat(error.toString()).contains(message);
         verify(exitCallback).onExit(-1, message);
+        // the push was attempted and refused, so it is written as a failed push and not as a write that had nothing new
+        var audit = ArgumentCaptor.forClass(GitOperationAudit.class);
+        verify(accessLogRecorder).recordPushSSH(any(), audit.capture(), any(Repository.class));
+        assertThat(audit.getValue().isPushReceived()).isTrue();
     }
 
     @Test
