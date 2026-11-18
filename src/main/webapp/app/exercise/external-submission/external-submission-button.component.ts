@@ -13,7 +13,8 @@ import { TumAetUiDialogService } from '@tumaet/ui-angular';
     selector: 'jhi-external-submission',
     template: `
         <tumaet-ui-button
-            severity="warn"
+            [severity]="outlined() ? 'secondary' : 'warn'"
+            [variant]="outlined() ? 'outlined' : 'solid'"
             size="small"
             [icon]="faPlus"
             [ariaLabel]="'entity.action.addExternalSubmission' | artemisTranslate"
@@ -29,6 +30,7 @@ export class ExternalSubmissionButtonComponent {
     private readonly translateService = inject(TranslateService);
 
     readonly exercise = input.required<Exercise>();
+    readonly outlined = input(false);
 
     /** Emitted with the new result once the dialog saved it, so the page can show it without a reload. */
     readonly resultCreated = output<Result>();
