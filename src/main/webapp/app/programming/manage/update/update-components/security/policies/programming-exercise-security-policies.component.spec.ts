@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -415,6 +416,31 @@ describe('ProgrammingExerciseSecurityPoliciesComponent', () => {
         expect(comp.structure()).toBeUndefined();
         refreshed.next({ testClasses: [{ qualifiedName: 'de.example.SortingTest', testCases: ['added'], testClass: true }] });
         expect(comp.structure()?.testClasses?.[0].testCases).toEqual(['added']);
+    });
+
+    it('keeps the imported language configuration of a new policy when a reload brings the same committed configuration', () => {
+        const scanning = 'JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION';
+        create(configured(), false);
+        comp['addPolicy']();
+        const added = comp.policies()[1];
+        comp['onPolicyChange'](cloneWith(added, { working: cloneWith(added.working!, { languageConfiguration: scanning }) }));
+        service.getPolicies.mockReturnValue(of(editor('d'.repeat(40))));
+
+        comp['reload']();
+
+        expect(comp.policies().find((policy) => policy.id === added.id)?.working?.languageConfiguration).toBe(scanning);
+    });
+
+    it('lets a new policy with the configuration it started from follow a switch of dependency scanning', () => {
+        const scanning = 'JAVA_USING_GRADLE_WALA_AND_INSTRUMENTATION';
+        create(configured(), false);
+        comp['addPolicy']();
+        const added = comp.policies()[1];
+        service.getPolicies.mockReturnValue(of(editor('d'.repeat(40), { ...DOCUMENT, languageConfiguration: scanning })));
+
+        comp['reload']();
+
+        expect(comp.policies().find((policy) => policy.id === added.id)?.working?.languageConfiguration).toBe(scanning);
     });
 
     it('keeps the language configuration of a new policy when the reloaded policies have none', () => {

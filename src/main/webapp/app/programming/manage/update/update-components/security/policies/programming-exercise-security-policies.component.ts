@@ -570,6 +570,9 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
     private rebaseOnto(editor: SecurityPolicyEditor, announce: boolean): void {
         const previous = this.policies();
         const deleted = this.deletedPolicies();
+        // The configuration a new policy starts from, see addPolicy.
+        const previousConfiguration =
+            [...previous, ...deleted].find((policy) => policy.base)?.base?.languageConfiguration ?? this.editor()?.newPolicyTemplate?.languageConfiguration;
         this.editor.set(editor);
         this.refreshStructure();
         const files = editor.policies ?? [];
@@ -586,11 +589,13 @@ export class ProgrammingExerciseSecurityPoliciesComponent {
                 return old && changed(old) ? rebasePolicy(old, file) : editorPolicyOf(file);
             });
         const languageConfiguration = files.find((file) => file.document)?.document?.languageConfiguration;
+        // A new policy follows the committed policies, e.g. when dependency scanning was switched, as long as it still has the configuration it started
+        // from; one the instructor gave another configuration, e.g. by importing a file, keeps it.
         const added = previous
             .filter((policy) => isNewPolicy(policy))
             .map((policy) =>
-                policy.working
-                    ? cloneWith(policy, { working: cloneWith(policy.working, { languageConfiguration: languageConfiguration ?? policy.working.languageConfiguration }) })
+                policy.working && languageConfiguration && policy.working.languageConfiguration === previousConfiguration
+                    ? cloneWith(policy, { working: cloneWith(policy.working, { languageConfiguration }) })
                     : policy,
             );
         // A changed policy whose file someone deleted or renamed meanwhile is kept as a new policy, so the changes are not lost without a word.
