@@ -717,6 +717,8 @@ dependencies {
 
     // Required by JPlag
     implementation "com.ibm.icu:icu4j-charset:79.1"
+    // Normalizes host names the way a browser does (UTS #46, not the older IDNA2003 of java.net.IDN), for the image host policy. Kept in step with icu4j-charset above.
+    implementation "com.ibm.icu:icu4j:79.1"
     // Required by exam session service
     implementation "com.github.seancfoley:ipaddress:5.6.2"
 

@@ -65,6 +65,52 @@ class ImageHostPolicyTest {
     }
 
     @Test
+    void keepsTheLetterThatTheOlderRulesOfJavaFoldIntoAnotherDomain() {
+        // a browser keeps the sharp s, so faß.example is xn--fa-hia.example, and fass.example is another domain
+        var policy = ImageHostPolicy.of("faß.example", SERVER_URL);
+
+        assertThat(policy.allows("https://xn--fa-hia.example/a.png")).isTrue();
+        assertThat(policy.allows("https://faß.example/a.png")).isTrue();
+        assertThat(policy.allows("https://FAß.EXAMPLE/a.png")).isTrue();
+        assertThat(policy.allows("https://fass.example/a.png")).isFalse();
+    }
+
+    @Test
+    void doesNotMatchTheSharpSOfAnImageToAnEntryWithTwoLetters() {
+        var policy = ImageHostPolicy.of("fass.example", SERVER_URL);
+
+        assertThat(policy.allows("https://fass.example/a.png")).isTrue();
+        assertThat(policy.allows("https://faß.example/a.png")).isFalse();
+        assertThat(policy.allows("https://xn--fa-hia.example/a.png")).isFalse();
+    }
+
+    @Test
+    void keepsTheFinalSigmaOfAGreekName() {
+        // the nontransitional form of βόλος.example ends in the final sigma, the transitional one in the ordinary sigma
+        var policy = ImageHostPolicy.of("βόλος.example", SERVER_URL);
+
+        assertThat(policy.allows("https://xn--nxasmm1c.example/a.png")).isTrue();
+        assertThat(policy.allows("https://βόλος.example/a.png")).isTrue();
+        assertThat(policy.allows("https://xn--nxasmq6b.example/a.png")).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "https://xn--/a.png", "https://xn--zz-/a.png", "https://a..example/a.png" })
+    void refusesAHostThatCannotBeNormalized(String src) {
+        var policy = ImageHostPolicy.of("images.example.org", SERVER_URL);
+
+        assertThat(policy.allows(src)).isFalse();
+    }
+
+    @Test
+    void keepsAnIpv6AddressAsItIs() {
+        var policy = ImageHostPolicy.of("[::1]", SERVER_URL);
+
+        assertThat(policy.allows("https://[::1]/a.png")).isTrue();
+        assertThat(policy.allows("https://[::2]/a.png")).isFalse();
+    }
+
+    @Test
     void anEntryThatIsNoPlainHostNameStaysAsItIsWritten() {
         var policy = ImageHostPolicy.of("images.example.net:8443, images.example.org/path", SERVER_URL);
 

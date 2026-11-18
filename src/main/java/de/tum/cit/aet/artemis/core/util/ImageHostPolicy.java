@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.util;
 
-import java.net.IDN;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -10,6 +9,8 @@ import java.util.regex.Pattern;
 
 import org.jsoup.nodes.Element;
 import org.jspecify.annotations.Nullable;
+
+import com.ibm.icu.text.IDNA;
 
 /**
  * Decides from which hosts rendered markdown may load images.
@@ -135,12 +136,20 @@ public record ImageHostPolicy(List<String> allowedHosts, @Nullable String server
         return ascii == null ? entry : prefix + ascii;
     }
 
+    /**
+     * The nontransitional processing of UTS #46, which is what a browser applies to a host name: {@code ß} and {@code ς} stay what they are, and the older rules of
+     * {@code java.net.IDN} would turn them into {@code ss} and {@code σ}, so that a host name would match another domain than the one that is meant.
+     */
+    private static final IDNA BROWSER_COMPATIBLE_IDNA = IDNA.getUTS46Instance(IDNA.CHECK_BIDI | IDNA.CHECK_CONTEXTJ | IDNA.NONTRANSITIONAL_TO_ASCII);
+
     private static @Nullable String asciiForm(String host) {
-        try {
-            return IDN.toASCII(host).toLowerCase(Locale.ROOT);
+        if (host.startsWith("[")) {
+            // an IPv6 address has nothing to fold
+            return host.toLowerCase(Locale.ROOT);
         }
-        catch (IllegalArgumentException _) {
-            return null;
-        }
+        IDNA.Info info = new IDNA.Info();
+        StringBuilder ascii = new StringBuilder();
+        BROWSER_COMPATIBLE_IDNA.nameToASCII(host, ascii, info);
+        return info.hasErrors() ? null : ascii.toString();
     }
 }
