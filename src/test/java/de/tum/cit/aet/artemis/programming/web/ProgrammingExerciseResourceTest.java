@@ -1565,6 +1565,45 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertTimelinePinnedToGroup();
     }
 
+    /**
+     * Only the ordinary update creates and checks auxiliary repositories, so a re-evaluation that adds one is refused before anything is written or created.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testReEvaluateProgrammingExerciseRefusesANewAuxiliaryRepository() throws Exception {
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        var addedAuxiliaryRepository = new AuxiliaryRepository();
+        addedAuxiliaryRepository.setName("additional");
+        addedAuxiliaryRepository.setDescription("Must not be created for a re-evaluation");
+        addedAuxiliaryRepository.setCheckoutDirectory("additional");
+        programmingExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(addedAuxiliaryRepository)));
+        var auxiliaryRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName("additional"));
+        Path auxiliaryRepositoryPath = auxiliaryRepositoryUri.getLocalRepositoryPath(localVCBasePath);
+        assertThat(auxiliaryRepositoryPath).doesNotExist();
+
+        request.putWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
+
+        assertThat(auxiliaryRepositoryRepository.findByProgrammingExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(auxiliaryRepositoryPath).doesNotExist();
+    }
+
+    /**
+     * The client sends the stored auxiliary repositories along with every save, so a re-evaluation that repeats them is not refused.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testReEvaluateProgrammingExerciseAcceptsTheStoredAuxiliaryRepositories() throws Exception {
+        programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+
+        request.putWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)), ProgrammingExercise.class, HttpStatus.OK);
+
+        assertThat(auxiliaryRepositoryRepository.findByProgrammingExerciseId(programmingExercise.getId())).extracting(AuxiliaryRepository::getName).containsExactly("auxrepo");
+    }
+
     // The /timeline guard for group members is covered by ExerciseVariantGroupIntegrationTest.
 
     /** Puts {@link #programmingExercise} into a variant group whose timeline it already matches. */

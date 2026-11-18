@@ -106,12 +106,19 @@ public class ProgrammingExerciseReEvaluationService {
             final String originalBranch = buildConfig.getBranch();
             final var originalSettings = ProgrammingExerciseUpdateMappingService.OriginalSettings.of(programmingExercise, buildConfig);
 
+            // Only the ordinary update creates and checks the auxiliary repositories, so a request without it cannot change them. This needs the stored list, which applying the
+            // update
+            // replaces.
+            programmingExerciseUpdateMappingService.validateAuxiliaryRepositoriesUnchanged(updateDTO, programmingExercise);
+
             // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
             programmingExerciseUpdateMappingService.apply(updateDTO, programmingExercise, buildConfig, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
             // The re-evaluation refuses what the update refuses
             programmingExerciseUpdateMappingService.validateUpdatedExercise(updateDTO, programmingExercise, buildConfig, originalSettings, false);
-            // so does the update, but only after the re-evaluation has written, which must not happen for a request that is refused
+            // so does the update, for the problem statement and the name of the channel, but only after the re-evaluation has written, which must not happen for a request that is
+            // refused
             programmingExerciseCreationUpdateService.validateProblemStatementLength(programmingExercise.getProblemStatement());
+            programmingExerciseCreationUpdateService.validateChannelNameOfUpdate(programmingExercise);
             // the default branch cannot be changed
             buildConfig.setBranch(originalBranch);
 

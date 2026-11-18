@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -190,6 +191,38 @@ public class ProgrammingExerciseUpdateMappingService {
         if (!Objects.equals(existingCourseId, updateDTO.courseId()) || !Objects.equals(existingExerciseGroupId, updateDTO.exerciseGroupId())) {
             throw new ConflictException("The course or exercise group cannot be changed", ENTITY_NAME, "courseOrExerciseGroupCannotChange");
         }
+    }
+
+    /**
+     * Refuses a request that changes the auxiliary repositories of the exercise. Only the ordinary update checks, creates and removes them, so a request that is applied without
+     * it must keep the list as it is. A request that repeats the stored list, or leaves the list out, is accepted. This has to run before the request is applied.
+     *
+     * @param updateDTO           the request
+     * @param programmingExercise the exercise as it is stored, with its auxiliary repositories
+     * @throws BadRequestAlertException if the request adds, removes or edits an auxiliary repository
+     */
+    public void validateAuxiliaryRepositoriesUnchanged(UpdateProgrammingExerciseDTO updateDTO, ProgrammingExercise programmingExercise) {
+        if (updateDTO.auxiliaryRepositories() == null) {
+            return;
+        }
+        Set<AuxiliaryRepositoryValues> stored = new HashSet<>();
+        if (programmingExercise.getAuxiliaryRepositories() != null) {
+            programmingExercise.getAuxiliaryRepositories().forEach(repository -> stored
+                    .add(new AuxiliaryRepositoryValues(repository.getId(), repository.getName(), repository.getCheckoutDirectory(), repository.getDescription())));
+        }
+        Set<AuxiliaryRepositoryValues> requested = new HashSet<>();
+        updateDTO.auxiliaryRepositories()
+                .forEach(repository -> requested.add(new AuxiliaryRepositoryValues(repository.id(), repository.name(), repository.checkoutDirectory(), repository.description())));
+        // a repeated entry makes the lists differ in length without making the sets differ
+        if (updateDTO.auxiliaryRepositories().size() != stored.size() || !stored.equals(requested)) {
+            throw new BadRequestAlertException("The auxiliary repositories cannot be changed while the results are re-evaluated", ENTITY_NAME, "auxiliaryRepositoriesChanged");
+        }
+    }
+
+    /**
+     * The values of an auxiliary repository that the update of the repositories compares, which leaves the address aside as the server sets it.
+     */
+    private record AuxiliaryRepositoryValues(Long id, String name, String checkoutDirectory, String description) {
     }
 
     /**

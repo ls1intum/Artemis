@@ -101,6 +101,32 @@ class ProgrammingExerciseReEvaluationServiceTest {
     }
 
     @Test
+    void aChangeOfTheAuxiliaryRepositoriesIsRefusedBeforeAnythingIsApplied() {
+        var dto = mock(UpdateProgrammingExerciseDTO.class);
+        doThrow(new BadRequestAlertException("changed", "ProgrammingExercise", "auxiliaryRepositoriesChanged")).when(mappingService).validateAuxiliaryRepositoriesUnchanged(dto,
+                exercise);
+
+        assertThatThrownBy(() -> service.reEvaluateAndUpdate(EXERCISE_ID, exercise, dto, false, Set.of(), new User())).isInstanceOf(BadRequestAlertException.class);
+
+        // the stored list is what the request is compared with, and applying the request replaces it
+        verify(mappingService, never()).apply(any(), any(), any(), any());
+        verify(exerciseService, never()).reEvaluateExercise(any(), anyBoolean());
+        verify(creationUpdateService, never()).updateProgrammingExercise(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void theChannelNameOfTheRequestIsRefusedBeforeAnythingIsReEvaluated() {
+        // the update refuses the name only when it saves the channel, which is after the results have been written
+        doThrow(new BadRequestAlertException("bad name", "channel", "namePatternInvalid")).when(creationUpdateService).validateChannelNameOfUpdate(exercise);
+
+        assertThatThrownBy(() -> service.reEvaluateAndUpdate(EXERCISE_ID, exercise, mock(UpdateProgrammingExerciseDTO.class), false, Set.of(), new User()))
+                .isInstanceOf(BadRequestAlertException.class);
+
+        verify(exerciseService, never()).reEvaluateExercise(any(), anyBoolean());
+        verify(creationUpdateService, never()).updateProgrammingExercise(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
     void theUpdateIsValidatedBeforeTheResultsAreReEvaluated() {
         var dto = mock(UpdateProgrammingExerciseDTO.class);
         doThrow(new BadRequestAlertException("stop here", "ProgrammingExercise", "stop")).when(exerciseService).reEvaluateExercise(any(), anyBoolean());
@@ -108,8 +134,11 @@ class ProgrammingExerciseReEvaluationServiceTest {
         assertThatThrownBy(() -> service.reEvaluateAndUpdate(EXERCISE_ID, exercise, dto, false, Set.of(), new User())).isInstanceOf(BadRequestAlertException.class);
 
         InOrder order = inOrder(mappingService, creationUpdateService, exerciseService);
+        order.verify(mappingService).validateAuxiliaryRepositoriesUnchanged(dto, exercise);
+        order.verify(mappingService).apply(any(), any(), any(), any());
         order.verify(mappingService).validateUpdatedExercise(any(), any(), any(), any(), anyBoolean());
         order.verify(creationUpdateService).validateProblemStatementLength(MAPPED_STATEMENT);
+        order.verify(creationUpdateService).validateChannelNameOfUpdate(exercise);
         order.verify(exerciseService).reEvaluateExercise(any(), anyBoolean());
     }
 
