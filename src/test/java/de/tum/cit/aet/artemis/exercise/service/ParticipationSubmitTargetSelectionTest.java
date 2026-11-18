@@ -19,6 +19,7 @@ import org.mockito.InOrder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -211,7 +212,7 @@ class ParticipationSubmitTargetSelectionTest {
 
     private void exam(boolean testExam) {
         var exam = new Exam();
-        exam.setTestExam(testExam);
+        exam.setExamMode(testExam ? ExamMode.TEST : ExamMode.REAL);
         var group = new ExerciseGroup();
         group.setExam(exam);
         exercise.setExerciseGroup(group);

@@ -77,12 +77,12 @@ Artemis ships a template for each supported language, so a new exercise starts f
 | 12  | R                    | ✅        | ✅       | built-in               | [artemis-r-docker](https://github.com/ls1intum/artemis-r-docker)                             | ✅ †               |
 | 13  | C++                  | ✅        | ✅       | CMake                  | [artemis-cpp-docker](https://github.com/ls1intum/artemis-cpp-docker)                         | ✅ †               |
 | 14  | TypeScript           | ✅        | ✅       | npm                    | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker)           | ✅                 |
-| 15  | C#                   | ✅        | ✅       | dotnet                 | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)                   | ❌ ‡               |
+| 15  | C#                   | ✅        | ✅       | dotnet                 | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker)                   | ✅                 |
 | 16  | Go                   | ✅        | ✅       | built-in               | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker)                           | ✅ †               |
 | 17  | Bash                 | ✅        | ✅       | built-in               | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker)                       | ✅ †               |
 | 18  | MATLAB               | ✅ \*     | ❌       | built-in               | [matlab](https://hub.docker.com/r/mathworks/matlab)                                          | ✅ †               |
-| 19  | Ruby                 | ✅        | ✅       | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       | ❌ ‡               |
-| 20  | Dart                 | ✅        | ✅       | built-in               | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker)                       | ❌ ‡               |
+| 19  | Ruby                 | ✅        | ✅       | Rake                   | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker)                       | ✅                 |
+| 20  | Dart                 | ✅        | ✅       | built-in               | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker)                       | ✅                 |
 
 \* MATLAB only appears in the language list if your administrators have configured a license server for it.
 
@@ -90,7 +90,7 @@ Artemis ships a template for each supported language, so a new exercise starts f
 
 - ✅ Checked automatically on every pull request that changes the template, and nightly by building the template in the image without network access.
 - ✅ † Not needed: the template pins no dependency that the image has to cache. It uses the standard library or tools the image installs, so there is nothing that can drift.
-- ❌ ‡ Not checked yet: Ruby, Dart and C# cache the lock files of the template in the image, so a version change in the template can make every build download it. Haskell uses an external image that has not been assessed.
+- ❌ ‡ Not checked yet: Haskell uses an external image that has not been assessed.
 
 ### Using a Language Without a Template
 
