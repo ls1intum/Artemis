@@ -90,6 +90,7 @@ describe('StandaloneFeedbackComponent', () => {
         expect(component.result()).toBe(nextResult);
         const currentDetails = fixture.debugElement.query(By.directive(FeedbackComponent)).componentInstance;
         expect(currentDetails).not.toBe(initialDetails);
+        expect(currentDetails.result()).toBe(nextResult);
     });
 
     it('should set showMissingAutomaticFeedbackInformation and messageKey correctly', async () => {

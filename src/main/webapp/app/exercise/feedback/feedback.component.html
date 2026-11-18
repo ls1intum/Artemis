@@ -133,7 +133,7 @@
 
             <div class="feedback-list">
                 @for (feedbackItemNode of feedbackItemNodes(); track feedbackNodeKey(feedbackItemNode)) {
-                    <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course()" [isPrinting]="isPrinting()" />
+                    <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [snippetLines]="snippetLines()" [course]="course()" [isPrinting]="isPrinting()" />
                 }
             </div>
         </div>

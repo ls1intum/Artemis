@@ -146,21 +146,23 @@ describe('UpdatingResultComponent', () => {
         expect(comp.result()?.score).toBe(90);
     });
 
-    it.each([undefined, false, true])('shows the status of text Athena feedback on load and websocket updates: %s', (successful) => {
+    it.each([ExerciseType.TEXT, ExerciseType.MODELING])('preserves selection of rated and pending Athena feedback for %s', (exerciseType) => {
         const official: Result = { id: 20, rated: true, score: 80, completionDate: dayjs().subtract(1, 'minute') };
-        const ai: Result = {
-            id: 21,
-            rated: true,
-            score: successful ? 60 : undefined,
-            successful,
-            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-            completionDate: dayjs().add(5, 'minutes'),
-        };
-        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT });
-        cleanInitializeGraded({ ...initialParticipation, submissions: [{ results: [official, ai] } as Submission] });
-        expect(comp.result()).toEqual(ai);
-        subscribeForLatestResultOfParticipationSubject.next({ ...ai, id: 22 });
-        expect(comp.result()?.id).toBe(22);
+        const failed: Result = { id: 21, rated: false, successful: false, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs() };
+        const pending: Result = { ...failed, id: 22, successful: undefined, completionDate: dayjs().add(5, 'minutes') };
+        const completed: Result = { ...failed, id: 23, rated: true, successful: true, score: 60 };
+        fixture.componentRef.setInput('exercise', { type: exerciseType });
+        cleanInitializeGraded({ ...initialParticipation, submissions: [{ results: [official, failed] } as Submission] });
+        expect(comp.result()).toEqual(official);
+
+        subscribeForLatestResultOfParticipationSubject.next(pending);
+        expect(comp.result()?.id).toBe(pending.id);
+
+        subscribeForLatestResultOfParticipationSubject.next(failed);
+        expect(comp.result()).toEqual(official);
+
+        subscribeForLatestResultOfParticipationSubject.next(completed);
+        expect(comp.result()?.id).toBe(completed.id);
     });
 
     it('should react to rated, but not to unrated results if showUngradedResults is false', () => {

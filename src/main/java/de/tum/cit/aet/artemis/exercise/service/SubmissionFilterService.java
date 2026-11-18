@@ -59,13 +59,13 @@ public class SubmissionFilterService {
      * @return the selected result without replacing the submission's results
      */
     public Optional<Result> getLatestResultForExport(Set<Submission> submissions) {
-        return submissions.stream().sorted(Comparator.reverseOrder()).map(submission -> {
+        return submissions.stream().map(submission -> {
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 Result latestResult = programmingSubmission.getLatestGradingResult();
-                return latestResult == null ? null : selectProgrammingResult(programmingSubmission, latestResult, true, false);
+                return latestResult == null ? null : selectProgrammingResult(programmingSubmission, latestResult, true);
             }
             return isSubmissionRelevantForCourseDashboard(submission, true) ? submission.getLatestGradingResult() : null;
-        }).filter(Objects::nonNull).findFirst();
+        }).filter(Objects::nonNull).max(Comparator.comparing(Result::getSubmission));
     }
 
     /**
@@ -95,16 +95,16 @@ public class SubmissionFilterService {
             Optional<ZonedDateTime> optionalDueDate = ExerciseDateService.getDueDate(participation);
             return optionalDueDate.map(dueDate -> programmingSubmission.getSubmissionDate() != null && programmingSubmission.getSubmissionDate().isBefore(dueDate)).orElse(true);
         }
-        Result selectedResult = selectProgrammingResult(programmingSubmission, latestResult, ignoreAssessmentDueDate, true);
+        Result selectedResult = selectProgrammingResult(programmingSubmission, latestResult, ignoreAssessmentDueDate);
         if (selectedResult != null && selectedResult != latestResult) {
             programmingSubmission.setResults(Set.of(selectedResult));
         }
         return selectedResult != null;
     }
 
-    private Result selectProgrammingResult(ProgrammingSubmission submission, Result latestResult, boolean ignoreAssessmentDueDate, boolean includeSuccessfulAthenaFallback) {
+    private Result selectProgrammingResult(ProgrammingSubmission submission, Result latestResult, boolean ignoreAssessmentDueDate) {
         Exercise exercise = submission.getParticipation().getExercise();
-        // the latest automatic (or athena based) result can always be chosen if it is rated, a result that is not rated is not considered
+        // the latest official automatic result can always be chosen if it is rated, a result that is not rated is not considered
         if (!latestResult.isManual()) {
             return latestResult.isRated() ? latestResult : null;
         }
@@ -121,8 +121,7 @@ public class SubmissionFilterService {
          * (this already creates an empty manual result which is neither rated nor complete), but we should still show the student the latest
          * automatically determined score.
          */
-        Result automaticResult = submission.getAutomaticResults().stream().filter(Result::isRated)
-                .filter(result -> !result.isAthenaBased() || (includeSuccessfulAthenaFallback && Boolean.TRUE.equals(result.isSuccessful())))
+        Result automaticResult = submission.getAutomaticResults().stream().filter(Result::isRated).filter(result -> !result.isAthenaBased())
                 .max(Comparator.comparing(Result::getId)).orElse(null);
         if (automaticResult != null) {
             automaticResult.setSubmission(submission);

@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -751,10 +752,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithLatestResult_keepsBuildFeedbackFirstWhenAthenaIsNewer(boolean athenaCompleted) throws Exception {
         startExercise();
-        var build = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1));
+        var completedAt = ZonedDateTime.parse("2026-01-01T12:00:00Z");
+        var build = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, completedAt.minusHours(1));
         var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(build.getSubmission().getParticipation().getId()).orElseThrow();
         Result athena = participationUtilService.addResultToSubmission(participation, participation.getSubmissions().iterator().next());
-        athena.rated(true).score(60.0).assessmentType(AssessmentType.AUTOMATIC_ATHENA).completionDate(athenaCompleted ? ZonedDateTime.now().minusMinutes(5) : null);
+        athena.rated(true).score(60.0).assessmentType(AssessmentType.AUTOMATIC_ATHENA).completionDate(athenaCompleted ? completedAt : null);
         athena.setSuccessful(athenaCompleted ? Boolean.TRUE : null);
         athena = participationUtilService.addVariousVisibilityFeedbackToResult(athena);
 
@@ -766,7 +768,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(results.get(0).path("score").asDouble()).isEqualTo(100.0);
         assertThat(results.get(0).path("feedbacks")).isNotEmpty();
         assertThat(results.get(1).path("id").asLong()).isEqualTo(athena.getId());
-        assertThat(results.get(1).path("completionDate").isMissingNode()).isEqualTo(!athenaCompleted);
+        var completionDate = results.get(1).path("completionDate");
+        if (athenaCompleted) {
+            assertThat(Instant.parse(completionDate.asString())).isEqualTo(completedAt.toInstant());
+        }
+        else {
+            assertThat(completionDate.isMissingNode()).isTrue();
+        }
     }
 
     @Test

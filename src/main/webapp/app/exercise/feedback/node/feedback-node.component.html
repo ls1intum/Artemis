@@ -36,19 +36,17 @@
                     </span>
                 }
             </div>
-            @if (feedbackItem()!.codeReference) {
+            @if (feedbackItem()!.codeReference; as reference) {
                 <div class="feedback-item__code-reference">
-                    <div class="feedback-item__code-reference-path">{{ feedbackItem()!.codeReference!.filePath }}</div>
-                    @for (line of feedbackItem()!.codeReference!.lines; track line.line) {
+                    <div class="feedback-item__code-reference-path">{{ reference.filePath }}</div>
+                    @for (line of snippetLines()?.get(reference) ?? reference.lines; track line.line) {
                         <div class="feedback-item__code-reference-line" [class.feedback-item__code-reference-line--referenced]="line.referenced">
                             <span class="feedback-item__code-reference-line-number">{{ line.line }}</span>
-                            <code class="hljs" [innerHTML]="highlightCode(line.code, feedbackItem()!.codeReference!.filePath)"></code>
+                            <code class="hljs" [innerHTML]="highlightCode(line.code, reference.filePath)"></code>
                         </div>
                     } @empty {
                         <div class="feedback-item__code-reference-line feedback-item__code-reference-line--referenced">
-                            <span class="feedback-item__code-reference-line-number">
-                                {{ feedbackItem()!.codeReference!.line }}{{ feedbackItem()!.codeReference!.lineEnd ? '-' + feedbackItem()!.codeReference!.lineEnd : '' }}
-                            </span>
+                            <span class="feedback-item__code-reference-line-number"> {{ reference.line }}{{ reference.lineEnd ? '-' + reference.lineEnd : '' }} </span>
                         </div>
                     }
                 </div>
@@ -86,7 +84,7 @@
         </div>
         @if (isGroupExpanded()) {
             @for (feedbackItem of feedbackItemGroup()!.members; track feedbackItem.feedbackReference ?? feedbackItem) {
-                <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course()" [isPrinting]="isPrinting()" />
+                <jhi-feedback-node [feedbackItemNode]="feedbackItem" [snippetLines]="snippetLines()" [course]="course()" [isPrinting]="isPrinting()" />
             }
         }
     </div>

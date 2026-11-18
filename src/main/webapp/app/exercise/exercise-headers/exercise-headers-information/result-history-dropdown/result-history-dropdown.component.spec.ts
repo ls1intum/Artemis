@@ -86,6 +86,7 @@ describe('ResultHistoryDropdownComponent', () => {
                         result: {
                             resultString: {
                                 automaticAIFeedbackInProgress: 'AI feedback request is being processed',
+                                automaticAIFeedbackSuccessful: 'Feedback',
                                 automaticAIFeedbackSuccessfulTooltip: 'AI-based feedback can include mistakes. Consider checking important information.',
                                 automaticAIFeedbackFailed: 'AI feedback generation failed.',
                                 automaticAIFeedbackFailedTooltip: 'AI feedback generation failed.',
@@ -247,6 +248,23 @@ describe('ResultHistoryDropdownComponent', () => {
             const result = { id: 1, score: 0, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined } as Result;
 
             expect(component.getResultFeedbackMessage(result)).toBe('AI feedback request is being processed');
+        });
+
+        it('shows completed programming Athena feedback without a score as feedback', () => {
+            fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING });
+            const result: Result = { id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
+
+            expect(component.getResultFeedbackMessage(result)).toBe('Feedback');
+        });
+
+        it('compares programming grade progress to the previous official result', () => {
+            fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING });
+            const earlierGrade = createResult(1, 30);
+            const ai: Result = { id: 2, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, score: 90 };
+            const latestGrade = createResult(3, 60);
+            fixture.componentRef.setInput('sortedHistoryResults', [latestGrade, ai, earlierGrade]);
+
+            expect(component.getResultFeedbackMessage(latestGrade)).toBe('artemisApp.result.progressString.niceProgress');
         });
 
         it('should show failed AI feedback message instead of score progress for failed Athena results', () => {

@@ -5,7 +5,7 @@ import { Component, computed, input } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
-import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
+import { FeedbackItem, FeedbackItemCodeReference, FeedbackItemCodeReferenceLine } from 'app/exercise/feedback/item/feedback-item';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
@@ -25,6 +25,7 @@ export class FeedbackNodeComponent {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     readonly feedbackItemNode = input<FeedbackNode>(undefined!);
+    readonly snippetLines = input<ReadonlyMap<FeedbackItemCodeReference, FeedbackItemCodeReferenceLine[]>>();
     readonly course = input<Course>();
     /** While the exam summary is being printed, every group renders expanded regardless of its `open` flag. */
     readonly isPrinting = input(false);

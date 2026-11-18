@@ -195,7 +195,7 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         assertThat(resultRepository.findById(ai.getId())).isPresent();
 
         resultRepository.deleteById(official.getId());
-        assertThat(studentParticipationRepository.findAllForPlagiarism(exercise.getId(), 50)).isEmpty();
+        assertThat(studentParticipationRepository.findAllForPlagiarism(exercise.getId(), 10)).isEmpty();
         assertThat(studentParticipationRepository.findAllForPlagiarism(exercise.getId(), 0)).extracting(StudentParticipation::getId).containsExactly(participation.getId());
     }
 

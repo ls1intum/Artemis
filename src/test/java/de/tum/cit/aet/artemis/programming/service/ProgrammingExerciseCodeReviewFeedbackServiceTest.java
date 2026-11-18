@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -393,7 +394,10 @@ class ProgrammingExerciseCodeReviewFeedbackServiceTest {
         assertThat(automaticResult.getScore()).isEqualTo(60.0);
         assertThat(automaticResult.isSuccessful()).isTrue();
         verify(resultRepository).save(automaticResult);
-        verify(resultService).storeFeedbackInResult(eq(automaticResult), any(), eq(true));
+        var calls = inOrder(programmingMessagingService, resultService);
+        calls.verify(programmingMessagingService).notifyUserAboutNewResult(automaticResult, participation);
+        calls.verify(resultService).storeFeedbackInResult(eq(automaticResult), any(), eq(true));
+        calls.verify(programmingMessagingService).notifyUserAboutNewResult(automaticResult, participation);
     }
 
     @Test

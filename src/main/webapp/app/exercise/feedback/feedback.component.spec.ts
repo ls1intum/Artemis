@@ -428,17 +428,14 @@ describe('FeedbackComponent', () => {
         repositoryFiles.next(new Map([['src/main/java/Example.java', ['1', '2', 'historical answer', '4', '5'].join('\n')]]));
 
         const feedbackItem = (comp.feedbackItemNodes()?.[0] as FeedbackGroup).members[0];
-        expect(feedbackItem.codeReference).toEqual({
-            filePath: 'src/main/java/Example.java',
-            line: 3,
-            lines: [
-                { line: 1, code: '1', referenced: false },
-                { line: 2, code: '2', referenced: false },
-                { line: 3, code: 'historical answer', referenced: true },
-                { line: 4, code: '4', referenced: false },
-                { line: 5, code: '5', referenced: false },
-            ],
-        });
+        expect(feedbackItem.codeReference).toEqual({ filePath: 'src/main/java/Example.java', line: 3 });
+        expect(comp.snippetLines().get(feedbackItem.codeReference!)).toEqual([
+            { line: 1, code: '1', referenced: false },
+            { line: 2, code: '2', referenced: false },
+            { line: 3, code: 'historical answer', referenced: true },
+            { line: 4, code: '4', referenced: false },
+            { line: 5, code: '5', referenced: false },
+        ]);
     });
 
     it.each([false, true])('should render asynchronously loaded code without recreating the card (expanded: %s)', async (expanded) => {
@@ -507,7 +504,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         const feedbackItem = (comp.feedbackItemNodes()?.[0] as FeedbackGroup).members[0];
-        expect(feedbackItem.codeReference?.lines).toEqual([
+        expect(comp.snippetLines().get(feedbackItem.codeReference!)).toEqual([
             { line: 1, code: '1', referenced: false },
             { line: 2, code: '2', referenced: false },
             { line: 3, code: '3', referenced: true },
@@ -534,9 +531,10 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         const feedbackItem = (comp.feedbackItemNodes()?.[0] as FeedbackGroup).members[0];
-        expect(feedbackItem.codeReference?.lines).toHaveLength(50);
-        expect(feedbackItem.codeReference?.lines?.at(0)?.line).toBe(1);
-        expect(feedbackItem.codeReference?.lines?.at(-1)?.line).toBe(50);
+        const lines = comp.snippetLines().get(feedbackItem.codeReference!);
+        expect(lines).toHaveLength(50);
+        expect(lines?.at(0)?.line).toBe(1);
+        expect(lines?.at(-1)?.line).toBe(50);
     });
 
     it('should still show feedback when loading the assessed repository fails', () => {

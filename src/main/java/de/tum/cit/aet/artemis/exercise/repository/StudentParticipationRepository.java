@@ -1225,8 +1225,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     /**
      * Retrieves all distinct `StudentParticipation` entities for a specific exercise,
-     * including their latest submission and the latest rated result for each submission.
-     * The method fetches related submissions, results, student, and team data to avoid the N+1 select problem.
+     * filtered by their latest submission and an optional minimum official score.
+     * The method fetches the related student and team data.
      *
      * <p>
      * The method ensures that:

@@ -26,7 +26,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -48,7 +47,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
-import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
+import { FeedbackItem, FeedbackItemCodeReference, FeedbackItemCodeReferenceLine } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
 const CODE_REFERENCE_CONTEXT_LINES = 2;
@@ -188,6 +187,7 @@ export class FeedbackComponent implements OnInit {
 
     feedbackItemService!: FeedbackItemService; // set in ngOnInit() (selected based on exercise type)
     readonly feedbackItemNodes = signal<FeedbackNode[] | undefined>(undefined);
+    readonly snippetLines = signal<ReadonlyMap<FeedbackItemCodeReference, FeedbackItemCodeReferenceLine[]>>(new Map());
 
     /**
      * Load the result feedbacks if necessary and assign them to the component.
@@ -261,6 +261,7 @@ export class FeedbackComponent implements OnInit {
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         const exercise = this.resolvedExercise();
                         if (exercise) {
+                            this.snippetLines.set(new Map());
                             this.feedbackItemNodes.set(this.feedbackItemService.group(feedbackItems, exercise));
                             this.enrichFeedbackItemsWithCodeReferences(feedbackItems);
                         }
@@ -333,28 +334,18 @@ export class FeedbackComponent implements OnInit {
                 if (!fileContentByPath) {
                     return;
                 }
-                const addCodeLines = (item: FeedbackItem) => {
-                    const reference = item.codeReference;
-                    const fileContent = reference && fileContentByPath.get(reference.filePath);
-                    if (!reference || !fileContent) {
-                        return item;
+                const snippetLines = new Map<FeedbackItemCodeReference, FeedbackItemCodeReferenceLine[]>();
+                for (const { codeReference } of feedbackItems) {
+                    const fileContent = codeReference && fileContentByPath.get(codeReference.filePath);
+                    if (codeReference && fileContent) {
+                        snippetLines.set(codeReference, this.getReferencedLines(fileContent, codeReference.line, codeReference.lineEnd ?? codeReference.line));
                     }
-                    const lines = this.getReferencedLines(fileContent, reference.line, reference.lineEnd ?? reference.line);
-                    return cloneWith(item, { feedbackReference: item.feedbackReference, codeReference: cloneWith(reference, { lines }) });
-                };
-                this.feedbackItemNodes.update((nodes) =>
-                    nodes?.map((node) => {
-                        if (!isFeedbackGroup(node)) {
-                            return addCodeLines(node as FeedbackItem);
-                        }
-                        const members = node.members.map(addCodeLines);
-                        return members.some((member, index) => member !== node.members[index]) ? cloneWith(node, { members }) : node;
-                    }),
-                );
+                }
+                this.snippetLines.set(snippetLines);
             });
     }
 
-    private getReferencedLines(fileContent: string, lineStart: number, lineEnd: number): { line: number; code: string; referenced: boolean }[] {
+    private getReferencedLines(fileContent: string, lineStart: number, lineEnd: number): FeedbackItemCodeReferenceLine[] {
         const lines = fileContent.split(/\r?\n/);
         const firstLine = Math.max(1, lineStart - CODE_REFERENCE_CONTEXT_LINES);
         const lastLine = Math.min(lines.length, lineEnd + CODE_REFERENCE_CONTEXT_LINES, firstLine + MAX_DISPLAYED_CODE_REFERENCE_LINES - 1);
