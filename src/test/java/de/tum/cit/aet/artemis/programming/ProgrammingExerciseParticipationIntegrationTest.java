@@ -779,6 +779,20 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResult_keepsBuildFeedbackFirstWhenAthenaIsOlder() throws Exception {
+        startExercise();
+        var completedAt = ZonedDateTime.parse("2026-01-01T12:00:00Z");
+        var athena = addStudentParticipationWithResult(AssessmentType.AUTOMATIC_ATHENA, completedAt.minusHours(1));
+        var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(athena.getSubmission().getParticipation().getId()).orElseThrow();
+        var build = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, completedAt, participation.getSubmissions().iterator().next());
+        assertThat(athena.getId()).isLessThan(build.getId());
+
+        var response = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks");
+        assertThat(response.path("submissions").get(0).path("results")).extracting(result -> result.path("id").asLong()).containsExactly(build.getId(), athena.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithAllResults_showsAthenaBeforeAssessmentDueDate() throws Exception {
         // The all-results endpoint must also keep Athena automatic feedback visible before the assessment due date.
         programmingExercise.setStartDate(ZonedDateTime.now().minusDays(3));
