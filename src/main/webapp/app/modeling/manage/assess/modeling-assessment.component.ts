@@ -551,6 +551,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             const instruction = this.gradingInstructionOf(assessment);
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
+                const previousScore = feedback.credits;
                 const scoreChanged = feedback.credits !== assessment.score;
                 // Linking a grading instruction to the element or removing it in Apollon is an edit like any other.
                 const instructionChanged = feedback.gradingInstruction?.id !== instruction?.id;
@@ -572,7 +573,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     const detail = assessment.feedback ?? '';
                     if (alreadyAdapted) {
                         if (assessment.title !== undefined || lastShownTitle !== undefined) {
-                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + this.titleOrDefault(title, assessment.score);
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + this.titleOrDefault(title, assessment.score, previousScore);
                         }
                         if (assessment.feedback !== undefined || lastShownDetail !== undefined) {
                             feedback.detailText = detail;
@@ -582,7 +583,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                         const detailChanged = lastShownDetail !== undefined && detail !== lastShownDetail;
                         if (titleChanged || detailChanged || scoreChanged || instructionChanged) {
                             const newTitle = titleChanged ? title : this.stripSuggestionPrefix(feedback.text ?? '');
-                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + this.titleOrDefault(newTitle, assessment.score);
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + this.titleOrDefault(newTitle, assessment.score, previousScore);
                             if (titleChanged) {
                                 this.shownTitleInApollon.set(assessment.modelElementId, title);
                             }
@@ -702,8 +703,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 let title: string | undefined;
                 if (isSuggestion) {
                     title = this.stripSuggestionPrefix(feedback.text ?? '');
-                } else if (isTextTitle && !this.isDefaultTitle(feedback.text ?? '')) {
+                } else if (isTextTitle && !this.isDefaultTitleFor(feedback.text ?? '', feedback.credits)) {
                     // A saved default title is left out, so Apollon shows the default for the current points as its placeholder.
+                    // Only the default for the feedback's own points is one: "Feedback" on a positive feedback is the tutor's own title.
                     title = feedback.text;
                 }
                 const feedbackContent = isTextTitle ? (feedback.detailText ?? '') : (feedback.text ?? '');
@@ -825,16 +827,17 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     /**
      * A feedback never keeps an empty title: a missing one is saved as the points-based default the unified
      * feedback editor offers ("Positive", "Needs Revision" or "Feedback"), so the student sees the same heading.
-     * A title that already is one of these defaults keeps following the score, as in the unified feedback editor.
+     * A title the tutor typed in Apollon is kept, even one that reads like a default. Only a stored title that is the
+     * default for the previous score was generated, and keeps following the score, as in the unified feedback editor.
      */
-    private titleOrDefault(title: string, score: number | undefined): string {
-        return title.trim() && !this.isDefaultTitle(title) ? title : this.translateService.instant(Feedback.getDefaultTitleKey(score));
+    private titleOrDefault(title: string, score: number | undefined, previousScore?: number): string {
+        const generated = previousScore !== undefined && this.isDefaultTitleFor(title, previousScore);
+        return title.trim() && !generated ? title : this.translateService.instant(Feedback.getDefaultTitleKey(score));
     }
 
-    /** Whether the title is one of the points-based defaults in the user's language. */
-    private isDefaultTitle(title: string): boolean {
-        const trimmedTitle = title.trim();
-        return Feedback.DEFAULT_TITLE_KEYS.some((key) => this.translateService.instant(key) === trimmedTitle);
+    /** Whether the title is the points-based default for the given score in the user's language. */
+    private isDefaultTitleFor(title: string, score: number | undefined): boolean {
+        return title.trim() === this.translateService.instant(Feedback.getDefaultTitleKey(score));
     }
 
     /**

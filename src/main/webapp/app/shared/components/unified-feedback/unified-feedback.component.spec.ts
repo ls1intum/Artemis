@@ -962,6 +962,57 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
     });
 
+    it.each(['artemisApp.feedback.type.feedback', 'artemisApp.feedback.type.positive'])('should keep the typed title %s when only the points change', (typedTitle) => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set('artemisApp.feedback.type.positive');
+        component.feedbackCredits.set(2);
+        fixture.detectChanges();
+
+        component.onTitleInput(typedTitle);
+        component.onCreditsChange(-1);
+        fixture.detectChanges();
+        expect(component.feedbackTitle()).toBe(typedTitle);
+    });
+
+    it('should keep a stored title that is the default for other points, e.g. "Feedback" on a positive feedback', () => {
+        fixture.componentRef.setInput('editable', true);
+        // e.g. a reopened assessment binds the saved feedback, which brings its title and points together
+        fixture.componentRef.setInput('feedback', { text: 'artemisApp.feedback.type.feedback', credits: 2 } as Feedback);
+        component.feedbackTitle.set('artemisApp.feedback.type.feedback');
+        component.feedbackCredits.set(2);
+        fixture.detectChanges();
+
+        component.onCreditsChange(-1);
+        fixture.detectChanges();
+        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.feedback');
+    });
+
+    it('should let a title follow the points again once the assessor cleared it', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(2);
+        fixture.detectChanges();
+
+        component.onTitleInput('Good interface');
+        component.onTitleInput('');
+        component.applyDefaultTitleIfEmpty();
+        component.onCreditsChange(-1);
+        expect(component.feedbackTitle()).toBe('artemisApp.feedback.type.needsRevision');
+    });
+
+    it('should cut a title and description that bypass the input limits, but keep an older description that exceeds them', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.detectChanges();
+
+        component.onTitleInput('t'.repeat(101));
+        expect(component.feedbackTitle()).toHaveLength(100);
+        component.onDetailChange('d'.repeat(501));
+        expect(component.feedbackDetail()).toHaveLength(500);
+
+        component.feedbackDetail.set('d'.repeat(600));
+        component.onDetailChange('d'.repeat(599));
+        expect(component.feedbackDetail()).toHaveLength(599);
+    });
+
     it('should not rewrite an untouched suggestion whose own title matches a default title', () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}artemisApp.feedback.type.feedback`);

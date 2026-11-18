@@ -129,7 +129,16 @@ export class UnifiedFeedbackComponent {
         // consumers read the title right away when the points change is emitted.
         effect(() => {
             this.feedbackCredits();
-            untracked(() => this.refreshDefaultTitle());
+            const feedback = this.feedback();
+            untracked(() => {
+                // Another feedback brings its own title and points together, which is no points change of the previous title.
+                if (feedback !== this.lastFeedback) {
+                    this.lastFeedback = feedback;
+                    this.lastDefaultTitle = undefined;
+                    this.titleTypedByAssessor = false;
+                }
+                this.refreshDefaultTitle();
+            });
         });
     }
 
@@ -411,6 +420,12 @@ export class UnifiedFeedbackComponent {
 
     readonly detailLength = computed(() => (this.feedbackDetail() ?? '').length);
 
+    /** Whether the assessor typed the current title, which then never follows the points, even when it reads like a default. */
+    private titleTypedByAssessor = false;
+    /** The default title for the points the title was last checked against, see {@link refreshDefaultTitle}. */
+    private lastDefaultTitle?: string;
+    private lastFeedback?: Feedback;
+
     private currentTitlePrefix(): string {
         const raw = this.feedbackTitle() ?? '';
         for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
@@ -457,7 +472,9 @@ export class UnifiedFeedbackComponent {
     }
 
     onTitleInput(value: string): void {
-        this.feedbackTitle.set(`${this.nextTitlePrefix()}${value}`);
+        const title = Feedback.withinLength(value, this.displayTitle(), this.TITLE_MAX_LENGTH);
+        this.titleTypedByAssessor = !!title.trim();
+        this.feedbackTitle.set(`${this.nextTitlePrefix()}${title}`);
     }
 
     /**
@@ -477,18 +494,21 @@ export class UnifiedFeedbackComponent {
     }
 
     /**
-     * Keeps a default title in line with the points, which choose it. A title counts as default when it is one of the
-     * points-based defaults, not by remembering who wrote it, so this also holds once a new inline feedback is
-     * re-rendered after its first commit, or when an assessment is reopened. An untouched (accepted) suggestion is
-     * never rewritten, so opening one whose own title happens to match a default does not mark it adapted.
+     * Keeps a default title in line with the points, which choose it. A title counts as default when it is the default
+     * for the points it was last checked against, so this also holds once a new inline feedback is re-rendered after its
+     * first commit, or when an assessment is reopened, while a title such as "Feedback" on a positive feedback is the
+     * assessor's own and stays. A title the assessor typed here always stays, even one that reads like the default. An
+     * untouched (accepted) suggestion is never rewritten, so opening one whose own title matches a default does not mark it adapted.
      */
     private refreshDefaultTitle(): void {
-        if (!this.isTitleEditable() || (this.feedbackTitle() ?? '').startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+        const defaultTitle = this.defaultTitlePlaceholder();
+        const previousDefaultTitle = this.lastDefaultTitle ?? defaultTitle;
+        this.lastDefaultTitle = defaultTitle;
+        if (!this.isTitleEditable() || this.titleTypedByAssessor || (this.feedbackTitle() ?? '').startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
             return;
         }
         const currentTitle = this.displayTitle().trim();
-        const defaultTitle = this.defaultTitlePlaceholder();
-        if (currentTitle !== defaultTitle && this.isDefaultTitle(currentTitle)) {
+        if (currentTitle !== defaultTitle && currentTitle === previousDefaultTitle) {
             this.feedbackTitle.set(`${this.nextTitlePrefix()}${defaultTitle}`);
         }
     }
@@ -501,16 +521,12 @@ export class UnifiedFeedbackComponent {
         return this.editable() && this.titleEditable() && !this.readOnly();
     }
 
-    private isDefaultTitle(title: string): boolean {
-        return Object.values(this.feedbackTypeTitleKeys).some((key) => this.artemisTranslatePipe.transform(key) === title);
-    }
-
     onTitleTextareaInput(): void {
         this.autogrowTitleTextarea();
     }
 
     onDetailChange(value: string): void {
-        this.feedbackDetail.set(value);
+        this.feedbackDetail.set(Feedback.withinLength(value, this.feedbackDetail() ?? '', this.DETAIL_MAX_LENGTH));
         this.markAdaptedIfSuggestion();
         // The moment a feedback gets content (a description or points), an empty title is filled with the default,
         // so a feedback whose title field was never visited is not saved without a heading.
