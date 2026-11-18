@@ -10,6 +10,8 @@
 @source not './src/**/*.stories.ts';
 
 :where(
+    tumaet-ui-accordion,
+    tumaet-ui-accordion-panel,
     tumaet-ui-autocomplete,
     tumaet-ui-bar-chart,
     tumaet-ui-button,
@@ -35,6 +37,8 @@
     tumaet-ui-line-chart,
     tumaet-ui-list,
     tumaet-ui-menu,
+    tumaet-ui-menu-group,
+    tumaet-ui-menu-separator,
     tumaet-ui-message,
     tumaet-ui-multi-select,
     tumaet-ui-paginator,
@@ -46,6 +50,7 @@
     tumaet-ui-search-field,
     tumaet-ui-select,
     tumaet-ui-select-button,
+    tumaet-ui-skeleton,
     tumaet-ui-splitter,
     tumaet-ui-tab,
     tumaet-ui-tab-list,
@@ -70,6 +75,7 @@
 }
 
 :where(
+        tumaet-ui-accordion-panel,
         tumaet-ui-autocomplete,
         tumaet-ui-button,
         tumaet-ui-calendar,

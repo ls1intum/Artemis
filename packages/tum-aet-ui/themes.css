@@ -5,6 +5,11 @@
     --tumaet-ui-panel-enter-duration: 160ms;
     --tumaet-ui-spacing: 0.25rem;
     --tumaet-ui-splitter-divider-size: 6px;
+    --tumaet-ui-accordion-header-padding: calc(var(--tumaet-ui-spacing) * 3) calc(var(--tumaet-ui-spacing) * 4);
+    --tumaet-ui-accordion-content-padding: 0 calc(var(--tumaet-ui-spacing) * 4) calc(var(--tumaet-ui-spacing) * 4);
+    --tumaet-ui-accordion-icon-size: var(--tumaet-ui-font-size-sm);
+    --tumaet-ui-menu-group-label-padding: calc(var(--tumaet-ui-spacing) * 2) calc(var(--tumaet-ui-spacing) * 3);
+    --tumaet-ui-menu-group-label-font-size: var(--tumaet-ui-font-size-sm);
     --tumaet-ui-font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     --tumaet-ui-font-size-xs: 0.75rem;
     --tumaet-ui-font-size-sm: 0.875rem;
@@ -35,6 +40,7 @@
     --tumaet-ui-text-color: #334155;
     --tumaet-ui-text-hover-color: #1e293b;
     --tumaet-ui-muted-color: #64748b;
+    --tumaet-ui-accordion-icon-color: var(--tumaet-ui-muted-color);
     --tumaet-ui-disabled-color: #64748b;
     --tumaet-ui-content-background: #fff;
     --tumaet-ui-control-background: #fff;
@@ -104,6 +110,7 @@
     --tumaet-ui-text-color: #fff;
     --tumaet-ui-text-hover-color: #fff;
     --tumaet-ui-muted-color: #7e8b9a;
+    --tumaet-ui-accordion-icon-color: var(--tumaet-ui-muted-color);
     --tumaet-ui-disabled-color: #7e8b9a;
     --tumaet-ui-content-background: #16191d;
     --tumaet-ui-control-background: #101214;

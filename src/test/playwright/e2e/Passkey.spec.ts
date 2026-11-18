@@ -104,8 +104,9 @@ test.describe('Passkey', () => {
         await expect(page.getByText('Your passkeys')).toBeVisible();
         await expect(page.getByText(user.email).first()).toBeVisible();
 
-        // Delete the passkey
-        await page.getByRole('button', { name: 'Delete' }).first().click();
+        // Delete the passkey. The name is matched exactly: the account menu button in the navbar shows the login of
+        // this user, which contains "deletes".
+        await page.getByRole('button', { name: 'Delete', exact: true }).first().click();
         await page.getByTestId('delete-dialog-confirm-button').click();
 
         // Verify passkey is removed
